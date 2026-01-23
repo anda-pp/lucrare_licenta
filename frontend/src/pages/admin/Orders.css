@@ -1,0 +1,305 @@
+.orders-page {
+    max-width: 1400px;
+}
+
+.orders-page .filters {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+    background: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.orders-page .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.orders-page .filter-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-primary);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.orders-page .filter-select {
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 200px;
+    appearance: none;
+    /* Hide default arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+.orders-page .filter-select:hover {
+    border-color: var(--color-secondary);
+    background-color: white;
+}
+
+.orders-page .filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+    background-color: white;
+}
+
+.filter-count {
+    margin-left: auto;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: #f1f5f9;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.orders-table-container {
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table thead {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.orders-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.orders-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s ease;
+}
+
+.orders-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.orders-table td {
+    padding: 1rem 1.5rem;
+    color: #334155;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+.order-id {
+    font-family: monospace;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: #f0f9ff;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.customer-name {
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.customer-email {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.order-total {
+    font-weight: 700;
+    color: var(--color-navy);
+    font-size: 1rem;
+}
+
+.order-date {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.date-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* Payment Statuses */
+.status-paid {
+    background: #e0f2fe;
+    color: var(--color-primary);
+    border: 1px solid #bae6fd;
+}
+
+.status-pending {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.status-failed {
+    background: white;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+}
+
+/* Order Statuses */
+.status-active {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.status-cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    text-decoration: line-through;
+}
+
+.row-cancelled {
+    opacity: 0.6;
+    background-color: #f8fafc;
+}
+
+.btn-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-cancel {
+    background: white;
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+
+.btn-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btn-activate {
+    background: white;
+    border-color: #bae6fd;
+    color: var(--color-primary);
+}
+
+.btn-activate:hover {
+    background: #f0f9ff;
+    color: #0369a1;
+    border-color: #7dd3fc;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: #f1f5f9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+    color: #cbd5e1;
+}
+
+.empty-state p {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.btn-reset-filters {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+    background: #0369a1;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+    .orders-table-container {
+        overflow-x: auto;
+    }
+
+    .orders-table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 640px) {
+    .orders-page .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-count {
+        text-align: center;
+        margin-left: 0;
+    }
+}

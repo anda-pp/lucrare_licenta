@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette */
+  --color-navy: #03045e;
+  /* Text principal, titluri */
+  --color-primary: #0077b6;
+  /* Butoane primare, link-uri */
+  --color-secondary: #00b4d8;
+  /* Elemente secundare, icon-uri */
+  --color-accent: #90e0ef;
+  /* Accente subtile, fundaluri carduri */
+  --color-bg: #caf0f8;
+  /* Fundal pagina */
+  --color-white: #ffffff;
+
+  /* Status Colors */
+  --color-success: #2ecc71;
+  --color-warning: #f1c40f;
+  --color-danger: #e74c3c;
+
+  /* Spacing & Layout */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(3, 4, 94, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(3, 4, 94, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(3, 4, 94, 0.1);
+
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: var(--color-navy);
+  background-color: var(--color-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(144, 224, 239, 0.5) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 180, 216, 0.2) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+#root {
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}

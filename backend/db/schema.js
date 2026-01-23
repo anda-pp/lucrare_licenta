@@ -1,0 +1,182 @@
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+
+// ============================================
+// BetterAuth Tables (Required for authentication)
+// ============================================
+
+// BetterAuth User table
+export const user = sqliteTable('user', {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
+    image: text('image'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    role: text('role').default('Utilizator'), // Admin, Personal, Utilizator
+});
+
+// BetterAuth Session table
+export const session = sqliteTable('session', {
+    id: text('id').primaryKey(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    token: text('token').notNull().unique(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// BetterAuth Account table
+export const account = sqliteTable('account', {
+    id: text('id').primaryKey(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }),
+    password: text('password'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// BetterAuth Verification table
+export const verification = sqliteTable('verification', {
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// ============================================
+// Application Tables
+// ============================================
+
+
+// Tabela Judete
+export const judete = sqliteTable('judete', {
+    codJudet: text('cod_judet').primaryKey(),
+    numeJudet: text('nume_judet').notNull().unique(),
+});
+
+// Tabela Utilizatori
+export const utilizatori = sqliteTable('utilizatori', {
+    codUnicUtilizator: text('cod_unic_utilizator').primaryKey(),
+    numeUtil: text('nume_util').notNull(),
+    prenumeUtil: text('prenume_util').notNull(),
+    emailUtil: text('email_util').notNull(),
+    usernameUtil: text('username_util').notNull().unique(),
+    parolaUtil: text('parola_util').notNull(),
+    telefonUtil: text('telefon_util'),
+    orasUtil: text('oras_util').notNull(),
+    judetUtil: text('judet_util').references(() => judete.codJudet),
+    adresaUtil: text('adresa_util').notNull(),
+    rolUtil: text('rol_util', { enum: ['Admin', 'Utilizator', 'Personal'] }).notNull(),
+    dataInregistrare: text('data_inregistrare').default(sql`CURRENT_TIMESTAMP`),
+    avatarUrl: text('avatar_url'), // Pentru upload avatar
+});
+
+// Tabela Card Fidelitate (tipuri de carduri)
+export const cardFidelitate = sqliteTable('card_fidelitate', {
+    tipUnicCard: text('tip_unic_card').primaryKey(),
+    numeCard: text('nume_card').notNull().unique(),
+    puncteCard: integer('puncte_card').default(0),
+    oferteSpeciale: text('oferte_speciale'),
+    oferteBunVenit: text('oferte_bun_venit'),
+});
+
+// Tabela Carduri Clienti (carduri asociate utilizatorilor)
+export const carduriClienti = sqliteTable('carduri_clienti', {
+    nrUnicCard: text('nr_unic_card').primaryKey(),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
+    tipUnicCard: text('tip_unic_card').references(() => cardFidelitate.tipUnicCard),
+    puncteAcumulate: integer('puncte_acumulate').default(0),
+});
+
+// Tabela Locatii Publice (Muzee si Galerii)
+export const locatiiPublice = sqliteTable('locatii_publice', {
+    codUnicLocatie: text('cod_unic_locatie').primaryKey(),
+    tipLocatie: text('tip_locatie', { enum: ['Muzeu', 'Galerie'] }).notNull(),
+    numeLoc: text('nume_loc').notNull(),
+    orasLoc: text('oras_loc').notNull(),
+    judet: text('judet').references(() => judete.codJudet),
+    adresa: text('adresa').notNull(),
+    orar: text('orar'),
+    scurtaDescriere: text('scurta_descriere'),
+    siteOficial: text('site_oficial'),
+    locatieHarta: text('locatie_harta').notNull(),
+    statusLocatie: text('status_locatie', { enum: ['Activ', 'Inactiv', 'Cerere'] }).notNull(),
+    imagineUrl: text('imagine_url'), // Pentru upload imagine locatie
+});
+
+// Tabela Tipuri Bilete
+export const tipuriBilete = sqliteTable('tipuri_bilete', {
+    codUnicTipBilet: text('cod_unic_tip_bilet').primaryKey(),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
+    tipBilet: text('tip_bilet', { enum: ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'] }).notNull(),
+    pret: real('pret').notNull(),
+});
+
+// Tabela Favorite
+export const favorite = sqliteTable('favorite', {
+    numarFavorite: text('numar_favorite').primaryKey(),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => utilizatori.codUnicUtilizator),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
+});
+
+// Tabela Recenzii
+export const recenzii = sqliteTable('recenzii', {
+    numarRecenzie: text('numar_recenzie').primaryKey(),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
+    descriereRecenzie: text('descriere_recenzie'),
+    rating: integer('rating').notNull(), // 1-5
+    dataRecenzie: text('data_recenzie').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Tabela Comenzi
+export const comenzi = sqliteTable('comenzi', {
+    numarComanda: integer('numar_comanda').primaryKey({ autoIncrement: true }),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
+    totalPlata: real('total_plata').notNull(),
+    dataComanda: text('data_comanda').default(sql`CURRENT_TIMESTAMP`),
+    statusPlata: text('status_plata', { enum: ['Plătit', 'Eșuat', 'În așteptare'] }).notNull(),
+    statusComanda: text('status_comanda', { enum: ['Activă', 'Anulată'] }).default('Activă'),
+});
+
+// Tabela Bilete Cumparate
+export const bileteCumparate = sqliteTable('bilete_cumparate', {
+    nrBiletCumparat: text('nr_bilet_cumparat').primaryKey(),
+    codUnicTipBilet: text('cod_unic_tip_bilet').references(() => tipuriBilete.codUnicTipBilet),
+    numarComanda: integer('numar_comanda').references(() => comenzi.numarComanda),
+    cantitate: integer('cantitate').notNull(),
+});
+
+// Tabela Facturi
+export const facturi = sqliteTable('facturi', {
+    numarFactura: integer('numar_factura').primaryKey({ autoIncrement: true }),
+    numarComanda: integer('numar_comanda').references(() => comenzi.numarComanda),
+    serieFactura: text('serie_factura').notNull(),
+    dataFacturare: text('data_facturare').notNull(),
+    tva: real('tva').default(0.19),
+    totalFactura: real('total_factura').notNull(),
+});
+
+// Tabela Imagini Locatii (pentru upload multiple imagini per muzeu)
+export const imaginiLocatii = sqliteTable('imagini_locatii', {
+    codUnicImagine: text('cod_unic_imagine').primaryKey(),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
+    numeOriginal: text('nume_original').notNull(),
+    caleFisier: text('cale_fisier').notNull(),
+    tipFisier: text('tip_fisier').notNull(),
+    marimeFisier: integer('marime_fisier'),
+    dataIncarcare: text('data_incarcare').notNull(),
+    ordinAfisare: integer('ordin_afisare').default(0),
+});
+

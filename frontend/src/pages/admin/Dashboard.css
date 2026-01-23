@@ -1,0 +1,121 @@
+.dashboard-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-page .page-title {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-navy);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: var(--color-primary);
+    margin: 0 0 2rem 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Icon Wrappers */
+.stat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #e0f2fe;
+    color: var(--color-primary);
+}
+
+.stat-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-number {
+    margin: 0 0 0.25rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-navy);
+}
+
+.stat-label {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.info-section {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.info-section h2 {
+    margin: 0 0 1.5rem 0;
+    color: var(--color-navy);
+    font-size: 1.5rem;
+}
+
+.todo-list {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style: none;
+    /* Remove default bullets */
+}
+
+.todo-list li {
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    line-height: 1.6;
+    position: relative;
+    padding-left: 0.5rem;
+}
+
+/* Custom bullets */
+.todo-list li::before {
+    content: "•";
+    color: var(--color-navy);
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

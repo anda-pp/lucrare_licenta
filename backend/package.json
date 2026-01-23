@@ -1,0 +1,41 @@
+{
+  "name": "aplicatie-licenta-backend",
+  "version": "1.0.0",
+  "description": "Backend pentru aplicația de licență - Express.js",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "node db/seed.js",
+    "seed-user-data": "node db/seed-user-data.js",
+    "make-admin": "node db/make-admin.js",
+    "make-staff": "node db/make-staff.js"
+  },
+  "keywords": [
+    "express",
+    "backend",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@better-auth/cli": "^1.4.14",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.4.14",
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
+    "express": "^4.18.2",
+    "multer": "^2.0.2",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
