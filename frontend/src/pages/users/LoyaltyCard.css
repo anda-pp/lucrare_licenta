@@ -1,0 +1,215 @@
+.loyalty-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.lc-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+/* Current card visual */
+.my-card-visual {
+    border: 2px solid;
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-visual-chip {
+    width: 44px;
+    height: 32px;
+    border-radius: 7px;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.card-visual-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.card-visual-label {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.card-visual-tier {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+.card-visual-pts {
+    text-align: right;
+}
+
+.pts-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.pts-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    letter-spacing: 1.5px;
+}
+
+.card-visual-benefit {
+    margin: 1.2rem 0 0;
+    font-size: 0.9rem;
+    color: #475569;
+    font-style: italic;
+}
+
+.no-card-notice {
+    text-align: center;
+    padding: 3rem;
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
+    color: #94a3b8;
+    margin-bottom: 2rem;
+}
+
+.no-card-notice p {
+    margin: 1rem 0 0;
+    font-size: 1rem;
+}
+
+/* Tiers grid */
+.tiers-section h2 {
+    font-size: 1.3rem;
+    color: var(--color-navy);
+    margin: 0 0 1.5rem;
+}
+
+.tiers-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+}
+
+.tier-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.25rem;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tier-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.tier-current {
+    border-width: 2.5px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tier-achieved {
+    opacity: 0.75;
+}
+
+.tier-current-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.8rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.next-badge {
+    background: #0ea5e9 !important;
+}
+
+.tier-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.tier-card h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin: 0 0 0.5rem;
+}
+
+.tier-threshold {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #64748b;
+    font-size: 0.82rem;
+    margin: 0 0 0.75rem;
+}
+
+.tier-threshold svg {
+    flex-shrink: 0;
+}
+
+.tier-benefit-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    color: #475569;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+}
+
+.tier-benefit-row.welcome {
+    color: #94a3b8;
+}
+
+/* Progress bar */
+.tier-progress {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.tier-progress-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.tier-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s ease;
+}
+
+.tier-progress-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+}

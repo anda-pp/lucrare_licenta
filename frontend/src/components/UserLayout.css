@@ -1,0 +1,210 @@
+/* =============================================
+   USER LAYOUT - Collapsible Sidebar
+   ============================================= */
+
+.user-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--color-background);
+}
+
+/* --- SIDEBAR --- */
+.user-sidebar {
+    width: 70px;
+    /* collapsed width (icon only) */
+    background: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.07);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+    overflow: hidden;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-sidebar:hover {
+    width: 280px;
+}
+
+/* --- SIDEBAR HEADER --- */
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-navy);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    padding: 0.3rem;
+    transition: color 0.2s;
+}
+
+.logo-area:hover {
+    color: var(--color-primary);
+}
+
+.logo-icon-small {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.sidebar-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease 0.05s;
+}
+
+.user-sidebar:hover .sidebar-header h2 {
+    opacity: 1;
+}
+
+.user-info {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0;
+    padding-left: calc(20px + 0.75rem);
+    /* align with icon */
+    opacity: 0;
+    transition: opacity 0.2s ease 0.05s;
+}
+
+.user-sidebar:hover .user-info {
+    opacity: 1;
+}
+
+/* --- NAV --- */
+.sidebar-nav {
+    padding: 1rem 0.6rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    overflow: hidden;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 0.75rem;
+    color: #475569;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.nav-item svg {
+    flex-shrink: 0;
+    /* icon always visible */
+}
+
+.nav-item:hover {
+    background: #f8fafc;
+    color: var(--color-navy);
+}
+
+.nav-item.active {
+    background: #f0f9ff;
+    color: var(--color-primary);
+}
+
+/* Labels hidden when sidebar is collapsed */
+.nav-label {
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.user-sidebar:hover .nav-label {
+    opacity: 1;
+}
+
+/* Divider */
+.nav-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    margin: 0.5rem 0;
+}
+
+/* --- FOOTER --- */
+.sidebar-footer {
+    padding: 1rem 0.6rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.85rem 0.75rem;
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.logout-btn:hover {
+    background: #fef2f2;
+}
+
+/* --- MAIN CONTENT --- */
+.user-content {
+    flex: 1;
+    margin-left: 70px;
+    /* match collapsed sidebar width */
+    padding: 2rem;
+    overflow-y: auto;
+    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* On larger screens, content slightly shifts when sidebar is hovered */
+/* This is optional and gives a push feel */
+
+/* --- LOADING --- */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .user-sidebar {
+        width: 0;
+        border-right: none;
+    }
+
+    .user-sidebar:hover {
+        width: 260px;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .user-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+}

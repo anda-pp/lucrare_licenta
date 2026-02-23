@@ -1,5 +1,4 @@
 import { betterAuth } from "better-auth";
-import { twoFactor } from "better-auth/providers/two-factor";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db/db.js";
 import * as schema from "../db/schema.js";
@@ -40,7 +39,7 @@ export const auth = betterAuth({
                 after: async (user) => {
                     // Only assign Bronze card to users with Utilizator role
                     if (user.role !== 'Utilizator') {
-                        console.log(`⏭️ Skipping card for non-Utilizator user ${user.email} (role: ${user.role})`);
+                        console.log(`\u23ED\uFE0F Skipping card for non-Utilizator user ${user.email} (role: ${user.role})`);
                         return;
                     }
 
@@ -50,16 +49,12 @@ export const auth = betterAuth({
                             codUnicUtilizator: user.id,
                             tipUnicCard: 'BRONZE',
                         });
-                        console.log(`✅ Bronze card assigned to user ${user.email}`);
+                        console.log(`\u2705 Bronze card assigned to user ${user.email}`);
                     } catch (error) {
                         console.error('Error assigning Bronze card:', error);
                     }
                 },
             },
         },
-    },
-    plugins: [
-        twoFactor()
-    ]
+    }
 });
-

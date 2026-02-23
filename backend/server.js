@@ -76,6 +76,8 @@ import staffRoutes from './routes/staff.routes.js';
 import marketingReportsRoutes from './routes/marketingReports.routes.js';
 import directorReportsRoutes from './routes/directorReports.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import eventsRoutes from './routes/events.routes.js';
+import artistsRoutes from './routes/artists.routes.js';
 
 app.use('/api/users', usersRoutes);
 app.use('/api/locations', locationsRoutes);
@@ -88,6 +90,8 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/reports/marketing', marketingReportsRoutes);
 app.use('/api/reports/director', directorReportsRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/artists', artistsRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

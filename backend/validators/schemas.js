@@ -39,3 +39,27 @@ export const createLoyaltyCardSchema = z.object({
     numeCard: z.string().min(2, 'Numele cardului trebuie să aibă minim 2 caractere'),
     puncteCard: z.number().int().min(0).default(0),
 });
+
+// Event validation schema
+export const createEventSchema = z.object({
+    codUnicLocatie: z.string().optional().nullable(),
+    titlu: z.string().min(2, 'Titlul trebuie să aibă minim 2 caractere'),
+    descriere: z.string().optional().nullable(),
+    dataStart: z.coerce.date({ required_error: 'Data de început este obligatorie' }),
+    dataSfarsit: z.coerce.date().optional().nullable(),
+    tipEveniment: z.enum(['General', 'Expozitie', 'Noaptea Muzeelor', 'Workshop']).default('General'),
+    imagineUrl: z.string().optional().nullable(),
+});
+
+export const updateEventSchema = createEventSchema.partial();
+
+// Artist validation schema
+export const createArtistSchema = z.object({
+    nume: z.string().min(2, 'Numele artistului trebuie să aibă minim 2 caractere'),
+    biografie: z.string().optional().nullable(),
+    interviu: z.string().optional().nullable(),
+    linkOpere: z.string().url('URL invalid pentru opere').optional().nullable().or(z.literal('')),
+    imagineUrl: z.string().optional().nullable(),
+});
+
+export const updateArtistSchema = createArtistSchema.partial();

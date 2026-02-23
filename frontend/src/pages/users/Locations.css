@@ -1,0 +1,231 @@
+.locations-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.loc-loading,
+.loc-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    gap: 1rem;
+    color: #94a3b8;
+}
+
+.loc-empty h3 {
+    color: var(--color-navy);
+    margin: 0;
+}
+
+.loc-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ---- FILTERS ---- */
+.loc-filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.loc-search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1rem;
+    flex: 1;
+    min-width: 220px;
+}
+
+.loc-search-box svg {
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.loc-search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    color: #334155;
+    background: transparent;
+}
+
+.loc-type-filters {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.loc-filter-btn {
+    padding: 0.6rem 1.1rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.loc-filter-btn.active,
+.loc-filter-btn:hover {
+    background: var(--color-navy);
+    border-color: var(--color-navy);
+    color: white;
+}
+
+/* ---- GRID ---- */
+.loc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ---- CARD ---- */
+.loc-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.loc-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+}
+
+.loc-card-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+    background: #f1f5f9;
+}
+
+.loc-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.loc-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #cbd5e1;
+}
+
+.loc-type-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(4px);
+}
+
+.loc-type-badge.museum {
+    background: rgba(15, 23, 42, 0.75);
+    color: #e2e8f0;
+}
+
+.loc-type-badge.gallery {
+    background: rgba(124, 58, 237, 0.85);
+    color: white;
+}
+
+/* Heart favorite button */
+.loc-fav-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s;
+}
+
+.loc-fav-btn:hover {
+    color: #f43f5e;
+    transform: scale(1.1);
+}
+
+.loc-fav-btn.active {
+    color: #f43f5e;
+}
+
+/* ---- CARD BODY ---- */
+.loc-card-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.loc-card-body h2 {
+    font-size: 1.1rem;
+    color: var(--color-navy);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.loc-location {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.loc-location svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.loc-description {
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (max-width: 640px) {
+    .loc-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .loc-type-filters {
+        justify-content: center;
+    }
+}

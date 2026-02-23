@@ -180,3 +180,40 @@ export const imaginiLocatii = sqliteTable('imagini_locatii', {
     ordinAfisare: integer('ordin_afisare').default(0),
 });
 
+// Tabela Evenimente
+export const evenimente = sqliteTable('evenimente', {
+    id: text('id').primaryKey(),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
+    titlu: text('titlu').notNull(),
+    descriere: text('descriere'),
+    dataStart: integer('data_start', { mode: 'timestamp' }).notNull(),
+    dataSfarsit: integer('data_sfarsit', { mode: 'timestamp' }),
+    tipEveniment: text('tip_eveniment').default('General'), // 'Expozitie', 'Noaptea Muzeelor', 'Workshop'
+    imagineUrl: text('imagine_url'),
+});
+
+// Tabela Artisti
+export const artisti = sqliteTable('artisti', {
+    id: text('id').primaryKey(),
+    nume: text('nume').notNull(),
+    biografie: text('biografie'),
+    interviu: text('interviu'), // Poate fi text lung sau link YouTube
+    linkOpere: text('link_opere'), // Unde pot fi găsite operele
+    imagineUrl: text('imagine_url'),
+});
+
+// Tabela Interese Evenimente (Facebook-style "Interested")
+export const intereseEvenimente = sqliteTable('interese_evenimente', {
+    id: text('id').primaryKey(),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id, { onDelete: 'cascade' }),
+    codUnicEveniment: text('cod_unic_eveniment').references(() => evenimente.id, { onDelete: 'cascade' }),
+    dataInteresului: integer('data_interesului', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// Tabela Favorite Locatii (legată de user BetterAuth)
+export const favoriteLocatii = sqliteTable('favorite_locatii', {
+    id: text('id').primaryKey(),
+    codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id, { onDelete: 'cascade' }),
+    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
+    dataAdaugarii: integer('data_adaugarii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});

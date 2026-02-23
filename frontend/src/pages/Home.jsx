@@ -8,13 +8,15 @@ export default function Home() {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
 
-    // Redirect admins and staff to their dashboards
+    // Redirect users to their respective dashboards
     useEffect(() => {
         if (!isPending && session?.user) {
             if (session.user.role === 'Admin') {
                 navigate('/admin');
             } else if (session.user.role === 'Personal') {
                 navigate('/staff');
+            } else if (session.user.role === 'Utilizator') {
+                navigate('/user');
             }
         }
     }, [session, isPending, navigate]);
