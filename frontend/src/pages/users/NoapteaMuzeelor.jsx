@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin, Calendar, Moon } from 'lucide-react';
 import './NoapteaMuzeelor.css';
 import './Events.css'; // Refolosim unele stiluri de la evenimente generale
 
 export default function NoapteaMuzeelor() {
+    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -158,7 +160,7 @@ export default function NoapteaMuzeelor() {
                                     <p className="event-description">
                                         {event.descriere || 'Bucură-te de o experiență inedită!'}
                                     </p>
-                                    <button className="view-details-btn night-btn">Detalii Program</button>
+                                    <button className="view-details-btn night-btn" onClick={() => navigate(`/user/events/${event.id}`)}>Detalii Program</button>
                                 </div>
                             </div>
                         ))}

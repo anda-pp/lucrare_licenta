@@ -48,7 +48,7 @@ export default function Artists() {
             ) : (
                 <div className="artists-grid">
                     {artists.map(artist => (
-                        <div key={artist.id} className="artist-card" onClick={() => navigate(`/artists/${artist.id}`)}>
+                        <div key={artist.id} className="artist-card" onClick={() => navigate(`/user/artists/${artist.id}`)}>
                             <div className="artist-image-container">
                                 {artist.imagineUrl ? (
                                     <img src={`http://localhost:5000${artist.imagineUrl}`} alt={artist.nume} className="artist-image" />

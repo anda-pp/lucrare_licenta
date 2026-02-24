@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Events from './pages/users/Events';
+import EventDetail from './pages/users/EventDetail';
 import NoapteaMuzeelor from './pages/users/NoapteaMuzeelor';
 import Artists from './pages/users/Artists';
 import ArtistDetail from './pages/users/ArtistDetail';
@@ -22,6 +23,10 @@ import UserLayout from './components/UserLayout';
 import UserDashboard from './pages/users/UserDashboard';
 import LoyaltyCard from './pages/users/LoyaltyCard';
 import UserLocations from './pages/users/Locations';
+import LocationDetail from './pages/users/LocationDetail';
+import MyFavorites from './pages/users/MyFavorites';
+import MyOrders from './pages/users/MyOrders';
+import MyReviews from './pages/users/MyReviews';
 import './App.css';
 
 function App() {
@@ -35,12 +40,15 @@ function App() {
                 {/* User routes */}
                 <Route path="/user" element={<UserLayout />}>
                     <Route index element={<UserDashboard />} />
-                    <Route path="orders" element={<div style={{ padding: '2rem' }}><h2>Comenzile mele</h2><p>Pagină în construcție.</p></div>} />
-                    <Route path="reviews" element={<div style={{ padding: '2rem' }}><h2>Recenziile mele</h2><p>Pagină în construcție.</p></div>} />
+                    <Route path="orders" element={<MyOrders />} />
+                    <Route path="reviews" element={<MyReviews />} />
                     <Route path="loyalty" element={<LoyaltyCard />} />
                     <Route path="locations" element={<UserLocations />} />
+                    <Route path="locations/:id" element={<LocationDetail />} />
+                    <Route path="my-favorites" element={<MyFavorites />} />
                     {/* Public pages shown with sidebar */}
                     <Route path="events" element={<Events />} />
+                    <Route path="events/:id" element={<EventDetail />} />
                     <Route path="noaptea-muzeelor" element={<NoapteaMuzeelor />} />
                     <Route path="artists" element={<Artists />} />
                     <Route path="artists/:id" element={<ArtistDetail />} />

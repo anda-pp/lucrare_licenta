@@ -66,6 +66,56 @@ router.get('/my-reviews', requireAuth, async (req, res) => {
 });
 
 /**
+ * PUT /api/users/my-reviews/:id
+ * Edit an existing review
+ */
+router.put('/my-reviews/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rating, descriereRecenzie } = req.body;
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, error: 'Rating invalid' });
+        }
+
+        const rezultat = await db.update(recenzii)
+            .set({ rating, descriereRecenzie })
+            .where(and(eq(recenzii.numarRecenzie, id), eq(recenzii.codUnicUtilizator, req.user.id)));
+
+        if (rezultat.changes === 0) {
+            return res.status(404).json({ success: false, error: 'Recenzia nu a fost găsită sau nu îți aparține' });
+        }
+
+        res.json({ success: true, message: 'Recenzia a fost actualizată' });
+    } catch (error) {
+        console.error('Update review error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la actualizarea recenziei' });
+    }
+});
+
+/**
+ * DELETE /api/users/my-reviews/:id
+ * Delete a review
+ */
+router.delete('/my-reviews/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const rezultat = await db.delete(recenzii)
+            .where(and(eq(recenzii.numarRecenzie, id), eq(recenzii.codUnicUtilizator, req.user.id)));
+
+        if (rezultat.changes === 0) {
+            return res.status(404).json({ success: false, error: 'Recenzia nu a fost găsită sau nu îți aparține' });
+        }
+
+        res.json({ success: true, message: 'Recenzia a fost ștearsă' });
+    } catch (error) {
+        console.error('Delete review error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la ștergerea recenziei' });
+    }
+});
+
+/**
  * GET /api/users/my-card
  * Get the loyalty card for the current user
  */

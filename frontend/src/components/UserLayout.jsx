@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '../lib/auth';
-import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Palette, Building2 } from 'lucide-react';
+import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Palette, Building2, Heart } from 'lucide-react';
 import './UserLayout.css';
 
 export default function UserLayout() {
@@ -85,6 +85,7 @@ export default function UserLayout() {
                         <span className="nav-label">Artiști Români</span>
                     </Link>
                 </nav>
+
 
                 <div className="sidebar-footer">
                     <button onClick={handleLogout} className="logout-btn">

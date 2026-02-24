@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { MapPin, Building2, Search, Heart } from 'lucide-react';
 import { useSession } from '../../lib/auth';
@@ -8,6 +9,7 @@ const API = 'http://localhost:5000';
 
 export default function Locations() {
     const { data: session } = useSession();
+    const navigate = useNavigate();
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +18,15 @@ export default function Locations() {
     const [toggling, setToggling] = useState(null);
 
     useEffect(() => { fetchLocations(); }, []);
-    useEffect(() => { if (session) fetchFavs(); }, [session]);
+    useEffect(() => {
+        if (session) {
+            fetchFavs();
+            // Re-sync favorites whenever user returns to this page
+            const onFocus = () => fetchFavs();
+            window.addEventListener('focus', onFocus);
+            return () => window.removeEventListener('focus', onFocus);
+        }
+    }, [session]);
 
     const fetchLocations = async () => {
         try {
@@ -92,6 +102,7 @@ export default function Locations() {
                             {t || 'Toate'}
                         </button>
                     ))}
+                    <span className="loc-results-count">{filtered.length} rezultate</span>
                 </div>
             </div>
 
@@ -106,7 +117,12 @@ export default function Locations() {
                     {filtered.map(loc => {
                         const isFav = favIds.has(loc.codUnicLocatie);
                         return (
-                            <div key={loc.codUnicLocatie} className="loc-card">
+                            <div
+                                key={loc.codUnicLocatie}
+                                className="loc-card"
+                                onClick={() => navigate(`/user/locations/${loc.codUnicLocatie}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className="loc-card-image">
                                     {loc.imagineUrl ? (
                                         <img src={`${API}${loc.imagineUrl}`} alt={loc.numeLoc} />
@@ -121,7 +137,7 @@ export default function Locations() {
                                     {session && (
                                         <button
                                             className={`loc-fav-btn ${isFav ? 'active' : ''}`}
-                                            onClick={() => toggleFav(loc.codUnicLocatie)}
+                                            onClick={(e) => { e.stopPropagation(); toggleFav(loc.codUnicLocatie); }}
                                             disabled={toggling === loc.codUnicLocatie}
                                             title={isFav ? 'Elimină din favorite' : 'Adaugă la favorite'}
                                         >

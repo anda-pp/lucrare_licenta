@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Search, Heart } from 'lucide-react';
 import { useSession } from '../../lib/auth';
 import './Events.css';
@@ -8,6 +9,7 @@ const API = 'http://localhost:5000';
 
 export default function Events() {
     const { data: session } = useSession();
+    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -72,6 +74,8 @@ export default function Events() {
     const cities = [...new Set(events.map(e => e.orasLocatie).filter(Boolean))];
 
     const filteredEvents = events.filter(event => {
+        if (event.tipEveniment === 'Noaptea Muzeelor') return false;
+
         const matchesSearch = event.titlu.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (event.descriere && event.descriere.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesCity = filterCity ? event.orasLocatie === filterCity : true;
@@ -148,7 +152,7 @@ export default function Events() {
                                         {event.descriere || 'Nicio descriere disponibilă.'}
                                     </p>
                                     <div className="event-actions">
-                                        <button className="view-details-btn">Vezi Detalii</button>
+                                        <button className="view-details-btn" onClick={() => navigate(`/user/events/${event.id}`)}>Vezi Detalii</button>
                                         {session && (
                                             <button
                                                 className={`interest-btn ${isInterested ? 'interested' : ''}`}
