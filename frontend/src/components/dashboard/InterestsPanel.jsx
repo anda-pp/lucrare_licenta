@@ -25,7 +25,12 @@ export default function InterestsPanel({ interests, formatDate, onNavigate }) {
             ) : (
                 <div className="interests-list">
                     {interests.slice(0, 5).map(ev => (
-                        <div key={ev.interestId} className="interest-item">
+                        <div
+                            key={ev.interestId}
+                            className="interest-item"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => onNavigate(`/user/events/${ev.eventId}`)}
+                        >
                             <div
                                 className="interest-type-tag"
                                 style={{
@@ -45,11 +50,11 @@ export default function InterestsPanel({ interests, formatDate, onNavigate }) {
                             <ChevronRight
                                 size={16}
                                 className="interest-arrow"
-                                onClick={() => onNavigate('/user/events')}
+                                onClick={() => onNavigate('/user/interests')}
                             />
                         </div>
                     ))}
-                    <button className="show-all-btn" onClick={() => onNavigate('/user/events')}>
+                    <button className="show-all-btn" onClick={() => onNavigate('/user/interests')}>
                         Vezi toate →
                     </button>
                 </div>

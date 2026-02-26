@@ -25,8 +25,10 @@ import LoyaltyCard from './pages/users/LoyaltyCard';
 import UserLocations from './pages/users/Locations';
 import LocationDetail from './pages/users/LocationDetail';
 import MyFavorites from './pages/users/MyFavorites';
+import MyInterests from './pages/users/MyInterests';
 import MyOrders from './pages/users/MyOrders';
 import MyReviews from './pages/users/MyReviews';
+import Checkout from './pages/users/Checkout';
 import './App.css';
 
 function App() {
@@ -41,11 +43,13 @@ function App() {
                 <Route path="/user" element={<UserLayout />}>
                     <Route index element={<UserDashboard />} />
                     <Route path="orders" element={<MyOrders />} />
+                    <Route path="checkout" element={<Checkout />} />
                     <Route path="reviews" element={<MyReviews />} />
                     <Route path="loyalty" element={<LoyaltyCard />} />
                     <Route path="locations" element={<UserLocations />} />
                     <Route path="locations/:id" element={<LocationDetail />} />
                     <Route path="my-favorites" element={<MyFavorites />} />
+                    <Route path="interests" element={<MyInterests />} />
                     {/* Public pages shown with sidebar */}
                     <Route path="events" element={<Events />} />
                     <Route path="events/:id" element={<EventDetail />} />

@@ -83,8 +83,8 @@ export default function LocationDetail() {
         <div className="loc-detail-not-found">
             <Building2 size={64} strokeWidth={1} />
             <h2>Locația nu a fost găsită</h2>
-            <button className="back-btn" onClick={() => navigate('/user/locations')}>
-                <ArrowLeft size={16} /> Înapoi la muzee
+            <button className="back-btn" onClick={() => navigate('/user')}>
+                <ArrowLeft size={16} /> Înapoi
             </button>
         </div>
     );
@@ -96,8 +96,8 @@ export default function LocationDetail() {
     return (
         <div className="loc-detail-page">
             {/* Back button */}
-            <button className="back-btn" onClick={() => navigate('/user/locations')}>
-                <ArrowLeft size={16} /> Înapoi la muzee &amp; galerii
+            <button className="back-btn" onClick={() => navigate('/user')}>
+                <ArrowLeft size={16} /> Înapoi
             </button>
 
             {/* Hero section */}
@@ -111,18 +111,30 @@ export default function LocationDetail() {
             />
 
             <div className="loc-detail-body">
-                {/* Info grid */}
-                <LocationInfoGrid location={location} />
-
-                <div className="loc-detail-right">
-                    {/* Ticket prices */}
-                    {location.ticketTypes?.length > 0 && (
-                        <LocationTickets tickets={location.ticketTypes} />
+                <div className="loc-info-section">
+                    {/* Description */}
+                    {location.scurtaDescriere && (
+                        <div className="loc-info-card full-width">
+                            <h3>Despre</h3>
+                            <p>{location.scurtaDescriere}</p>
+                        </div>
                     )}
 
-                    {/* Reviews */}
-                    <LocationReviews reviews={location.reviews || []} avgRating={avgRating} />
+                    {/* Ticket prices */}
+                    {location.ticketTypes?.length > 0 && (
+                        <LocationTickets tickets={location.ticketTypes} locationId={id} />
+                    )}
                 </div>
+
+                <div className="loc-detail-right">
+                    {/* Details grid */}
+                    <LocationInfoGrid location={location} />
+                </div>
+            </div>
+
+            {/* Reviews (Full Width) */}
+            <div className="loc-detail-reviews-container" style={{ marginTop: '2rem' }}>
+                <LocationReviews reviews={location.reviews || []} avgRating={avgRating} />
             </div>
         </div>
     );

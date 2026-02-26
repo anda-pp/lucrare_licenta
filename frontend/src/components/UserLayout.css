@@ -1,56 +1,45 @@
-/* =============================================
-   USER LAYOUT - Collapsible Sidebar
-   ============================================= */
-
 .user-layout {
     display: flex;
     min-height: 100vh;
-    background-color: var(--color-background);
+    width: 100%;
 }
 
-/* --- SIDEBAR --- */
 .user-sidebar {
-    width: 70px;
-    /* collapsed width (icon only) */
-    background: white;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.07);
+    width: 85px;
+    background-color: var(--color-white);
+    border-right: 1px solid var(--color-bg);
     display: flex;
     flex-direction: column;
-    position: fixed;
+    padding: 2rem 0.5rem;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
     height: 100vh;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+    white-space: nowrap;
     z-index: 100;
-    overflow: hidden;
-    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .user-sidebar:hover {
-    width: 280px;
+    width: 250px;
 }
 
-/* --- SIDEBAR HEADER --- */
+/* We want to make sure the text values map to Navy in Light, and White/Lilac in Dark mode */
 .sidebar-header {
-    padding: 1.5rem 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    white-space: nowrap;
-    overflow: hidden;
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
 .logo-area {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 0.75rem;
-    color: var(--color-navy);
-    text-decoration: none;
-    border-radius: var(--radius-md);
-    padding: 0.3rem;
-    transition: color 0.2s;
-}
-
-.logo-area:hover {
+    justify-content: flex-start;
+    gap: 1rem;
     color: var(--color-primary);
+    text-decoration: none;
+    padding: 0 0.5rem;
 }
 
 .logo-icon-small {
@@ -58,153 +47,200 @@
     flex-shrink: 0;
 }
 
-.sidebar-header h2 {
-    font-size: 1.15rem;
+.logo-area h2 {
+    font-size: 1.4rem;
     font-weight: 700;
+    color: var(--color-navy);
     margin: 0;
     opacity: 0;
-    transition: opacity 0.2s ease 0.05s;
+    max-width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.user-sidebar:hover .sidebar-header h2 {
+.user-sidebar:hover .logo-area h2 {
     opacity: 1;
+    max-width: 200px;
 }
 
 .user-info {
-    color: #64748b;
     font-size: 0.85rem;
-    margin: 0;
-    padding-left: calc(20px + 0.75rem);
-    /* align with icon */
+    color: var(--color-secondary);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
     opacity: 0;
-    transition: opacity 0.2s ease 0.05s;
+    max-width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .user-sidebar:hover .user-info {
     opacity: 1;
+    max-width: 200px;
 }
 
-/* --- NAV --- */
 .sidebar-nav {
-    padding: 1rem 0.6rem;
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
-    overflow: hidden;
+    gap: 0.5rem;
+    flex: 1;
+    /* Pushes footer down */
 }
 
 .nav-item {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.85rem 0.75rem;
-    color: #475569;
-    text-decoration: none;
+    padding: 0.85rem 0.5rem;
     border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-    font-weight: 500;
-    white-space: nowrap;
+    color: var(--color-navy);
+    text-decoration: none;
+    transition: background-color 0.2s, transform 0.1s;
+    font-weight: 400;
     overflow: hidden;
 }
 
-.nav-item svg {
+.nav-item svg,
+.logout-btn svg,
+.theme-toggle-btn svg {
     flex-shrink: 0;
-    /* icon always visible */
 }
 
-.nav-item:hover {
-    background: #f8fafc;
-    color: var(--color-navy);
-}
-
-.nav-item.active {
-    background: #f0f9ff;
-    color: var(--color-primary);
-}
-
-/* Labels hidden when sidebar is collapsed */
 .nav-label {
     opacity: 0;
-    transition: opacity 0.18s ease;
+    max-width: 0;
+    white-space: nowrap;
+    transition: opacity 0.3s ease, max-width 0.3s ease;
+    font-size: 1.05rem;
 }
 
 .user-sidebar:hover .nav-label {
     opacity: 1;
+    max-width: 150px;
 }
 
-/* Divider */
+.nav-item:hover {
+    background-color: var(--color-bg);
+}
+
+.nav-item:active {
+    transform: scale(0.96);
+}
+
+.nav-item.active {
+    font-weight: 700;
+}
+
 .nav-divider {
     height: 1px;
-    background: rgba(0, 0, 0, 0.06);
-    margin: 0.5rem 0;
+    background: var(--color-bg);
+    margin: 1rem 0;
+    opacity: 0.5;
 }
 
-/* --- FOOTER --- */
 .sidebar-footer {
-    padding: 1rem 0.6rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.logout-btn,
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 0.85rem 0.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    font-size: 1.05rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
     overflow: hidden;
 }
 
 .logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    width: 100%;
-    padding: 0.85rem 0.75rem;
-    background: transparent;
-    color: #ef4444;
-    border: none;
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
+    color: var(--color-navy);
 }
 
 .logout-btn:hover {
-    background: #fef2f2;
+    background-color: var(--color-bg);
 }
 
-/* --- MAIN CONTENT --- */
+.theme-toggle-btn {
+    color: var(--color-navy);
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--color-bg);
+}
+
 .user-content {
     flex: 1;
-    margin-left: 70px;
-    /* match collapsed sidebar width */
     padding: 2rem;
     overflow-y: auto;
-    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: transparent;
+    /* transparent to respect body background gradient */
 }
 
-/* On larger screens, content slightly shifts when sidebar is hovered */
-/* This is optional and gives a push feel */
-
-/* --- LOADING --- */
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-size: 1.1rem;
-    color: #64748b;
-}
-
-/* --- RESPONSIVE --- */
+/* Respond to smaller screens */
 @media (max-width: 768px) {
+    .user-layout {
+        flex-direction: column;
+    }
+
     .user-sidebar {
-        width: 0;
+        width: 100%;
         border-right: none;
-    }
-
-    .user-sidebar:hover {
-        width: 260px;
-        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
-    }
-
-    .user-content {
-        margin-left: 0;
+        border-bottom: 1px solid var(--color-bg);
         padding: 1rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sidebar-header {
+        margin-bottom: 0;
+        text-align: left;
+    }
+
+    .logo-area {
+        flex-direction: row;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .nav-item {
+        padding: 0.5rem;
+    }
+
+    .nav-label {
+        display: none;
+        /* Hide text on very small screens, keep icons */
+    }
+
+    .nav-divider {
+        display: none;
+    }
+
+    .sidebar-footer {
+        border-top: none;
+        flex-direction: row;
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: flex-end;
     }
 }

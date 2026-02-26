@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '../lib/auth';
-import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Palette, Building2, Heart } from 'lucide-react';
+import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Sun, Palette, Building2, Heart } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import './UserLayout.css';
 
 export default function UserLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -58,10 +60,9 @@ export default function UserLayout() {
             <aside className="user-sidebar">
                 <div className="sidebar-header">
                     <Link to="/user" className="logo-area" title="Profilul meu">
-                        <User className="logo-icon-small" size={24} />
-                        <h2>Contul Meu</h2>
+                        <User className="logo-icon-small" size={28} />
+                        <h2>Acasă</h2>
                     </Link>
-                    <p className="user-info">{session.user.name}</p>
                 </div>
 
                 <nav className="sidebar-nav">
@@ -88,6 +89,10 @@ export default function UserLayout() {
 
 
                 <div className="sidebar-footer">
+                    <button onClick={toggleTheme} className="theme-toggle-btn">
+                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        <span className="nav-label">{theme === 'light' ? 'Mod Întunecat' : 'Mod Luminos'}</span>
+                    </button>
                     <button onClick={handleLogout} className="logout-btn">
                         <LogOut size={20} />
                         <span className="nav-label">Deconectare</span>

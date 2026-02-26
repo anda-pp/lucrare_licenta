@@ -1,9 +1,11 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { db } from '../db/db.js';
-import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente } from '../db/schema.js';
+import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 
 const router = express.Router();
 
@@ -35,6 +37,218 @@ router.get('/my-orders', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Get my orders error:', error);
         res.status(500).json({ success: false, error: 'Nu s-au putut prelua comenzile tale' });
+    }
+});
+
+/**
+ * POST /api/users/checkout
+ * Process ticket purchase and create order
+ */
+router.post('/checkout', requireAuth, async (req, res) => {
+    try {
+        const { locationId, tickets, total } = req.body;
+
+        if (!locationId || !tickets || tickets.length === 0 || total === undefined) {
+            return res.status(400).json({ success: false, error: 'Date invalide' });
+        }
+
+        // 1. Create Order
+        const [newOrder] = await db.insert(comenzi).values({
+            codUnicUtilizator: req.user.id,
+            totalPlata: total,
+            statusPlata: 'Plătit',
+            statusComanda: 'Activă'
+        }).returning({ id: comenzi.numarComanda });
+
+        // 2. Insert Tickets
+        const ticketInserts = [];
+        for (const t of tickets) {
+            if (t.cantitate > 0) {
+                ticketInserts.push({
+                    nrBiletCumparat: uuidv4(),
+                    codUnicTipBilet: t.codUnicTipBilet,
+                    numarComanda: newOrder.id,
+                    cantitate: t.cantitate
+                });
+            }
+        }
+
+        if (ticketInserts.length > 0) {
+            await db.insert(bileteCumparate).values(ticketInserts);
+        }
+
+        // 3. Create Invoice
+        const serie = 'FCT-' + Math.floor(Math.random() * 10000);
+        await db.insert(facturi).values({
+            numarComanda: newOrder.id,
+            serieFactura: serie,
+            dataFacturare: new Date().toISOString().split('T')[0],
+            tva: 0.19,
+            totalFactura: total
+        });
+
+        res.json({ success: true, message: 'Comandă plasată cu succes!', orderId: newOrder.id });
+    } catch (error) {
+        console.error('Checkout error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la procesarea comenzii' });
+    }
+});
+
+/**
+ * GET /api/users/my-orders/:id/ticket
+ * Download tickets for a specific order as PDF
+ */
+router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.id, 10);
+        if (isNaN(orderId)) return res.status(400).send('ID comandă invalid');
+
+        // Check if order belongs to user and is paid
+        const orderInfo = await db.select().from(comenzi)
+            .where(and(eq(comenzi.numarComanda, orderId), eq(comenzi.codUnicUtilizator, req.user.id)))
+            .limit(1);
+
+        if (orderInfo.length === 0) {
+            return res.status(404).send('Comanda nu a fost găsită sau nu îți aparține');
+        }
+
+        const order = orderInfo[0];
+        if (order.statusPlata !== 'Plătit' || order.statusComanda !== 'Activă') {
+            return res.status(400).send('Nu se pot emite bilete pentru o comandă neplătită sau anulată');
+        }
+
+        // Fetch ticket details
+        const tickets = await db.select({
+            cantitate: bileteCumparate.cantitate,
+            tipBilet: tipuriBilete.tipBilet,
+            pret: tipuriBilete.pret,
+            numeLocatie: locatiiPublice.numeLoc,
+            orasLocatie: locatiiPublice.orasLoc
+        })
+            .from(bileteCumparate)
+            .leftJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
+            .leftJoin(locatiiPublice, eq(tipuriBilete.codUnicLocatie, locatiiPublice.codUnicLocatie))
+            .where(eq(bileteCumparate.numarComanda, orderId));
+
+        if (tickets.length === 0) {
+            return res.status(404).send('Nu au fost găsite bilete pentru această comandă');
+        }
+
+        // Create PDF with better defaults
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4',
+            info: {
+                Title: `Bilete Comanda #${orderId}`,
+                Author: 'Museum App'
+            }
+        });
+
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Bilete_Comanda_${orderId}.pdf`);
+
+        doc.pipe(res); // Stream directly to HTTP response
+
+        const userName = req.user.numeComplet || 'Vizitator';
+
+        // Helper function to remove diacritics
+        const normalizeText = (text) => {
+            if (!text) return '';
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i').replace(/ș/g, 's').replace(/ț/g, 't').replace(/Ă/g, 'A').replace(/Â/g, 'A').replace(/Î/g, 'I').replace(/Ș/g, 'S').replace(/Ț/g, 'T');
+        };
+
+        // Draw Ticket Content
+        for (let i = 0; i < tickets.length; i++) {
+            const t = tickets[i];
+
+            if (i > 0) doc.addPage();
+
+            // Background / Border
+            doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60)
+                .lineWidth(2)
+                .stroke('#1e293b');
+
+            // Header Section Background
+            doc.rect(30, 30, doc.page.width - 60, 100)
+                .fill('#0f172a');
+
+            // Header Text
+            doc.font('Helvetica-Bold')
+                .fontSize(28)
+                .fillColor('#ffffff')
+                .text('BILET DE ACCES', 0, 50, { align: 'center' });
+
+            doc.font('Helvetica')
+                .fontSize(14)
+                .fillColor('#94a3b8')
+                .text(normalizeText(t.numeLocatie || 'Locatie Nespecificata'), 0, 85, { align: 'center', width: doc.page.width });
+
+            // Main Content Area
+            doc.moveDown(4);
+
+            const leftX = 70;
+            const rightX = doc.page.width - 220;
+
+            // Order Info (Left side)
+            doc.font('Helvetica-Bold').fontSize(18).fillColor('#0f172a').text('Detalii Comanda', leftX, 170);
+
+            doc.font('Helvetica-Bold').fontSize(12).fillColor('#64748b').text('Nume:', leftX, 205);
+            doc.font('Helvetica').fillColor('#1e293b').text(normalizeText(userName), leftX + 80, 205);
+
+            doc.font('Helvetica-Bold').fillColor('#64748b').text('Numar:', leftX, 225);
+            doc.font('Helvetica').fillColor('#1e293b').text(`#${orderId}`, leftX + 80, 225);
+
+            doc.font('Helvetica-Bold').fillColor('#64748b').text('Data:', leftX, 245);
+            doc.font('Helvetica').fillColor('#1e293b').text(new Date(order.dataComanda).toLocaleDateString('ro-RO'), leftX + 80, 245);
+
+            // Ticket Info (Left side, lower)
+            doc.font('Helvetica-Bold').fontSize(18).fillColor('#0f172a').text('Detalii Bilet', leftX, 300);
+
+            doc.font('Helvetica-Bold').fontSize(12).fillColor('#64748b').text('Tip Bilet:', leftX, 335);
+            doc.font('Helvetica').fillColor('#1e293b').text(normalizeText(t.tipBilet), leftX + 80, 335);
+
+            doc.font('Helvetica-Bold').fillColor('#64748b').text('Persoane:', leftX, 355);
+            doc.font('Helvetica').fillColor('#1e293b').text(`${t.cantitate}`, leftX + 80, 355);
+
+            doc.font('Helvetica-Bold').fillColor('#64748b').text('Pret total:', leftX, 375);
+            doc.font('Helvetica-Bold').fillColor('#10b981').text(`${(t.pret * t.cantitate).toFixed(2)} RON`, leftX + 80, 375);
+
+            // Generate QR Code
+            const qrData = JSON.stringify({ order: orderId, user: req.user.id, type: normalizeText(t.tipBilet), loc: t.codUnicLocatie });
+            const qrImage = await QRCode.toDataURL(qrData, { margin: 1, width: 150, color: { dark: '#0f172a', light: '#ffffff' } });
+
+            // Draw QR Code Background & Image (Right side)
+            doc.rect(rightX - 10, 160, 170, 190).fill('#f1f5f9');
+            doc.image(qrImage, rightX, 170, { width: 150 });
+            doc.font('Courier-Bold').fontSize(10).fillColor('#475569').text('SCANATI LA INTRARE', rightX, 330, { width: 150, align: 'center' });
+
+            // Cut Here Dashed Line
+            doc.moveTo(30, 430).lineTo(doc.page.width - 30, 430).dash(5, { space: 5 }).stroke('#cbd5e1');
+            doc.undash(); // Important to reset
+
+            // Terms & Conditions (Footer area)
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#64748b').text('Termeni si Conditii', 70, 460);
+            doc.font('Helvetica').fontSize(8).fillColor('#94a3b8').text(
+                '1. Acest bilet asigura unicul acces pentru numarul de persoane specificat.\n' +
+                '2. Biletul este nominal si nu poate fi transferat altei persoane.\n' +
+                '3. Va rugam sa pastrati biletul in conditii bune (pe telefon sau printat) pentru scanarea codului QR.\n' +
+                '4. Orice incercare de frauda va atrage anularea biletului fara rambursare.',
+                70, 480, { width: doc.page.width - 140, lineGap: 4 }
+            );
+
+            // Absolute Footer
+            doc.font('Helvetica').fontSize(9).fillColor('#cbd5e1')
+                .text('Aplicația de Licență - Sistem de Gestionare Muzee și Galerii © 2024', 0, doc.page.height - 60, { align: 'center', width: doc.page.width });
+        }
+
+        doc.end();
+
+    } catch (error) {
+        console.error('Ticket generation error:', error);
+        if (!res.headersSent) {
+            res.status(500).send('Eroare la generarea biletelor');
+        }
     }
 });
 

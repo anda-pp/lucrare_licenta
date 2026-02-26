@@ -1,39 +1,93 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
-:root {
-  /* Color Palette */
-  --color-navy: #03045e;
-  /* Text principal, titluri */
-  --color-primary: #0077b6;
-  /* Butoane primare, link-uri */
-  --color-secondary: #00b4d8;
-  /* Elemente secundare, icon-uri */
-  --color-accent: #90e0ef;
-  /* Accente subtile, fundaluri carduri */
-  --color-bg: #caf0f8;
-  /* Fundal pagina */
+:root,
+.light-theme {
+  /* Text principal, titluri (Violet închis pt scris) */
+  --color-navy: #2e1065;
+
+  /* 10% PRIMARY - Actiuni, Butoane */
+  --color-primary: #9333ea;
+  --color-primary-dark: #7e22ce;
+
+  /* 30% SECONDARY - Accente mari, sectiuni */
+  --color-secondary: #d8b4fe;
+  --color-accent: #e9d5ff;
+
+  /* 60% BACKGROUND - Panouri, Pagina */
+  --color-bg: #f3e8ff;
   --color-white: #ffffff;
+  /* Card background in light mode */
+
+  /* Text & Borders Token Variables */
+  --color-text-main: #2e1065;
+  --color-text-muted: #6b21a8;
+  /* Un mov un pic mai deschis pentru text secundar */
+  --color-border: #e9d5ff;
+  --color-input-bg: #faf5ff;
+  --color-hover-bg: #f3e8ff;
+
+  /* Fundal Pagina Gradient */
+  --bg-gradient: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
 
   /* Status Colors */
-  --color-success: #2ecc71;
-  --color-warning: #f1c40f;
-  --color-danger: #e74c3c;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 
-  /* Spacing & Layout */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  /* Umbre light */
+  --shadow-sm: 0 4px 6px -1px rgba(124, 58, 237, 0.08);
+  --shadow-md: 0 10px 15px -3px rgba(124, 58, 237, 0.12);
+  --shadow-lg: 0 20px 25px -5px rgba(124, 58, 237, 0.15);
 
-  /* Shadows */
-  --shadow-sm: 0 4px 6px -1px rgba(3, 4, 94, 0.1);
-  --shadow-md: 0 10px 15px -3px rgba(3, 4, 94, 0.1);
-  --shadow-lg: 0 20px 25px -5px rgba(3, 4, 94, 0.1);
+  color-scheme: light;
+}
+
+.dark-theme {
+  /* Text principal (Pastel pentru scris pe fundal închis) */
+  --color-navy: #f3e8ff;
+
+  /* 10% PRIMARY - (Glowing Neon Violet) */
+  --color-primary: #c084fc;
+  --color-primary-dark: #a855f7;
+
+  /* 30% SECONDARY (Indigo/Violet) */
+  --color-secondary: #3730a3;
+  --color-accent: #4338ca;
+
+  /* 60% BACKGROUND (Deep Midnight Violet) */
+  --color-bg: #1e1b4b;
+  --color-white: #312e81;
+  /* Card background in dark mode */
+
+  /* Text & Borders Token Variables */
+  --color-text-main: #f3e8ff;
+  --color-text-muted: #d8b4fe;
+  --color-border: #3730a3;
+  --color-input-bg: #1e1b4b;
+  --color-hover-bg: #3730a3;
+
+  /* Fundal Pagina Gradient */
+  --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+
+  /* Umbre dark */
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+}
+
+:root {
+  /* Spacing & Layout (Global Settings) */
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  /* Slightly more rounded for funky look */
+  --radius-lg: 28px;
 
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light;
   color: var(--color-navy);
   background-color: var(--color-bg);
 
@@ -56,10 +110,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--color-bg);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(144, 224, 239, 0.5) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(0, 180, 216, 0.2) 0px, transparent 50%);
+  background-image: var(--bg-gradient);
   background-attachment: fixed;
+  color: var(--color-navy);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {

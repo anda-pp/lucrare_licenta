@@ -45,6 +45,28 @@ export default function MyOrders() {
         return <Clock size={18} className="status-icon pending" />;
     };
 
+    const downloadTickets = async (orderId) => {
+        try {
+            const response = await axios.get(`${API}/api/users/my-orders/${orderId}/ticket`, {
+                withCredentials: true,
+                responseType: 'blob' // Important for file download
+            });
+
+            // Creates a URL for the downloaded blob and auto-clicks a hidden anchor tag
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Bilete_Comanda_${orderId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Eroare descărcare bilete:', error);
+            alert('A apărut o eroare la descărcarea biletelor. Te rugăm să încerci din nou.');
+        }
+    };
+
     if (loading) return <div className="my-orders-loading">Se încarcă comenzile...</div>;
 
     return (
@@ -90,7 +112,9 @@ export default function MyOrders() {
 
                             {order.statusPlata === 'Plătit' && (
                                 <div className="order-footer">
-                                    <button className="download-btn">🎟 Descarcă Bilete (PDF)</button>
+                                    <button className="download-btn" onClick={() => downloadTickets(order.numarComanda)}>
+                                        🎟 Descarcă Bilete (PDF)
+                                    </button>
                                 </div>
                             )}
                         </div>

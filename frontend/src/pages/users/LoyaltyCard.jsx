@@ -57,7 +57,7 @@ export default function LoyaltyCard() {
             {card ? (
                 <div className="my-card-visual" style={{
                     borderColor: TIER_COLORS[card.tipUnicCard]?.border,
-                    background: `linear-gradient(135deg, ${TIER_COLORS[card.tipUnicCard]?.bg}, white)`,
+                    background: `linear-gradient(135deg, ${TIER_COLORS[card.tipUnicCard]?.bg}, var(--color-bg))`,
                 }}>
                     <div className="card-visual-chip" style={{ background: TIER_COLORS[card.tipUnicCard]?.main }}></div>
                     <div className="card-visual-body">
