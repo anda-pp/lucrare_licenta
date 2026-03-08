@@ -79,20 +79,23 @@ export default function LocationTickets({ tickets, locationId }) {
                 })}
             </div>
 
-            {subtotal > 0 && (
-                <div className="loc-tickets-footer">
+            <div className="loc-tickets-footer">
+                {subtotal > 0 && (
                     <div className="subtotal-info">
                         <span>Subtotal:</span>
                         <strong>{subtotal.toFixed(2)} Lei</strong>
                     </div>
-                    <button
-                        className="base-btn primary-btn w-full"
-                        onClick={handleCheckout}
-                    >
-                        Continuă la Plată
-                    </button>
-                </div>
-            )}
+                )}
+                <button
+                    className={`loc-checkout-btn ${subtotal > 0 ? 'active' : 'inactive'}`}
+                    onClick={handleCheckout}
+                    disabled={subtotal === 0}
+                >
+                    {subtotal > 0
+                        ? `Continuă la Plată — ${subtotal.toFixed(2)} Lei`
+                        : 'Selectează bilete pentru a continua'}
+                </button>
+            </div>
         </div>
     );
 }

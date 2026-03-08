@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../lib/auth';
-import { Ticket, Star, CreditCard } from 'lucide-react';
+import { Ticket, Star, CreditCard, CalendarCheck } from 'lucide-react';
 
 // Dashboard sub-components (single responsibility, reusable)
 import StatCard from '../../components/dashboard/StatCard';
@@ -28,6 +28,7 @@ export default function UserDashboard() {
     const navigate = useNavigate();
 
     const [orders, setOrders] = useState([]);
+    const [reservations, setReservations] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [card, setCard] = useState(null);
     const [interests, setInterests] = useState([]);
@@ -38,18 +39,20 @@ export default function UserDashboard() {
         if (!session) return;
         (async () => {
             try {
-                const [ordersRes, reviewsRes, cardRes, interestsRes, favRes] = await Promise.all([
+                const [ordersRes, reviewsRes, cardRes, interestsRes, favRes, resrvRes] = await Promise.all([
                     axios.get(`${API}/api/users/my-orders`, { withCredentials: true }),
                     axios.get(`${API}/api/users/my-reviews`, { withCredentials: true }),
                     axios.get(`${API}/api/users/my-card`, { withCredentials: true }),
                     axios.get(`${API}/api/users/my-interests`, { withCredentials: true }),
                     axios.get(`${API}/api/users/my-favorites`, { withCredentials: true }),
+                    axios.get(`${API}/api/users/my-reservations`, { withCredentials: true }),
                 ]);
                 if (ordersRes.data.success) setOrders(ordersRes.data.data);
                 if (reviewsRes.data.success) setReviews(reviewsRes.data.data);
                 if (cardRes.data.success) setCard(cardRes.data.data);
                 if (interestsRes.data.success) setInterests(interestsRes.data.data);
                 if (favRes.data.success) setFavorites(favRes.data.data);
+                if (resrvRes.data.success) setReservations(resrvRes.data.data);
             } catch (err) {
                 console.error('Eroare preluare date profil:', err);
             } finally {
@@ -79,6 +82,14 @@ export default function UserDashboard() {
                     value={orders.length}
                     btnLabel="Vezi toate →"
                     onBtnClick={() => navigate('/user/orders')}
+                />
+                <StatCard
+                    icon={<CalendarCheck size={24} />}
+                    iconClass="green"
+                    title="Rezervări evenimente"
+                    value={reservations.length}
+                    btnLabel="Vezi toate →"
+                    onBtnClick={() => navigate('/user/reservations')}
                 />
                 <StatCard
                     icon={<Star size={24} />}

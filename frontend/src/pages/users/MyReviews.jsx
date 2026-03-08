@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Star, MessageSquareQuote, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Star, MessageSquareQuote, Edit2, Trash2, Save, X, ArrowLeft } from 'lucide-react';
 import { useSession } from '../../lib/auth';
+import { useNavigate } from 'react-router-dom';
 import './MyReviews.css';
 
 const API = 'http://localhost:5000';
 
 export default function MyReviews() {
     const { data: session } = useSession();
+    const navigate = useNavigate();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -129,6 +131,9 @@ export default function MyReviews() {
 
     return (
         <div className="my-reviews-page">
+            <button className="profile-back-btn" onClick={() => navigate('/user')}>
+                <ArrowLeft size={18} /> Înapoi la cont
+            </button>
             <header className="page-header">
                 <h1>Recenziile Mele</h1>
                 <p>Toate părerile și experiențele tale lăsate pentru muzee și galerii.</p>

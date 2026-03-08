@@ -51,9 +51,9 @@ export default function ArtistDetail() {
 
     return (
         <div className="artist-detail-page">
-            <button className="back-btn" onClick={() => navigate(-1)}>
+            <button className="back-btn" onClick={() => navigate('/user/artists')}>
                 <ArrowLeft size={20} />
-                Înapoi
+                Înapoi la Artiști
             </button>
 
             <div className="artist-profile-header">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Calendar, Clock, MapPin, Share2, Ticket } from 'lucide-react';
+import LocationTickets from '../../components/location/LocationTickets';
 import './EventDetail.css';
 
 const API = 'http://localhost:5000';
@@ -58,9 +59,9 @@ export default function EventDetail() {
 
     return (
         <div className={mainClass}>
-            <button className="back-btn" onClick={() => navigate(-1)}>
+            <button className="back-btn" onClick={() => navigate(isNight ? '/user/noaptea-muzeelor' : '/user/events')}>
                 <ArrowLeft size={20} />
-                Înapoi
+                {isNight ? 'Înapoi la Muzee' : 'Înapoi la Evenimente'}
             </button>
 
             <div className="event-header-banner">
@@ -128,10 +129,21 @@ export default function EventDetail() {
                         )}
 
                         <div className="card-actions">
-                            <button className="buy-tickets-btn">
-                                <Ticket size={18} /> Cumpără Bilete
-                            </button>
-                            <button className="share-btn">
+                            {event.isGratuit ? (
+                                <button
+                                    className="buy-tickets-btn reserve-btn"
+                                    onClick={() => navigate(`/user/reserve/${event.id}`)}
+                                >
+                                    <Ticket size={18} /> Rezervă-ți Locul
+                                </button>
+                            ) : (
+                                (event.ticketTypes?.length > 0) ? (
+                                    <LocationTickets tickets={event.ticketTypes} locationId={event.codUnicLocatie} />
+                                ) : (
+                                    <div className="event-error" style={{ padding: '1rem', textAlign: 'left' }}>Biletele nu sunt disponibile momentan.</div>
+                                )
+                            )}
+                            <button className="share-btn" style={{ marginTop: '1rem', width: '100%' }}>
                                 <Share2 size={18} /> Distribuie
                             </button>
                         </div>

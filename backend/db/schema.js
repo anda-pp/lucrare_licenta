@@ -190,6 +190,7 @@ export const evenimente = sqliteTable('evenimente', {
     dataSfarsit: integer('data_sfarsit', { mode: 'timestamp' }),
     tipEveniment: text('tip_eveniment').default('General'), // 'Expozitie', 'Noaptea Muzeelor', 'Workshop'
     imagineUrl: text('imagine_url'),
+    isGratuit: integer('is_gratuit', { mode: 'boolean' }).default(0),
 });
 
 // Tabela Artisti
@@ -216,4 +217,16 @@ export const favoriteLocatii = sqliteTable('favorite_locatii', {
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id, { onDelete: 'cascade' }),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
     dataAdaugarii: integer('data_adaugarii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// Tabela Rezervari Evenimente Gratuite
+export const rezervariEvenimente = sqliteTable('rezervari_evenimente', {
+    id: text('id').primaryKey(),
+    eventId: text('event_id').notNull().references(() => evenimente.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    numeRezervant: text('nume_rezervant').notNull(),
+    nrPersoane: integer('nr_persoane').notNull().default(1),
+    ziuaAleasa: text('ziua_aleasa'), // ISO date string
+    intervalOrar: text('interval_orar'), // ex: '18:00-21:00'
+    dataRezervare: integer('data_rezervare', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });

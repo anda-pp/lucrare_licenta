@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { CreditCard, Star, Gift, ChevronRight } from 'lucide-react';
+import { CreditCard, Star, Gift, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useSession } from '../../lib/auth';
+import { useNavigate } from 'react-router-dom';
 import './LoyaltyCard.css';
 
 const API = 'http://localhost:5000';
@@ -16,6 +17,7 @@ const TIER_COLORS = {
 
 export default function LoyaltyCard() {
     const { data: session } = useSession();
+    const navigate = useNavigate();
     const [card, setCard] = useState(null);
     const [tiers, setTiers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,6 +50,9 @@ export default function LoyaltyCard() {
 
     return (
         <div className="loyalty-page">
+            <button className="profile-back-btn" onClick={() => navigate('/user')}>
+                <ArrowLeft size={18} /> Înapoi la cont
+            </button>
             <header className="page-header">
                 <h1>Card de Fidelitate</h1>
                 <p>Acumulează puncte la fiecare vizită și avansează spre beneficii exclusive.</p>

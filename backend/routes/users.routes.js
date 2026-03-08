@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { db } from '../db/db.js';
-import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi } from '../db/schema.js';
+import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi, rezervariEvenimente, user } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
@@ -606,6 +606,167 @@ router.get('/card-tiers', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Get card tiers error:', error);
         res.status(500).json({ success: false, error: 'Eroare la preluarea nivelurilor cardului' });
+    }
+});
+
+/**
+ * POST /api/users/events/:id/reserve
+ * Create a free event reservation
+ */
+router.post('/events/:id/reserve', requireAuth, async (req, res) => {
+    try {
+        const { id: eventId } = req.params;
+        const { nrPersoane, ziuaAleasa, intervalOrar } = req.body;
+
+        // Verify event exists and is free
+        const [event] = await db.select().from(evenimente).where(eq(evenimente.id, eventId)).limit(1);
+        if (!event) return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
+        if (!event.isGratuit) return res.status(400).json({ success: false, error: 'Evenimentul nu este gratuit' });
+
+        const reservationId = uuidv4();
+        const numeRezervant = req.user.numeComplet || req.user.name || 'Vizitator';
+
+        await db.insert(rezervariEvenimente).values({
+            id: reservationId,
+            eventId,
+            userId: req.user.id,
+            numeRezervant,
+            nrPersoane: parseInt(nrPersoane) || 1,
+            ziuaAleasa: ziuaAleasa || null,
+            intervalOrar: intervalOrar || null,
+        });
+
+        res.json({ success: true, reservationId });
+    } catch (error) {
+        console.error('Reserve event error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la creare rezervare' });
+    }
+});
+
+/**
+ * GET /api/users/my-reservations
+ * List all reservations for the current user
+ */
+router.get('/my-reservations', requireAuth, async (req, res) => {
+    try {
+        const reservations = await db
+            .select({
+                id: rezervariEvenimente.id,
+                numeRezervant: rezervariEvenimente.numeRezervant,
+                nrPersoane: rezervariEvenimente.nrPersoane,
+                ziuaAleasa: rezervariEvenimente.ziuaAleasa,
+                intervalOrar: rezervariEvenimente.intervalOrar,
+                dataRezervare: rezervariEvenimente.dataRezervare,
+                titluEveniment: evenimente.titlu,
+                tipEveniment: evenimente.tipEveniment,
+                dataStart: evenimente.dataStart,
+                numeLocatie: locatiiPublice.numeLoc,
+                orasLocatie: locatiiPublice.orasLoc,
+            })
+            .from(rezervariEvenimente)
+            .leftJoin(evenimente, eq(rezervariEvenimente.eventId, evenimente.id))
+            .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
+            .where(eq(rezervariEvenimente.userId, req.user.id))
+            .orderBy(desc(rezervariEvenimente.dataRezervare));
+
+        res.json({ success: true, data: reservations });
+    } catch (error) {
+        console.error('My reservations error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la preluarea rezervărilor' });
+    }
+});
+
+/**
+ * GET /api/users/my-reservations/:id/ticket
+ * Generate PDF ticket for a reservation
+ */
+router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [reservation] = await db
+            .select({
+                id: rezervariEvenimente.id,
+                numeRezervant: rezervariEvenimente.numeRezervant,
+                nrPersoane: rezervariEvenimente.nrPersoane,
+                ziuaAleasa: rezervariEvenimente.ziuaAleasa,
+                intervalOrar: rezervariEvenimente.intervalOrar,
+                dataRezervare: rezervariEvenimente.dataRezervare,
+                titluEveniment: evenimente.titlu,
+                tipEveniment: evenimente.tipEveniment,
+                dataStart: evenimente.dataStart,
+                numeLocatie: locatiiPublice.numeLoc,
+                orasLocatie: locatiiPublice.orasLoc,
+                adresaLocatie: locatiiPublice.adresa,
+                userId: rezervariEvenimente.userId,
+            })
+            .from(rezervariEvenimente)
+            .leftJoin(evenimente, eq(rezervariEvenimente.eventId, evenimente.id))
+            .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
+            .where(and(eq(rezervariEvenimente.id, id), eq(rezervariEvenimente.userId, req.user.id)))
+            .limit(1);
+
+        if (!reservation) return res.status(404).send('Rezervarea nu a fost găsită');
+
+        const normalizeText = (text) => {
+            if (!text) return '';
+            return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i').replace(/ș/g, 's').replace(/ț/g, 't').replace(/Ă/g, 'A').replace(/Â/g, 'A').replace(/Î/g, 'I').replace(/Ș/g, 'S').replace(/Ț/g, 'T');
+        };
+
+        const doc = new PDFDocument({ margin: 50, size: 'A4', info: { Title: `Bilet Rezervare ${id}`, Author: 'Museum App' } });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Bilet_Rezervare_${id.slice(0, 8)}.pdf`);
+        doc.pipe(res);
+
+        // Background border
+        doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60).lineWidth(2).stroke('#1e293b');
+
+        // Dark header
+        doc.rect(30, 30, doc.page.width - 60, 100).fill('#0f172a');
+
+        doc.font('Helvetica-Bold').fontSize(22).fillColor('#ffffff')
+            .text('BILET DE PARTICIPARE GRATUITA', 0, 50, { align: 'center' });
+        doc.font('Helvetica').fontSize(13).fillColor('#94a3b8')
+            .text(normalizeText(reservation.titluEveniment || 'Eveniment'), 0, 82, { align: 'center', width: doc.page.width });
+
+        const leftX = 70;
+
+        // Event Details
+        doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f172a').text('Detalii Eveniment', leftX, 165);
+
+        const fields = [
+            ['Participant:', reservation.numeRezervant],
+            ['Locatie:', normalizeText(reservation.numeLocatie || '-')],
+            ['Oras:', normalizeText(reservation.orasLocatie || '-')],
+            ['Zi aleasa:', reservation.ziuaAleasa ? new Date(reservation.ziuaAleasa).toLocaleDateString('ro-RO') : '-'],
+            ['Interval:', reservation.intervalOrar || '-'],
+            ['Nr. Persoane:', String(reservation.nrPersoane)],
+            ['Pret:', 'GRATUIT'],
+        ];
+
+        let yPos = 200;
+        for (const [label, value] of fields) {
+            doc.font('Helvetica-Bold').fontSize(11).fillColor('#64748b').text(label, leftX, yPos);
+            const isPrice = label === 'Pret:';
+            doc.font('Helvetica').fillColor(isPrice ? '#10b981' : '#1e293b').text(value, leftX + 120, yPos);
+            yPos += 22;
+        }
+
+        // QR Code (right side)
+        const qrData = JSON.stringify({ id: reservation.id, user: reservation.userId, np: reservation.nrPersoane, ev: reservation.titluEveniment });
+        const qrImage = await QRCode.toDataURL(qrData, { margin: 1, width: 150, color: { dark: '#0f172a', light: '#ffffff' } });
+        const qrBuffer = Buffer.from(qrImage.split(',')[1], 'base64');
+        doc.image(qrBuffer, doc.page.width - 230, 160, { width: 150, height: 150 });
+
+        // Footer
+        doc.font('Helvetica').fontSize(10).fillColor('#94a3b8')
+            .text(`Rezervare ID: ${reservation.id}`, leftX, doc.page.height - 100, { align: 'left' });
+        doc.text(`Emis: ${new Date().toLocaleDateString('ro-RO')}`, leftX, doc.page.height - 85);
+
+        doc.end();
+    } catch (error) {
+        console.error('Reservation ticket error:', error);
+        res.status(500).send('Eroare la generarea biletului');
     }
 });
 

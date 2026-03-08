@@ -27,8 +27,10 @@ import LocationDetail from './pages/users/LocationDetail';
 import MyFavorites from './pages/users/MyFavorites';
 import MyInterests from './pages/users/MyInterests';
 import MyOrders from './pages/users/MyOrders';
+import MyReservations from './pages/users/MyReservations';
 import MyReviews from './pages/users/MyReviews';
 import Checkout from './pages/users/Checkout';
+import EventReservation from './pages/users/EventReservation';
 import './App.css';
 
 function App() {
@@ -43,6 +45,7 @@ function App() {
                 <Route path="/user" element={<UserLayout />}>
                     <Route index element={<UserDashboard />} />
                     <Route path="orders" element={<MyOrders />} />
+                    <Route path="reservations" element={<MyReservations />} />
                     <Route path="checkout" element={<Checkout />} />
                     <Route path="reviews" element={<MyReviews />} />
                     <Route path="loyalty" element={<LoyaltyCard />} />
@@ -53,6 +56,7 @@ function App() {
                     {/* Public pages shown with sidebar */}
                     <Route path="events" element={<Events />} />
                     <Route path="events/:id" element={<EventDetail />} />
+                    <Route path="reserve/:eventId" element={<EventReservation />} />
                     <Route path="noaptea-muzeelor" element={<NoapteaMuzeelor />} />
                     <Route path="artists" element={<Artists />} />
                     <Route path="artists/:id" element={<ArtistDetail />} />

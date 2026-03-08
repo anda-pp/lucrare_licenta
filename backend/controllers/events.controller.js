@@ -1,5 +1,5 @@
 import { db } from '../db/db.js';
-import { evenimente, locatiiPublice } from '../db/schema.js';
+import { evenimente, locatiiPublice, tipuriBilete } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { createEventSchema, updateEventSchema } from '../validators/schemas.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +22,7 @@ export const getAllEvents = async (req, res) => {
                 codUnicLocatie: evenimente.codUnicLocatie,
                 numeLocatie: locatiiPublice.numeLoc,
                 orasLocatie: locatiiPublice.orasLoc,
+                isGratuit: evenimente.isGratuit,
             })
             .from(evenimente)
             .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
@@ -53,6 +54,7 @@ export const getEventById = async (req, res) => {
                 codUnicLocatie: evenimente.codUnicLocatie,
                 numeLocatie: locatiiPublice.numeLoc,
                 orasLocatie: locatiiPublice.orasLoc,
+                isGratuit: evenimente.isGratuit,
             })
             .from(evenimente)
             .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
@@ -63,7 +65,13 @@ export const getEventById = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         }
 
-        res.json({ success: true, data: event });
+        // Fetch ticket types for the event's location
+        const tickets = await db
+            .select()
+            .from(tipuriBilete)
+            .where(eq(tipuriBilete.codUnicLocatie, event.codUnicLocatie));
+
+        res.json({ success: true, data: { ...event, ticketTypes: tickets } });
     } catch (error) {
         console.error('Eroare preluare eveniment:', error);
         res.status(500).json({ success: false, error: 'Eroare la preluarea evenimentului' });

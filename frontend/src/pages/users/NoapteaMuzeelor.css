@@ -1,8 +1,9 @@
 .night-page {
     min-height: 100vh;
     background: #0f172a;
-    /* Slate 900 - dark theme */
     color: #f8fafc;
+    /* Break out of .user-content padding (2rem on all sides) */
+    margin: -2rem;
 }
 
 .night-hero {

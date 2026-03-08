@@ -1,0 +1,155 @@
+.my-res-loading,
+.my-res-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 50vh;
+    gap: 1rem;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.my-res-page {
+    max-width: 900px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.my-res-empty h3 {
+    color: var(--color-navy);
+    margin: 0;
+}
+
+.my-res-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ---- LIST ---- */
+.res-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ---- CARD ---- */
+.my-res-page .res-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    /* remove hover lift to match orders */
+}
+
+/* ---- HEADER ---- */
+.res-header {
+    padding: 1.25rem 1.5rem;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.my-res-page .res-id {
+    display: block;
+    font-weight: 700;
+    color: var(--color-navy);
+    font-family: inherit;
+    background: transparent;
+    padding: 0;
+    font-size: 1.05rem;
+    margin-bottom: 0.2rem;
+}
+
+.res-date {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.res-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.res-status-badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* ---- BODY ---- */
+.res-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.res-body h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    color: var(--color-primary);
+}
+
+.res-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.res-detail-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.res-label {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.res-val {
+    font-weight: 600;
+    color: var(--color-navy);
+    font-size: 0.95rem;
+}
+
+/* ---- FOOTER ---- */
+.res-footer {
+    padding: 1rem 1.5rem;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.res-download-btn {
+    padding: 0.5rem 1rem;
+    background: var(--color-input-bg);
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text-main);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.res-download-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: var(--btn-glow);
+}

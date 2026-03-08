@@ -5,6 +5,23 @@
     animation: fadeIn 0.3s ease-out;
 }
 
+.event-detail-page.is-night {
+    max-width: unset;
+    margin: -2rem;
+    padding: 0 2rem 3rem;
+    background: #0f172a;
+    color: #f8fafc;
+    min-height: 100vh;
+}
+
+.event-detail-page.is-night .event-header-banner,
+.event-detail-page.is-night .event-content-grid,
+.event-detail-page.is-night .back-btn {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .event-loading,
 .event-error {
     text-align: center;

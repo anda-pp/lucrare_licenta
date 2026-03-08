@@ -83,8 +83,8 @@ export default function LocationDetail() {
         <div className="loc-detail-not-found">
             <Building2 size={64} strokeWidth={1} />
             <h2>Locația nu a fost găsită</h2>
-            <button className="back-btn" onClick={() => navigate('/user')}>
-                <ArrowLeft size={16} /> Înapoi
+            <button className="back-btn" onClick={() => navigate('/user/locations')}>
+                <ArrowLeft size={16} /> Înapoi la Locații
             </button>
         </div>
     );
@@ -96,8 +96,8 @@ export default function LocationDetail() {
     return (
         <div className="loc-detail-page">
             {/* Back button */}
-            <button className="back-btn" onClick={() => navigate('/user')}>
-                <ArrowLeft size={16} /> Înapoi
+            <button className="back-btn" onClick={() => navigate('/user/locations')}>
+                <ArrowLeft size={16} /> Înapoi la Locații
             </button>
 
             {/* Hero section */}

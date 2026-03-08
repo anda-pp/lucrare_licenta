@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PackageOpen, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { PackageOpen, Clock, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useSession } from '../../lib/auth';
+import { useNavigate } from 'react-router-dom';
 import './MyOrders.css';
 
 const API = 'http://localhost:5000';
 
 export default function MyOrders() {
     const { data: session } = useSession();
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -71,6 +73,9 @@ export default function MyOrders() {
 
     return (
         <div className="my-orders-page">
+            <button className="profile-back-btn" onClick={() => navigate('/user')}>
+                <ArrowLeft size={18} /> Înapoi la cont
+            </button>
             <header className="page-header">
                 <h1>Comenzile Mele</h1>
                 <p>Istoricul biletelor achiziționate și statusul acestora.</p>
