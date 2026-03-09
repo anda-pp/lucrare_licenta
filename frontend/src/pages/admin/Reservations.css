@@ -1,0 +1,102 @@
+/* Reservations.css — uses admin-shared.css (loaded via AdminLayout) */
+.reservations-admin-page {
+    padding: 0;
+}
+
+.res-total-badge {
+    padding: 0.4rem 1rem;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.res-table-wrapper {
+    margin-top: 1.5rem;
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.res-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.res-table thead tr {
+    background: var(--color-input-bg);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.res-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    display: table-cell;
+}
+
+.res-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.15s;
+}
+
+.res-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.res-table tbody tr:hover td {
+    background: var(--color-hover-bg);
+}
+
+.res-table td {
+    padding: 0.85rem 1rem;
+    color: var(--color-text-main);
+    vertical-align: middle;
+}
+
+.ev-type-chip {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--color-accent);
+    color: var(--color-primary);
+}
+
+.user-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.user-email {
+    font-size: 0.77rem;
+    color: var(--color-text-muted);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.date-cell {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}

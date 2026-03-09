@@ -4,6 +4,7 @@ import {
     getUserById,
     deleteUser,
     getDashboardStats,
+    getAllReservations,
 } from '../controllers/admin.controller.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
@@ -20,6 +21,9 @@ router.get('/dashboard', getDashboardStats);
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);
 router.delete('/users/:id', deleteUser);
+
+// Reservations management
+router.get('/reservations', getAllReservations);
 
 export default router;
 

@@ -189,10 +189,9 @@ export default function Users() {
                         <tr>
                             <th onClick={() => handleSort('name')} className="sortable">
                                 <div className="th-content">
-                                    Nume {getSortIcon('name')}
+                                    Utilizator {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th>Email</th>
                             <th>Rol</th>
                             <th>Card Fidelitate</th>
                             <th onClick={() => handleSort('date')} className="sortable">
@@ -208,21 +207,27 @@ export default function Users() {
                     <tbody>
                         {sortedUsers.map((user) => (
                             <tr key={user.id}>
-                                <td>
-                                    <div className="user-info">
-                                        {user.image ? (
-                                            <img src={user.image} alt={user.name} className="user-avatar" />
-                                        ) : (
-                                            <div className="user-avatar-placeholder">
-                                                <User size={20} />
-                                            </div>
-                                        )}
-                                        <span>{user.name}</span>
+                                <td className="user-cell">
+                                    <div className="user-cell-inner">
+                                        <div className="user-avatar-wrap">
+                                            {user.image ? (
+                                                <img src={user.image} alt={user.name} className="user-avatar" />
+                                            ) : (
+                                                <div className="user-avatar-placeholder">
+                                                    <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                                                        {(user.name || '?')[0].toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="user-text-wrap">
+                                            <span className="user-name-cell">{user.name}</span>
+                                            <span className="user-email-cell">{user.email}</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td>{user.email}</td>
                                 <td>
-                                    <span className={`badge badge-role badge-role-${user.role?.toLowerCase()}`}>
+                                    <span className={`badge badge-role${user.role === 'Personal' ? ' badge-role-personal' : ''}`}>
                                         {user.role || 'Utilizator'}
                                     </span>
                                 </td>
@@ -238,7 +243,7 @@ export default function Users() {
                                 </td>
                                 <td>
                                     <button
-                                        className="btn-danger-small icon-btn-small"
+                                        className="btn-danger-small"
                                         onClick={() => handleDelete(user.id)}
                                         title="Șterge utilizator"
                                     >
@@ -249,6 +254,7 @@ export default function Users() {
                         ))}
                     </tbody>
                 </table>
+
 
                 {sortedUsers.length === 0 && !loading && (
                     <div className="empty-state">

@@ -111,7 +111,7 @@
     gap: 0.4rem;
 }
 
-.icon-btn {
+.my-reviews-page .icon-btn {
     background: var(--color-input-bg);
     border: 1px solid var(--color-border);
     color: var(--color-text-muted);
@@ -125,21 +125,21 @@
     transition: all 0.2s;
 }
 
-.icon-btn:hover {
+.my-reviews-page .icon-btn:hover {
     background: var(--color-bg);
     color: var(--color-navy);
 }
 
-.icon-btn.edit-btn:hover {
+.my-reviews-page .icon-btn.edit-btn:hover {
     background: #eff6ff;
     color: #3b82f6;
     border-color: #bfdbfe;
 }
 
-.icon-btn.delete-btn:hover {
+.my-reviews-page .icon-btn.delete-btn:hover {
     background: #fef2f2;
     color: #ef4444;
-    border-color: #fecaca;
+    border-color: #fca5a5;
 }
 
 .my-reviews-page .review-card.editing {

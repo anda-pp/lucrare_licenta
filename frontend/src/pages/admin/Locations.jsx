@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Plus, MapPin, Star, Image, Edit, Trash2, Filter, AlertCircle, Building2, Activity } from 'lucide-react';
+import { Search, Plus, MapPin, Star, Image, Edit, Trash2, Filter, AlertCircle, Building2, Activity, Ticket } from 'lucide-react';
 import LocationModal from '../../components/LocationModal';
 import ImageGalleryModal from '../../components/ImageGalleryModal';
+import TicketsModal from '../../components/TicketsModal';
 import './Locations.css';
+import './admin-shared.css';
 
 export default function Locations() {
     const [locations, setLocations] = useState([]);
@@ -14,6 +16,7 @@ export default function Locations() {
     const [showModal, setShowModal] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
     const [galleryLocation, setGalleryLocation] = useState(null);
+    const [ticketsLocation, setTicketsLocation] = useState(null);
 
     // Debounce search - wait 300ms after typing stops before fetching
     useEffect(() => {
@@ -187,11 +190,18 @@ export default function Locations() {
                         </div>
 
                         <div className="card-body">
-                            <p className="location-address">
-                                <MapPin size={16} />
-                                {location.orasLoc}, {location.adresa}
-                            </p>
+                            {/* Address row: icon+text left, status badge right */}
+                            <div className="location-address-row">
+                                <p className="location-address">
+                                    <MapPin size={16} />
+                                    {location.orasLoc}, {location.adresa}
+                                </p>
+                                <span className={`status-badge status-${location.statusLocatie.toLowerCase()}`}>
+                                    {location.statusLocatie}
+                                </span>
+                            </div>
 
+                            {/* Stats: only Recenzii + Rating */}
                             <div className="location-stats">
                                 <div className="stat">
                                     <span className="stat-label">Recenzii:</span>
@@ -200,14 +210,8 @@ export default function Locations() {
                                 <div className="stat">
                                     <span className="stat-label">Rating:</span>
                                     <span className="stat-value star-rating">
-                                        <Star size={14} fill="#0ea5e9" stroke="#0ea5e9" />
-                                        {location.avgRating || 'N/A'}
-                                    </span>
-                                </div>
-                                <div className="stat">
-                                    <span className="stat-label">Status:</span>
-                                    <span className={`status-badge status-${location.statusLocatie.toLowerCase()}`}>
-                                        {location.statusLocatie}
+                                        <Star size={13} fill="#f59e0b" stroke="#f59e0b" />
+                                        {location.avgRating ? Number(location.avgRating).toFixed(1) : 'N/A'}
                                     </span>
                                 </div>
                             </div>
@@ -218,18 +222,22 @@ export default function Locations() {
                         </div>
 
                         <div className="card-footer">
-                            <button className="btn-gallery icon-btn" onClick={() => setGalleryLocation(location)}>
-                                <Image size={16} />
-                                Galerie
-                            </button>
-                            <button className="btn-secondary icon-btn" onClick={() => handleEdit(location)}>
-                                <Edit size={16} />
-                                Editează
-                            </button>
-                            <button className="btn-danger icon-btn" onClick={() => handleDelete(location.codUnicLocatie)}>
-                                <Trash2 size={16} />
-                                Șterge
-                            </button>
+                            <div className="footer-left">
+                                <button className="btn-gallery icon-btn" onClick={() => setGalleryLocation(location)}>
+                                    <Image size={15} /> Galerie
+                                </button>
+                                <button className="btn-tickets icon-btn" onClick={() => setTicketsLocation(location)}>
+                                    <Ticket size={15} /> Bilete
+                                </button>
+                            </div>
+                            <div className="footer-right">
+                                <button className="btn-secondary icon-btn" onClick={() => handleEdit(location)}>
+                                    <Edit size={15} /> Editează
+                                </button>
+                                <button className="btn-danger icon-btn" onClick={() => handleDelete(location.codUnicLocatie)}>
+                                    <Trash2 size={15} /> Șterge
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -262,6 +270,12 @@ export default function Locations() {
                 <ImageGalleryModal
                     location={galleryLocation}
                     onClose={() => setGalleryLocation(null)}
+                />
+            )}
+            {ticketsLocation && (
+                <TicketsModal
+                    location={ticketsLocation}
+                    onClose={() => setTicketsLocation(null)}
                 />
             )}
         </div>

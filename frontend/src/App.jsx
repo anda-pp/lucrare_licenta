@@ -16,6 +16,9 @@ import Users from './pages/admin/Users';
 import Orders from './pages/admin/Orders';
 import Reviews from './pages/admin/Reviews';
 import LoyaltyCards from './pages/admin/LoyaltyCards';
+import AdminEvents from './pages/admin/Events';
+import AdminReservations from './pages/admin/Reservations';
+import AdminArtists from './pages/admin/Artists';
 import StaffLayout from './components/StaffLayout';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Reports from './pages/staff/Reports';
@@ -31,6 +34,9 @@ import MyReservations from './pages/users/MyReservations';
 import MyReviews from './pages/users/MyReviews';
 import Checkout from './pages/users/Checkout';
 import EventReservation from './pages/users/EventReservation';
+import Badges from './pages/users/Badges';
+import Rewards from './pages/users/Rewards';
+import CulturalTrails from './pages/users/CulturalTrails';
 import './App.css';
 
 function App() {
@@ -60,6 +66,9 @@ function App() {
                     <Route path="noaptea-muzeelor" element={<NoapteaMuzeelor />} />
                     <Route path="artists" element={<Artists />} />
                     <Route path="artists/:id" element={<ArtistDetail />} />
+                    <Route path="badges" element={<Badges />} />
+                    <Route path="rewards" element={<Rewards />} />
+                    <Route path="trails" element={<CulturalTrails />} />
                 </Route>
 
                 {/* Admin routes */}
@@ -70,6 +79,9 @@ function App() {
                     <Route path="orders" element={<Orders />} />
                     <Route path="reviews" element={<Reviews />} />
                     <Route path="loyalty-cards" element={<LoyaltyCards />} />
+                    <Route path="events" element={<AdminEvents />} />
+                    <Route path="reservations" element={<AdminReservations />} />
+                    <Route path="artists" element={<AdminArtists />} />
                 </Route>
 
                 {/* Staff routes */}

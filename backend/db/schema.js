@@ -230,3 +230,50 @@ export const rezervariEvenimente = sqliteTable('rezervari_evenimente', {
     intervalOrar: text('interval_orar'), // ex: '18:00-21:00'
     dataRezervare: integer('data_rezervare', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
+
+// ============================================
+// Gamification Tables
+// ============================================
+
+// Catalog de insigne disponibile
+export const insigne = sqliteTable('insigne', {
+    id: text('id').primaryKey(),
+    nume: text('nume').notNull(),            // "Critic de Artă"
+    descriere: text('descriere'),
+    iconita: text('iconita').notNull(),      // ex: 'Star', 'Trophy', 'Heart'
+    conditie: text('conditie').notNull(),    // 'reviews_5', 'museums_3', etc.
+    valoareConditie: integer('valoare_conditie').notNull(),
+    culoare: text('culoare').default('#9333ea'), // hex pentru gradient badge
+    mesajMotivatie: text('mesaj_motivatie'), // "Lasă încă X recenzii pentru a obține insigna"
+});
+
+// Insigne câștigate de utilizatori
+export const insigneUtilizatori = sqliteTable('insigne_utilizatori', {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    insignaId: text('insigna_id').notNull().references(() => insigne.id, { onDelete: 'cascade' }),
+    dataObtinerii: integer('data_obtinerii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});
+
+// Catalog de recompense disponibile
+export const recompense = sqliteTable('recompense', {
+    id: text('id').primaryKey(),
+    nume: text('nume').notNull(),                   // "Bilet gratuit Adult"
+    descriere: text('descriere'),
+    puncteNecesare: integer('puncte_necesare').notNull(),
+    tip: text('tip').default('voucher'),             // 'bilet_gratuit', 'reducere_10', 'voucher'
+    valoare: text('valoare'),                        // ex: '15 lei', '10%', 'bilet gratuit'
+    activ: integer('activ', { mode: 'boolean' }).default(true),
+});
+
+// Recompense revendicate de utilizatori
+export const recompenzeRevendicate = sqliteTable('recompense_revendicate', {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    recompensaId: text('recompensa_id').notNull().references(() => recompense.id, { onDelete: 'cascade' }),
+    dataRevendicarii: integer('data_revendicarii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    status: text('status').default('activ'),         // 'activ', 'folosit', 'expirat'
+    codVoucher: text('cod_voucher').notNull().unique(), // UUID generat la claim
+    puncteCheltuite: integer('puncte_cheltuite').notNull(),
+});
+

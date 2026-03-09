@@ -87,6 +87,24 @@ router.post('/checkout', requireAuth, async (req, res) => {
             totalFactura: total
         });
 
+        // 4. Acordare puncte fidelitate (1 leu = 1 punct)
+        const puncteDeAdaugat = Math.floor(total);
+        if (puncteDeAdaugat > 0) {
+            // Cautam cardul utilizatorului
+            const userCard = await db.select().from(carduriClienti)
+                .where(eq(carduriClienti.codUnicUtilizator, req.user.id))
+                .limit(1);
+
+            if (userCard.length > 0) {
+                // Adaugam punctele
+                await db.update(carduriClienti)
+                    .set({
+                        puncteAcumulate: sql`${carduriClienti.puncteAcumulate} + ${puncteDeAdaugat}`
+                    })
+                    .where(eq(carduriClienti.nrUnicCard, userCard[0].nrUnicCard));
+            }
+        }
+
         res.json({ success: true, message: 'Comandă plasată cu succes!', orderId: newOrder.id });
     } catch (error) {
         console.error('Checkout error:', error);

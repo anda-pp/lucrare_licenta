@@ -78,6 +78,9 @@ import directorReportsRoutes from './routes/directorReports.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import eventsRoutes from './routes/events.routes.js';
 import artistsRoutes from './routes/artists.routes.js';
+import badgesRoutes from './routes/badges.js';
+import rewardsRoutes from './routes/rewards.js';
+import trailsRoutes from './routes/trails.js';
 
 app.use('/api/users', usersRoutes);
 app.use('/api/locations', locationsRoutes);
@@ -92,6 +95,9 @@ app.use('/api/reports/director', directorReportsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/artists', artistsRoutes);
+app.use('/api/badges', badgesRoutes);
+app.use('/api/rewards', rewardsRoutes);
+app.use('/api/trails', trailsRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

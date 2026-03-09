@@ -1,0 +1,428 @@
+/*
+ * admin-shared.css
+ * Shared styles for all admin pages — uses the same design tokens as the user-side pages.
+ * Import this at the top of each admin page CSS or once from AdminLayout.
+ */
+
+/* ---- PAGE STRUCTURE ---- */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+}
+
+/* ---- FILTERS BAR ---- */
+.filters {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.6rem 0.85rem 0.6rem 2.4rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-text-muted);
+}
+
+.filter-icon {
+    flex-shrink: 0;
+}
+
+.filter-select {
+    padding: 0.6rem 0.85rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* ---- BUTTONS ---- */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: #faf5ff;
+    /* Matches the exact pale lilac background */
+    color: #4c1d95;
+    /* Matches the dark purple text */
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    /* Very faint purple border */
+    border-radius: 50px;
+    /* Perfect pill shape */
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+    /* Prevents text from breaking */
+}
+
+.btn-primary:hover {
+    background: #f3e8ff;
+    /* Darker lilac on hover similar to user theme */
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #4c1d95;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    padding: 0.6rem 1.25rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    font-family: inherit;
+}
+
+.btn-secondary:hover {
+    background: var(--color-hover-bg);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-danger {
+    padding: 0.6rem 1.25rem;
+    background: transparent;
+    color: #ef4444;
+    border: 1.5px solid #fca5a5;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-danger:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.btn-gallery {
+    padding: 0.5rem 0.9rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-muted);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn-gallery:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-hover-bg);
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* ---- CARDS ---- */
+.card {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* ---- TABLES ---- */
+.table-wrapper {
+    margin-top: 1.5rem;
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.admin-table thead tr {
+    background: var(--color-input-bg);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.admin-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.admin-table td {
+    padding: 0.85rem 1rem;
+    color: var(--color-text-main);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tbody tr:hover td {
+    background: var(--color-hover-bg);
+}
+
+/* ---- SECTION PANELS (like activity-card in Dashboard) ---- */
+.panel {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-input-bg);
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-navy);
+}
+
+.panel-header svg {
+    color: var(--color-primary);
+}
+
+/* ---- EMPTY STATE ---- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    color: var(--color-text-muted);
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* ---- MODAL ---- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-box {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-navy);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #ef4444;
+}
+
+/* ---- FORM ---- */
+.form-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.6rem 0.9rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #fca5a5;
+    color: #ef4444;
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ---- MISC ---- */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}

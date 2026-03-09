@@ -260,3 +260,60 @@ export const deleteLocation = async (req, res) => {
         });
     }
 };
+
+// ---- TICKETS MANAGEMENT ----
+
+/** GET /api/locations/:id/tickets */
+export const getTicketsByLocation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tickets = await db.select().from(tipuriBilete).where(eq(tipuriBilete.codUnicLocatie, id));
+        res.json({ success: true, data: tickets });
+    } catch (error) {
+        console.error('Get tickets error:', error);
+        res.status(500).json({ success: false, error: 'Nu s-au putut prelua biletele' });
+    }
+};
+
+/** POST /api/locations/:id/tickets */
+export const createTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tipBilet, pret } = req.body;
+        if (!tipBilet || pret === undefined) {
+            return res.status(400).json({ success: false, error: 'tipBilet și pret sunt obligatorii' });
+        }
+        const newId = crypto.randomUUID();
+        await db.insert(tipuriBilete).values({ codUnicTipBilet: newId, codUnicLocatie: id, tipBilet, pret });
+        res.status(201).json({ success: true, data: { codUnicTipBilet: newId, tipBilet, pret } });
+    } catch (error) {
+        console.error('Create ticket error:', error);
+        res.status(500).json({ success: false, error: 'Nu s-a putut crea biletul' });
+    }
+};
+
+/** PUT /api/locations/tickets/:ticketId */
+export const updateTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const { tipBilet, pret } = req.body;
+        await db.update(tipuriBilete).set({ tipBilet, pret }).where(eq(tipuriBilete.codUnicTipBilet, ticketId));
+        res.json({ success: true, message: 'Bilet actualizat' });
+    } catch (error) {
+        console.error('Update ticket error:', error);
+        res.status(500).json({ success: false, error: 'Nu s-a putut actualiza biletul' });
+    }
+};
+
+/** DELETE /api/locations/tickets/:ticketId */
+export const deleteTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicTipBilet, ticketId));
+        res.json({ success: true, message: 'Bilet șters' });
+    } catch (error) {
+        console.error('Delete ticket error:', error);
+        res.status(500).json({ success: false, error: 'Nu s-a putut șterge biletul' });
+    }
+};
+

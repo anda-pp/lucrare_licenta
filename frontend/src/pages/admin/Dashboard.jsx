@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Building2, Users, Receipt, MessageSquare } from 'lucide-react';
+import { Building2, Users, Receipt, MessageSquare, Calendar, CalendarCheck, TrendingUp, Star, ShoppingBag } from 'lucide-react';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -9,6 +9,11 @@ export default function Dashboard() {
         users: 0,
         orders: 0,
         reviews: 0,
+        events: 0, // Added based on new UI
+        reservations: 0, // Added based on new UI
+        revenue: 0, // Added based on new UI
+        recentOrders: [], // Added based on new UI
+        recentReviews: [], // Added based on new UI
     });
     const [loading, setLoading] = useState(true);
 
@@ -35,61 +40,87 @@ export default function Dashboard() {
             <p className="subtitle">Bine ai venit în panoul de administrare!</p>
 
             <div className="stats-grid">
-                <div className="stat-card">
-                    <div className="stat-icon-wrapper">
-                        <Building2 size={32} />
+                {[
+                    { icon: <Building2 size={28} />, label: 'Locații', value: stats.locations, sub: 'Muzee & Galerii', color: '#6366f1' },
+                    { icon: <Users size={28} />, label: 'Utilizatori', value: stats.users, sub: 'Înregistrați', color: '#0ea5e9' },
+                    { icon: <Calendar size={28} />, label: 'Evenimente', value: stats.events ?? 0, sub: 'Total', color: '#8b5cf6' },
+                    { icon: <CalendarCheck size={28} />, label: 'Rezervări', value: stats.reservations ?? 0, sub: 'Gratuite', color: '#10b981' },
+                    { icon: <ShoppingBag size={28} />, label: 'Comenzi', value: stats.orders, sub: 'Total', color: '#f59e0b' },
+                    { icon: <MessageSquare size={28} />, label: 'Recenzii', value: stats.reviews, sub: 'Total', color: '#ec4899' },
+                    { icon: <TrendingUp size={28} />, label: 'Venituri', value: `${Number(stats.revenue ?? 0).toFixed(0)} Lei`, sub: 'Comenzi plătite', color: '#14b8a6' },
+                ].map(({ icon, label, value, sub, color }) => (
+                    <div key={label} className="stat-card" style={{ '--stat-color': color }}>
+                        <div className="stat-icon-wrapper" style={{ background: `${color}18`, color }}>
+                            {icon}
+                        </div>
+                        <div className="stat-content">
+                            <h3>{label}</h3>
+                            <p className="stat-number">{loading ? '...' : value}</p>
+                            <p className="stat-label">{sub}</p>
+                        </div>
                     </div>
-                    <div className="stat-content">
-                        <h3>Locații</h3>
-                        <p className="stat-number">{loading ? '...' : stats.locations}</p>
-                        <p className="stat-label">Muzee & Galerii</p>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-icon-wrapper">
-                        <Users size={32} />
-                    </div>
-                    <div className="stat-content">
-                        <h3>Utilizatori</h3>
-                        <p className="stat-number">{loading ? '...' : stats.users}</p>
-                        <p className="stat-label">Înregistrați</p>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-icon-wrapper">
-                        <Receipt size={32} />
-                    </div>
-                    <div className="stat-content">
-                        <h3>Comenzi</h3>
-                        <p className="stat-number">{loading ? '...' : stats.orders}</p>
-                        <p className="stat-label">Total</p>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-icon-wrapper">
-                        <MessageSquare size={32} />
-                    </div>
-                    <div className="stat-content">
-                        <h3>Recenzii</h3>
-                        <p className="stat-number">{loading ? '...' : stats.reviews}</p>
-                        <p className="stat-label">Total</p>
-                    </div>
-                </div>
+                ))}
             </div>
 
-            <div className="info-section">
-                <h2>Următorii pași</h2>
-                <ul className="todo-list">
-                    <li>Vizualizează și gestionează muzee și galerii</li>
-                    <li>Monitorizează utilizatorii și comenzile</li>
-                    <li>Analizează recenziile și feedback-ul</li>
-                    <li>Gestionează cardurile de fidelitate</li>
-                </ul>
+            <div className="activity-grid">
+                <div className="activity-card">
+                    <div className="activity-header">
+                        <ShoppingBag size={18} />
+                        <h2>Comenzi Recente</h2>
+                    </div>
+                    {loading ? (
+                        <div className="activity-loading">Se încarcă...</div>
+                    ) : (stats.recentOrders?.length > 0) ? (
+                        <table className="activity-table">
+                            <thead><tr><th>Utilizator</th><th>Total</th><th>Status</th><th>Data</th></tr></thead>
+                            <tbody>
+                                {stats.recentOrders.map(o => (
+                                    <tr key={o.numarComanda}>
+                                        <td>{o.userName || '—'}</td>
+                                        <td><strong>{Number(o.totalPlata).toFixed(2)} Lei</strong></td>
+                                        <td>
+                                            <span className={`status-chip ${o.statusPlata === 'Plătit' ? 'chip-success' : o.statusPlata === 'Eșuat' ? 'chip-danger' : 'chip-warn'}`}>
+                                                {o.statusPlata}
+                                            </span>
+                                        </td>
+                                        <td className="muted">{o.dataComanda ? new Date(o.dataComanda).toLocaleDateString('ro-RO') : '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="activity-empty">Nicio comandă înregistrată.</p>
+                    )}
+                </div>
+
+                <div className="activity-card">
+                    <div className="activity-header">
+                        <Star size={18} />
+                        <h2>Recenzii Recente</h2>
+                    </div>
+                    {loading ? (
+                        <div className="activity-loading">Se încarcă...</div>
+                    ) : (stats.recentReviews?.length > 0) ? (
+                        <table className="activity-table">
+                            <thead><tr><th>Utilizator</th><th>Locație</th><th>Rating</th><th>Data</th></tr></thead>
+                            <tbody>
+                                {stats.recentReviews.map(r => (
+                                    <tr key={r.numarRecenzie}>
+                                        <td>{r.userName || '—'}</td>
+                                        <td>{r.numeLoc || '—'}</td>
+                                        <td>
+                                            <span className="rating-stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                                        </td>
+                                        <td className="muted">{r.dataRecenzie ? new Date(r.dataRecenzie).toLocaleDateString('ro-RO') : '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="activity-empty">Nicio recenzie înregistrată.</p>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
-

@@ -1,3 +1,5 @@
+/* StaffDashboard.css — theme-aware using CSS variables */
+
 .staff-dashboard {
     max-width: 1400px;
 }
@@ -16,11 +18,12 @@
 }
 
 .staff-dashboard .subtitle {
-    color: #64748b;
+    color: var(--color-text-muted);
     margin: 0;
     font-size: 1rem;
 }
 
+/* ---- Date Filter ---- */
 .date-filter {
     position: relative;
     display: flex;
@@ -37,10 +40,10 @@
 
 .date-range-select {
     padding: 0.75rem 1rem 0.75rem 2.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
-    background: white;
+    background: var(--color-input-bg);
     color: var(--color-navy);
     cursor: pointer;
     font-weight: 500;
@@ -50,7 +53,7 @@
 
 .date-range-select:hover {
     border-color: var(--color-secondary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
 }
 
 .date-range-select:focus {
@@ -58,28 +61,29 @@
     border-color: var(--color-primary);
 }
 
+/* ---- Stats Grid ---- */
 .staff-dashboard .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
 .stat-card {
-    background: white;
+    background: var(--color-white);
     border-radius: var(--radius-md);
     padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1.5rem;
     box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border);
     transition: all 0.3s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-icon-wrapper {
@@ -89,28 +93,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .stat-icon-wrapper.blue {
-    background: #e0f2fe;
-    color: #0284c7;
+    background: rgba(14, 165, 233, 0.12);
+    color: #0ea5e9;
 }
 
 .stat-icon-wrapper.purple {
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--color-accent);
+    color: var(--color-text-muted);
 }
 
 .stat-icon-wrapper.green {
-    background: #f0f9ff;
-    color: var(--color-primary);
-    border: 1px solid #bae6fd;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
 }
 
 .stat-icon-wrapper.orange {
-    background: white;
-    color: var(--color-navy);
-    border: 1px solid #e2e8f0;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
 }
 
 .stat-icon-wrapper.white {
@@ -118,8 +121,10 @@
     color: white;
 }
 
+/* Highlight card (revenue) */
 .stat-card.highlight {
     background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
 }
 
@@ -134,11 +139,11 @@
 
 .stat-content h3 {
     margin: 0;
-    font-size: 0.85rem;
-    color: #94a3b8;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .stat-number {
@@ -150,10 +155,11 @@
 
 .stat-label {
     margin: 0;
-    font-size: 0.85rem;
-    color: #64748b;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
 }
 
+/* ---- Rankings Section ---- */
 .rankings-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -161,11 +167,11 @@
 }
 
 .ranking-card {
-    background: white;
+    background: var(--color-white);
     border-radius: var(--radius-md);
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border);
 }
 
 .ranking-header {
@@ -182,16 +188,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .ranking-icon-wrapper.gold {
-    background: #e0f2fe;
+    background: rgba(14, 165, 233, 0.12);
     color: var(--color-primary);
 }
 
 .ranking-icon-wrapper.purple {
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--color-accent);
+    color: var(--color-text-muted);
 }
 
 .ranking-card h2 {
@@ -203,7 +210,7 @@
 
 .ranking-subtitle {
     margin: 0.25rem 0 0 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
 }
 
@@ -218,19 +225,20 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: #f8fafc;
+    background: var(--color-input-bg);
     border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
     border: 1px solid transparent;
+    transition: all 0.2s ease;
 }
 
 .ranking-item:hover {
-    background: white;
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: var(--color-white);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
     transform: translateX(4px);
 }
 
+/* Rank badges */
 .rank {
     width: 28px;
     height: 28px;
@@ -240,34 +248,36 @@
     justify-content: center;
     font-weight: 700;
     font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
 .rank-1 {
-    background: #e0f2fe;
+    background: rgba(14, 165, 233, 0.15);
     color: var(--color-primary);
 }
 
 .rank-2 {
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--color-accent);
+    color: var(--color-text-muted);
 }
 
 .rank-3 {
-    background: white;
+    background: var(--color-white);
     color: var(--color-navy);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
 }
 
 .rank-4,
 .rank-5 {
-    background: #f8fafc;
-    color: #94a3b8;
+    background: var(--color-bg);
+    color: var(--color-text-muted);
 }
 
 .location-name {
     flex: 1;
     font-weight: 600;
     color: var(--color-navy);
+    font-size: 0.95rem;
 }
 
 .location-value {
@@ -288,12 +298,12 @@
 
 .rating-number {
     font-weight: 600;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
 }
 
 .no-data {
-    color: #94a3b8;
+    color: var(--color-text-muted);
     text-align: center;
     padding: 3rem;
     display: flex;

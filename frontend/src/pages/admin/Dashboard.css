@@ -1,121 +1,207 @@
+/* Dashboard.css — uses admin-shared.css (loaded via AdminLayout) */
+
 .dashboard-page {
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .dashboard-page .page-title {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.4rem;
     color: var(--color-navy);
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 1.8rem;
+    font-weight: 800;
 }
 
 .subtitle {
-    color: var(--color-primary);
-    margin: 0 0 2rem 0;
-    font-size: 1.1rem;
-    opacity: 0.9;
+    color: var(--color-text-muted);
+    margin: 0 0 2rem;
+    font-size: 1rem;
 }
 
+/* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
 }
 
 .stat-card {
-    background: white;
+    background: var(--color-white);
     border-radius: var(--radius-md);
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
+    padding: 1.4rem 1.25rem;
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: center;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
 }
 
-/* Icon Wrappers */
 .stat-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: #e0f2fe;
-    color: var(--color-primary);
+    font-size: 1.3rem;
+    /* ensures lucide icon scales a bit nicely */
+}
+
+.stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 0;
 }
 
 .stat-content h3 {
-    margin: 0 0 0.5rem 0;
-    color: #64748b;
-    font-size: 0.9rem;
-    font-weight: 500;
+    margin: 0 0 0.4rem;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    width: 100%;
 }
 
 .stat-number {
-    margin: 0 0 0.25rem 0;
-    font-size: 2rem;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    line-height: 1;
+}
+
+.stat-label {
+    margin: 0.3rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    width: 100%;
+}
+
+/* Activity Grid */
+.activity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.activity-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-input-bg);
+}
+
+.activity-header svg {
+    color: var(--color-primary);
+}
+
+.activity-header h2 {
+    margin: 0;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--color-navy);
 }
 
-.stat-label {
-    margin: 0;
-    color: #94a3b8;
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 0.85rem;
 }
 
-.info-section {
-    background: white;
-    border-radius: var(--radius-md);
-    padding: 2rem;
-    box-shadow: var(--shadow-sm);
+.activity-table th {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    background: var(--color-input-bg);
 }
 
-.info-section h2 {
-    margin: 0 0 1.5rem 0;
-    color: var(--color-navy);
-    font-size: 1.5rem;
+.activity-table td {
+    padding: 0.7rem 1rem;
+    color: var(--color-text-main);
+    border-top: 1px solid var(--color-border);
+    vertical-align: middle;
 }
 
-.todo-list {
-    margin: 0;
-    padding-left: 1.5rem;
-    list-style: none;
-    /* Remove default bullets */
+.activity-table tr:hover td {
+    background: var(--color-hover-bg);
 }
 
-.todo-list li {
-    margin-bottom: 1rem;
-    color: var(--color-primary);
-    line-height: 1.6;
-    position: relative;
-    padding-left: 0.5rem;
+.activity-loading,
+.activity-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.88rem;
 }
 
-/* Custom bullets */
-.todo-list li::before {
-    content: "•";
-    color: var(--color-navy);
-    font-weight: bold;
+/* Status chips */
+.status-chip {
     display: inline-block;
-    width: 1em;
-    margin-left: -1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
 }
 
-@media (max-width: 640px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
+.chip-success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.chip-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.chip-warn {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+}
+
+.rating-stars {
+    color: #f59e0b;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.muted {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '../lib/auth';
-import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Sun, Palette, Building2, Heart } from 'lucide-react';
+import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Sun, Palette, Building2, Heart, Trophy, Gift, Map } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './UserLayout.css';
 
@@ -84,6 +84,21 @@ export default function UserLayout() {
                     <Link to="/user/artists" className={`nav-item ${location.pathname.startsWith('/user/artists') ? 'active' : ''}`}>
                         <Palette size={20} />
                         <span className="nav-label">Artiști Români</span>
+                    </Link>
+
+                    <div className="nav-divider" />
+
+                    <Link to="/user/badges" className={`nav-item ${location.pathname === '/user/badges' ? 'active' : ''}`}>
+                        <Trophy size={20} />
+                        <span className="nav-label">Insignele Mele</span>
+                    </Link>
+                    <Link to="/user/rewards" className={`nav-item ${location.pathname === '/user/rewards' ? 'active' : ''}`}>
+                        <Gift size={20} />
+                        <span className="nav-label">Schimb Puncte</span>
+                    </Link>
+                    <Link to="/user/trails" className={`nav-item ${location.pathname === '/user/trails' ? 'active' : ''}`}>
+                        <Map size={20} />
+                        <span className="nav-label">Trasee Culturale</span>
                     </Link>
                 </nav>
 

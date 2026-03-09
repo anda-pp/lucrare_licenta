@@ -1,19 +1,32 @@
+/* NoapteaMuzeelor.css
+   Pagina are propriul design de "noapte" independent de tema light/dark.
+   Toate culorile sunt hardcodate pentru a crea o atmosfera imersiva.
+*/
+
+/* ─── Wrapper pagina ──────────────────────────────────────── */
 .night-page {
     min-height: 100vh;
-    background: #0f172a;
-    color: #f8fafc;
-    /* Break out of .user-content padding (2rem on all sides) */
+    background: #0f0a1e;
+    /* midnight violet-black */
+    color: #e2e8f0;
     margin: -2rem;
+    padding-bottom: 4rem;
 }
 
+/* ─── Hero ────────────────────────────────────────────────── */
 .night-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-    padding: 6rem 2rem 4rem;
+    background: linear-gradient(180deg,
+            #0f0a1e 0%,
+            #1e1b4b 40%,
+            #2e1065 80%,
+            #0f0a1e 100%);
+    padding: 6rem 2rem 5rem;
     text-align: center;
     position: relative;
     overflow: hidden;
 }
 
+/* Stea de fundal animate */
 .night-hero::before {
     content: '';
     position: absolute;
@@ -21,27 +34,37 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    background:
+        radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 15%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 50%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+        radial-gradient(2px 2px at 10% 80%, rgba(192, 132, 252, 0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+        radial-gradient(80px 80px at 50% 10%, rgba(147, 51, 234, 0.12) 0%, transparent 100%);
     pointer-events: none;
 }
 
 .moon-icon {
     color: #fef08a;
-    /* Yellow 200 */
+    /* galbui lunar */
     margin-bottom: 1.5rem;
-    filter: drop-shadow(0 0 20px rgba(254, 240, 138, 0.4));
+    filter: drop-shadow(0 0 25px rgba(254, 240, 138, 0.5)) drop-shadow(0 0 60px rgba(254, 240, 138, 0.2));
     animation: pulse-glow 4s infinite alternate;
+    position: relative;
+    z-index: 1;
 }
 
 @keyframes pulse-glow {
     0% {
-        filter: drop-shadow(0 0 10px rgba(254, 240, 138, 0.3));
+        filter: drop-shadow(0 0 10px rgba(254, 240, 138, 0.35)) drop-shadow(0 0 40px rgba(254, 240, 138, 0.15));
         transform: scale(1);
     }
 
     100% {
-        filter: drop-shadow(0 0 30px rgba(254, 240, 138, 0.6));
-        transform: scale(1.05);
+        filter: drop-shadow(0 0 30px rgba(254, 240, 138, 0.65)) drop-shadow(0 0 80px rgba(254, 240, 138, 0.25));
+        transform: scale(1.06);
     }
 }
 
@@ -50,29 +73,35 @@
     margin: 0 0 1rem 0;
     font-weight: 800;
     letter-spacing: -1px;
-    background: linear-gradient(to right, #f8fafc, #94a3b8);
+    background: linear-gradient(to right, #f3e8ff, #a5b4fc, #818cf8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    position: relative;
+    z-index: 1;
 }
 
 .night-hero p {
-    font-size: 1.2rem;
-    color: #cbd5e1;
+    font-size: 1.15rem;
+    color: #94a3b8;
     max-width: 600px;
     margin: 0 auto 3rem;
+    position: relative;
+    z-index: 1;
 }
 
-/* Countdown */
+/* ─── Countdown ──────────────────────────────────────────── */
 .countdown-container {
     display: inline-flex;
     align-items: center;
     gap: 1rem;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 10, 30, 0.7);
     padding: 1.5rem 2.5rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    border: 1px solid rgba(165, 180, 252, 0.2);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .countdown-box {
@@ -86,79 +115,130 @@
     font-size: 2.5rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: white;
+    color: #f1f5f9;
     line-height: 1;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 2px 12px rgba(165, 180, 252, 0.4);
 }
 
 .countdown-box.accent .countdown-value {
-    color: #38bdf8;
-    /* Sky 400 */
+    color: #a5b4fc;
+    /* indigo 300 */
+    text-shadow: 0 2px 16px rgba(165, 180, 252, 0.6);
 }
 
 .countdown-label {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #94a3b8;
+    letter-spacing: 1.5px;
+    color: #64748b;
     margin-top: 0.5rem;
 }
 
 .countdown-separator {
     font-size: 2rem;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(165, 180, 252, 0.25);
     margin-top: -1.2rem;
 }
 
-/* Overrides for Events.css classes used here */
+/* ─── Events grid wrapper ────────────────────────────────── */
 .override-padding {
     padding-top: 0;
+    /* Continuam fundalul de noapte si in sectiunea de carduri */
+    background: transparent;
 }
 
+/* Suprascriem grila de la Events.css */
+.night-page .events-page {
+    background: transparent;
+    padding: 3rem 2rem;
+}
+
+.night-page .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ─── Carduri ────────────────────────────────────────────── */
 .night-card {
-    background: #1e293b;
-    border-color: rgba(255, 255, 255, 0.05);
+    background: #111827 !important;
+    /* gray-900 */
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 18px;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
 }
 
 .night-card:hover {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-6px) !important;
+    box-shadow: 0 16px 40px rgba(99, 102, 241, 0.2),
+        0 8px 16px rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(165, 180, 252, 0.45) !important;
 }
 
+/* Placeholder imagine (fara img) */
+.night-placeholder {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
+    color: #6366f1 !important;
+    /* indigo 500 */
+}
+
+/* Titlu eveniment */
 .night-card .event-content h2 {
-    color: #f8fafc;
+    color: #e2e8f0 !important;
+    font-size: 1.05rem;
 }
 
+/* Meta info (data, ora, locatie) */
 .night-card .meta-item {
-    color: #94a3b8;
+    color: #64748b !important;
 }
 
+.night-card .meta-item svg {
+    color: #6366f1 !important;
+    /* indigo 500 */
+}
+
+/* Descriere */
 .night-card .event-description {
-    color: #cbd5e1;
+    color: #475569 !important;
 }
 
+/* Separator / borduri interne */
+.night-card .event-content {
+    background: #111827;
+    border-top: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+/* ─── Buton "Detalii Program" ─────────────────────────────── */
 .night-btn {
-    border-color: #38bdf8;
-    color: #38bdf8;
+    border: 1px solid rgba(99, 102, 241, 0.5) !important;
+    color: #a5b4fc !important;
+    background: transparent !important;
+    border-radius: 12px;
+    transition: all 0.2s ease !important;
 }
 
 .night-btn:hover {
-    background: #38bdf8;
-    color: #0f172a;
+    background: #4f46e5 !important;
+    /* indigo 600 */
+    border-color: #4f46e5 !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4) !important;
 }
 
-.night-placeholder {
-    background: #0f172a;
-    color: #334155;
-}
-
+/* ─── Empty state ────────────────────────────────────────── */
 .no-events.night-theme {
-    background: rgba(30, 41, 59, 0.5);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #64748b;
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px dashed rgba(99, 102, 241, 0.3);
+    color: #475569;
+    border-radius: 18px;
+    padding: 4rem 2rem;
+    text-align: center;
 }
 
 .no-events.night-theme h3 {
-    color: #e2e8f0;
+    color: #94a3b8;
 }

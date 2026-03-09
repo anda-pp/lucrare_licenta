@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '../lib/auth';
-import { LayoutDashboard, ClipboardList, LogOut, UserCheck } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, LogOut, UserCheck, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import './StaffLayout.css';
 
 export default function StaffLayout() {
@@ -9,6 +10,7 @@ export default function StaffLayout() {
     const location = useLocation();
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         checkAuth();
@@ -64,18 +66,22 @@ export default function StaffLayout() {
                 <nav className="sidebar-nav">
                     <Link to="/staff" className={`nav-item ${isActive('/staff') ? 'active' : ''}`}>
                         <LayoutDashboard size={20} />
-                        Dashboard
+                        <span className="nav-label">Dashboard</span>
                     </Link>
                     <Link to="/staff/reports" className={`nav-item ${isActive('/staff/reports') ? 'active' : ''}`}>
                         <ClipboardList size={20} />
-                        Rapoarte
+                        <span className="nav-label">Rapoarte</span>
                     </Link>
                 </nav>
 
                 <div className="sidebar-footer">
+                    <button onClick={toggleTheme} className="theme-toggle-btn">
+                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        <span className="nav-label">{theme === 'light' ? 'Mod Întunecat' : 'Mod Luminos'}</span>
+                    </button>
                     <button onClick={handleLogout} className="logout-btn">
                         <LogOut size={20} />
-                        Deconectare
+                        <span className="nav-label">Deconectare</span>
                     </button>
                 </div>
             </aside>
