@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Gift, Star, Ticket, MapPin, Zap, BookOpen, CheckCircle, Tag } from 'lucide-react';
+import { Gift, Star, Ticket, MapPin, Zap, BookOpen, CheckCircle, Tag, Info } from 'lucide-react';
 import './Rewards.css';
 
 const TIP_ICON = {
@@ -144,6 +144,18 @@ export default function Rewards() {
             {/* My rewards */}
             {tab === 'my' && (
                 <div className="my-rewards-list">
+                    <div style={{
+                        marginBottom: '1.5rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.1)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: 'var(--radius-md)',
+                        display: 'flex', gap: '0.75rem', alignItems: 'flex-start', textAlign: 'left',
+                        color: 'var(--color-primary)'
+                    }}>
+                        <Info size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                            <strong>Reguli de utilizare:</strong> Codurile generate sunt valabile <strong>30 de zile</strong> de la revendicare și poți folosi un singur cod per comandă. Totodată, poți obține același tip de recompensă doar o dată la 30 de zile.
+                        </div>
+                    </div>
+
                     {myRewards.length === 0 ? (
                         <div className="no-rewards">
                             <Gift size={48} strokeWidth={1} />
@@ -161,10 +173,15 @@ export default function Rewards() {
                                         {' · '}{r.puncte_cheltuite} puncte cheltuite
                                     </span>
                                 </div>
-                                <div className="voucher-box">
+                                <div className="voucher-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                                     <span className="voucher-label">Cod voucher</span>
                                     <span className="voucher-code">{r.cod_voucher}</span>
-                                    <span className={`voucher-status ${r.status}`}>{r.status}</span>
+                                    {r.status === 'activ' && (
+                                        <span style={{ fontSize: '0.75rem', color: '#6366f1', marginTop: '0.2rem' }}>
+                                            Expiră la {new Date((r.data_revendicarii + 30 * 24 * 60 * 60) * 1000).toLocaleDateString('ro-RO')}
+                                        </span>
+                                    )}
+                                    <span className={`voucher-status ${r.status}`} style={{ marginTop: '0.25rem' }}>{r.status}</span>
                                 </div>
                             </div>
                         ))

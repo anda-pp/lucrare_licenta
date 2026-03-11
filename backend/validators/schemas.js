@@ -49,6 +49,7 @@ export const createEventSchema = z.object({
     dataSfarsit: z.coerce.date().optional().nullable(),
     tipEveniment: z.enum(['General', 'Expozitie', 'Noaptea Muzeelor', 'Workshop']).default('General'),
     imagineUrl: z.string().optional().nullable(),
+    intervaleOrare: z.array(z.string()).optional(),
 });
 
 export const updateEventSchema = createEventSchema.partial();

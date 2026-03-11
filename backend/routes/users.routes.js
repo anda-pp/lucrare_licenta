@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { db } from '../db/db.js';
-import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi, rezervariEvenimente, user } from '../db/schema.js';
+import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi, rezervariEvenimente, user, recompenzeRevendicate, recompense } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
@@ -41,21 +41,132 @@ router.get('/my-orders', requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/users/checkout/validate-promo
+ * Validate a user's promo code before checkout
+ */
+router.post('/checkout/validate-promo', requireAuth, async (req, res) => {
+    try {
+        const { promoCode } = req.body;
+        if (!promoCode) return res.status(400).json({ success: false, error: 'Cod promoțional lipsă' });
+
+        // Extragem detaliile voucherului și ale recompensei asociate
+        const voucherRes = await db.select({
+            id: recompenzeRevendicate.id,
+            status: recompenzeRevendicate.status,
+            dataRevendicarii: recompenzeRevendicate.dataRevendicarii,
+            valoare: recompense.valoare,
+            tip: recompense.tip
+        })
+            .from(recompenzeRevendicate)
+            .leftJoin(recompense, eq(recompenzeRevendicate.recompensaId, recompense.id))
+            .where(
+                and(
+                    eq(recompenzeRevendicate.codVoucher, promoCode),
+                    eq(recompenzeRevendicate.userId, req.user.id),
+                    eq(recompenzeRevendicate.status, 'activ')
+                )
+            )
+            .limit(1);
+
+        if (voucherRes.length === 0) {
+            return res.status(404).json({ success: false, error: 'Cod invalid sau deja folosit.' });
+        }
+
+        const voucher = voucherRes[0];
+
+        // Verificam daca a expirat (mai vechi de 30 de zile)
+        const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+        if (voucher.dataRevendicarii < thirtyDaysAgo) {
+            // Optional: îl putem marca și în DB ca 'expirat' aici
+            await db.update(recompenzeRevendicate)
+                .set({ status: 'expirat' })
+                .where(eq(recompenzeRevendicate.id, voucher.id));
+
+            return res.status(400).json({ success: false, error: 'Acest cod a expirat (valabilitate 30 de zile).' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: voucher.id,
+                valoare: voucher.valoare,
+                tip: voucher.tip
+            },
+            message: 'Cod aplicat cu succes!'
+        });
+
+    } catch (error) {
+        console.error('Validate promo error:', error);
+        res.status(500).json({ success: false, error: 'Eroare validare cod' });
+    }
+});
+
+/**
  * POST /api/users/checkout
  * Process ticket purchase and create order
  */
 router.post('/checkout', requireAuth, async (req, res) => {
     try {
-        const { locationId, tickets, total } = req.body;
+        const { locationId, tickets, total, promoCode } = req.body;
 
         if (!locationId || !tickets || tickets.length === 0 || total === undefined) {
             return res.status(400).json({ success: false, error: 'Date invalide' });
         }
 
+        let finalTotal = total;
+        let voucherIdFolosit = null;
+
+        // Validam si Aplicam Promo Code daca exista
+        if (promoCode) {
+            const voucherRes = await db.select({
+                id: recompenzeRevendicate.id,
+                valoare: recompense.valoare,
+                dataRevendicarii: recompenzeRevendicate.dataRevendicarii,
+                tip: recompense.tip
+            })
+                .from(recompenzeRevendicate)
+                .leftJoin(recompense, eq(recompenzeRevendicate.recompensaId, recompense.id))
+                .where(
+                    and(
+                        eq(recompenzeRevendicate.codVoucher, promoCode),
+                        eq(recompenzeRevendicate.userId, req.user.id),
+                        eq(recompenzeRevendicate.status, 'activ')
+                    )
+                )
+                .limit(1);
+
+            if (voucherRes.length === 0) {
+                return res.status(400).json({ success: false, error: 'Cod promoțional invalid.' });
+            }
+
+            const voucher = voucherRes[0];
+
+            // Verificam daca a expirat (mai vechi de 30 de zile) la momentul plasarii comenzii
+            const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+            if (voucher.dataRevendicarii < thirtyDaysAgo) {
+                await db.update(recompenzeRevendicate)
+                    .set({ status: 'expirat' })
+                    .where(eq(recompenzeRevendicate.id, voucher.id));
+                return res.status(400).json({ success: false, error: 'Acest cod promoțional a expirat.' });
+            }
+
+            voucherIdFolosit = voucher.id;
+
+            // Calculare reducere
+            const valoareReducere = parseFloat(voucher.valoare) || 0;
+            if (voucher.tip === 'reducere' || voucher.tip === 'Procentaj' || voucher.tip === 'reducere_%') {
+                finalTotal = finalTotal - (finalTotal * (valoareReducere / 100));
+            } else if (voucher.tip === 'voucher' || voucher.tip === 'SumaFixa' || voucher.tip === 'reducere_fixa') {
+                finalTotal = Math.max(0, finalTotal - valoareReducere);
+            } else if (voucher.tip === 'bilet_gratuit' || voucher.tip === 'Gratuitate') {
+                finalTotal = 0;
+            }
+        }
+
         // 1. Create Order
         const [newOrder] = await db.insert(comenzi).values({
             codUnicUtilizator: req.user.id,
-            totalPlata: total,
+            totalPlata: finalTotal, // salvam totalul nou cu reducerea
             statusPlata: 'Plătit',
             statusComanda: 'Activă'
         }).returning({ id: comenzi.numarComanda });
@@ -84,11 +195,11 @@ router.post('/checkout', requireAuth, async (req, res) => {
             serieFactura: serie,
             dataFacturare: new Date().toISOString().split('T')[0],
             tva: 0.19,
-            totalFactura: total
+            totalFactura: finalTotal
         });
 
-        // 4. Acordare puncte fidelitate (1 leu = 1 punct)
-        const puncteDeAdaugat = Math.floor(total);
+        // 4. Acordare puncte fidelitate (1 leu cheltuit = 1 punct)
+        const puncteDeAdaugat = Math.floor(finalTotal);
         if (puncteDeAdaugat > 0) {
             // Cautam cardul utilizatorului
             const userCard = await db.select().from(carduriClienti)
@@ -103,6 +214,13 @@ router.post('/checkout', requireAuth, async (req, res) => {
                     })
                     .where(eq(carduriClienti.nrUnicCard, userCard[0].nrUnicCard));
             }
+        }
+
+        // 5. Marcam Promo Code ca folosit
+        if (voucherIdFolosit) {
+            await db.update(recompenzeRevendicate)
+                .set({ status: 'folosit' })
+                .where(eq(recompenzeRevendicate.id, voucherIdFolosit));
         }
 
         res.json({ success: true, message: 'Comandă plasată cu succes!', orderId: newOrder.id });

@@ -23,12 +23,18 @@ export const getAllEvents = async (req, res) => {
                 numeLocatie: locatiiPublice.numeLoc,
                 orasLocatie: locatiiPublice.orasLoc,
                 isGratuit: evenimente.isGratuit,
+                intervaleOrare: evenimente.intervaleOrare,
             })
             .from(evenimente)
             .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
             .orderBy(desc(evenimente.dataStart));
 
-        res.json({ success: true, count: events.length, data: events });
+        const parsedEvents = events.map(ev => ({
+            ...ev,
+            intervaleOrare: ev.intervaleOrare ? JSON.parse(ev.intervaleOrare) : []
+        }));
+
+        res.json({ success: true, count: events.length, data: parsedEvents });
     } catch (error) {
         console.error('Eroare preluare evenimente:', error);
         res.status(500).json({ success: false, error: 'Eroare la preluarea evenimentelor' });
@@ -55,6 +61,7 @@ export const getEventById = async (req, res) => {
                 numeLocatie: locatiiPublice.numeLoc,
                 orasLocatie: locatiiPublice.orasLoc,
                 isGratuit: evenimente.isGratuit,
+                intervaleOrare: evenimente.intervaleOrare,
             })
             .from(evenimente)
             .leftJoin(locatiiPublice, eq(evenimente.codUnicLocatie, locatiiPublice.codUnicLocatie))
@@ -70,6 +77,8 @@ export const getEventById = async (req, res) => {
             .select()
             .from(tipuriBilete)
             .where(eq(tipuriBilete.codUnicLocatie, event.codUnicLocatie));
+
+        event.intervaleOrare = event.intervaleOrare ? JSON.parse(event.intervaleOrare) : [];
 
         res.json({ success: true, data: { ...event, ticketTypes: tickets } });
     } catch (error) {
@@ -97,7 +106,8 @@ export const createEvent = async (req, res) => {
         const newEventId = uuidv4();
         await db.insert(evenimente).values({
             id: newEventId,
-            ...validation.data
+            ...validation.data,
+            intervaleOrare: validation.data.intervaleOrare ? JSON.stringify(validation.data.intervaleOrare) : '[]'
         });
 
         res.status(201).json({
@@ -135,7 +145,10 @@ export const updateEvent = async (req, res) => {
         }
 
         await db.update(evenimente)
-            .set(validation.data)
+            .set({
+                ...validation.data,
+                intervaleOrare: validation.data.intervaleOrare ? JSON.stringify(validation.data.intervaleOrare) : '[]'
+            })
             .where(eq(evenimente.id, id));
 
         res.json({

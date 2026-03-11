@@ -182,12 +182,12 @@
     color: #b45309;
 }
 
-.badge-card {
+.user-badge-card {
     background: rgba(16, 185, 129, 0.12);
     color: #059669;
 }
 
-.badge-info {
+.user-badge-info {
     background: var(--color-accent);
     color: var(--color-primary);
     min-width: 28px;

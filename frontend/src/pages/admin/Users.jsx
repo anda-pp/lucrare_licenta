@@ -232,11 +232,11 @@ export default function Users() {
                                     </span>
                                 </td>
                                 <td>
-                                    <span className="badge badge-card">{user.cardName}</span>
+                                    <span className="badge user-badge-card">{user.cardName}</span>
                                 </td>
                                 <td>{formatDate(user.createdAt)}</td>
                                 <td>
-                                    <span className="badge badge-info">{user.orderCount || 0}</span>
+                                    <span className="badge user-badge-info">{user.orderCount || 0}</span>
                                 </td>
                                 <td>
                                     <span className="badge badge-success">{user.reviewCount || 0}</span>

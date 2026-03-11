@@ -19,6 +19,10 @@ import LoyaltyCards from './pages/admin/LoyaltyCards';
 import AdminEvents from './pages/admin/Events';
 import AdminReservations from './pages/admin/Reservations';
 import AdminArtists from './pages/admin/Artists';
+import RewardsAdmin from './pages/admin/RewardsAdmin';
+import BadgesAdmin from './pages/admin/BadgesAdmin';
+import TrailsAdmin from './pages/admin/TrailsAdmin';
+import VouchersAdmin from './pages/admin/VouchersAdmin';
 import StaffLayout from './components/StaffLayout';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Reports from './pages/staff/Reports';
@@ -82,6 +86,10 @@ function App() {
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="reservations" element={<AdminReservations />} />
                     <Route path="artists" element={<AdminArtists />} />
+                    <Route path="rewards" element={<RewardsAdmin />} />
+                    <Route path="badges" element={<BadgesAdmin />} />
+                    <Route path="trails" element={<TrailsAdmin />} />
+                    <Route path="vouchers" element={<VouchersAdmin />} />
                 </Route>
 
                 {/* Staff routes */}

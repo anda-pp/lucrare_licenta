@@ -13,7 +13,6 @@ const ICON_MAP = {
 export default function Badges() {
     const [badges, setBadges] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [checking, setChecking] = useState(false);
     const [newlyEarned, setNewlyEarned] = useState([]);
 
     useEffect(() => {
@@ -23,7 +22,12 @@ export default function Badges() {
     const fetchBadges = async () => {
         try {
             const res = await axios.get('http://localhost:5000/api/badges/my', { withCredentials: true });
-            if (res.data.success) setBadges(res.data.data);
+            if (res.data.success) {
+                setBadges(res.data.data);
+                if (res.data.newlyEarned && res.data.newlyEarned.length > 0) {
+                    setNewlyEarned(res.data.newlyEarned);
+                }
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -31,22 +35,7 @@ export default function Badges() {
         }
     };
 
-    const checkBadges = async () => {
-        setChecking(true);
-        try {
-            const res = await axios.post('http://localhost:5000/api/badges/check', {}, { withCredentials: true });
-            if (res.data.success && res.data.count > 0) {
-                setNewlyEarned(res.data.data);
-                fetchBadges();
-            } else {
-                alert('Nicio insignă nouă de acordat momentan.');
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setChecking(false);
-        }
-    };
+
 
     const earned = badges.filter(b => b.earned);
     const locked = badges.filter(b => !b.earned);
@@ -60,12 +49,9 @@ export default function Badges() {
                 <div>
                     <h1><Trophy size={28} /> Insignele Mele</h1>
                     <p className="badges-subtitle">
-                        Câștigă trofee digitale explorând cultura României
+                        Câștigă trofee digitale explorând și vizitând locații!
                     </p>
                 </div>
-                <button className="check-btn" onClick={checkBadges} disabled={checking}>
-                    {checking ? 'Se verifică...' : '✨ Verifică realizările'}
-                </button>
             </div>
 
             {/* Newly earned toast */}

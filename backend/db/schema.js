@@ -191,6 +191,7 @@ export const evenimente = sqliteTable('evenimente', {
     tipEveniment: text('tip_eveniment').default('General'), // 'Expozitie', 'Noaptea Muzeelor', 'Workshop'
     imagineUrl: text('imagine_url'),
     isGratuit: integer('is_gratuit', { mode: 'boolean' }).default(0),
+    intervaleOrare: text('intervale_orare'), // Stocheaza un array JSON de stringuri: '["10:00-12:00"]'
 });
 
 // Tabela Artisti
@@ -261,8 +262,8 @@ export const recompense = sqliteTable('recompense', {
     nume: text('nume').notNull(),                   // "Bilet gratuit Adult"
     descriere: text('descriere'),
     puncteNecesare: integer('puncte_necesare').notNull(),
-    tip: text('tip').default('voucher'),             // 'bilet_gratuit', 'reducere_10', 'voucher'
-    valoare: text('valoare'),                        // ex: '15 lei', '10%', 'bilet gratuit'
+    tip: text('tip').default('voucher'),             // 'bilet_gratuit', 'reducere', 'voucher'
+    valoare: real('valoare'),                        // ex: 15 (lei), 10 (%), 0 (bilet gratuit)
     activ: integer('activ', { mode: 'boolean' }).default(true),
 });
 
@@ -275,5 +276,29 @@ export const recompenzeRevendicate = sqliteTable('recompense_revendicate', {
     status: text('status').default('activ'),         // 'activ', 'folosit', 'expirat'
     codVoucher: text('cod_voucher').notNull().unique(), // UUID generat la claim
     puncteCheltuite: integer('puncte_cheltuite').notNull(),
+});
+
+// ============================================
+// Custom Cultural Trails (Gamification V2)
+// ============================================
+
+// Tabela Principală a Traseului
+export const trasee = sqliteTable('trasee', {
+    id: text('id').primaryKey(), // UUID
+    titlu: text('titlu').notNull(),
+    descriere: text('descriere'),
+    durataEstimata: integer('durata_estimata'), // în minute
+    oras: text('oras'),
+    imagineUrl: text('imagine_url'),
+    activ: integer('activ', { mode: 'boolean' }).default(true),
+    dataCreare: integer('data_creare', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+});
+
+// Tabela de Legătură: Ce locații intră într-un traseu și în ce ordine
+export const traseeLocatii = sqliteTable('trasee_locatii', {
+    id: text('id').primaryKey(), // UUID
+    traseuId: text('traseu_id').notNull().references(() => trasee.id, { onDelete: 'cascade' }),
+    codUnicLocatie: text('cod_unic_locatie').notNull().references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
+    ordine: integer('ordine').notNull().default(0) // 1, 2, 3...
 });
 

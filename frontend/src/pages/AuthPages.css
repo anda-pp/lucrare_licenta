@@ -180,3 +180,22 @@
         font-size: 1.75rem;
     }
 }
+
+/* --- Dark Theme Overrides for Auth --- */
+.dark-theme .auth-card {
+    background: rgba(49, 46, 129, 0.75);
+    /* var(--color-white) equivalent for dark bg */
+    border-color: rgba(216, 180, 254, 0.15);
+    /* subtle border */
+}
+
+.dark-theme .auth-form .input-wrapper input {
+    background: rgba(30, 27, 75, 0.6);
+    /* var(--color-input-bg) equivalent */
+    border-color: var(--color-border);
+    color: var(--color-text-main);
+}
+
+.dark-theme .auth-form .input-wrapper input:focus {
+    background: var(--color-hover-bg);
+}

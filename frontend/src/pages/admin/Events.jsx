@@ -20,6 +20,7 @@ const EMPTY_FORM = {
     codUnicLocatie: '',
     imagineUrl: '',
     isGratuit: false,
+    intervaleOrare: [],
 };
 
 function toInputDate(ts) {
@@ -41,6 +42,8 @@ export default function Events() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState('');
+    const [newIntervalStart, setNewIntervalStart] = useState('');
+    const [newIntervalEnd, setNewIntervalEnd] = useState('');
 
     useEffect(() => { fetchEvents(); fetchLocations(); }, []);
 
@@ -69,6 +72,8 @@ export default function Events() {
         setEditingEvent(null);
         setForm(EMPTY_FORM);
         setFormError('');
+        setNewIntervalStart('');
+        setNewIntervalEnd('');
         setShowModal(true);
     };
 
@@ -83,15 +88,55 @@ export default function Events() {
             codUnicLocatie: ev.codUnicLocatie || '',
             imagineUrl: ev.imagineUrl || '',
             isGratuit: !!ev.isGratuit,
+            intervaleOrare: ev.intervaleOrare || [],
         });
         setFormError('');
+        setNewIntervalStart('');
+        setNewIntervalEnd('');
         setShowModal(true);
+    };
+
+    const handleAddInterval = () => {
+        if (!newIntervalStart || !newIntervalEnd) return;
+        if (newIntervalStart >= newIntervalEnd) {
+            setFormError('Ora de început trebuie să fie mai mică decât ora de sfârșit.');
+            return;
+        }
+
+        const intervalString = `${newIntervalStart} - ${newIntervalEnd}`;
+
+        if ((form.intervaleOrare || []).includes(intervalString)) {
+            setFormError('Acest interval a fost deja adăugat.');
+            return;
+        }
+
+        setFormError('');
+        setForm({
+            ...form,
+            intervaleOrare: [...(form.intervaleOrare || []), intervalString]
+        });
+        setNewIntervalStart('');
+        setNewIntervalEnd('');
+    };
+
+    const handleRemoveInterval = (index) => {
+        const updated = [...(form.intervaleOrare || [])];
+        updated.splice(index, 1);
+        setForm({ ...form, intervaleOrare: updated });
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
         setFormError('');
+
+        // Asigurăm obligativitatea intervalelor
+        if (!form.intervaleOrare || form.intervaleOrare.length === 0) {
+            setFormError('Te rugăm să adaugi cel puțin un interval orar folosind selectorul de mai jos!');
+            setSaving(false);
+            return;
+        }
+
         try {
             const payload = {
                 ...form,
@@ -283,6 +328,36 @@ export default function Events() {
                                     value={form.descriere}
                                     onChange={e => setForm({ ...form, descriere: e.target.value })}
                                 />
+                            </div>
+                            <div className="form-group">
+                                <label>Intervale Orare Predefinite</label>
+                                <div className="intervals-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    {(form.intervaleOrare || []).map((intv, idx) => (
+                                        <div key={idx} className="interval-tag" style={{ background: 'var(--color-primary)', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                            {intv}
+                                            <button type="button" onClick={() => handleRemoveInterval(idx)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0 }}>
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="interval-input-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input
+                                        type="time"
+                                        value={newIntervalStart}
+                                        onChange={e => setNewIntervalStart(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span>–</span>
+                                    <input
+                                        type="time"
+                                        value={newIntervalEnd}
+                                        onChange={e => setNewIntervalEnd(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button type="button" className="btn-secondary" onClick={handleAddInterval}>Adaugă</button>
+                                </div>
+                                <small style={{ color: 'var(--color-danger)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block', fontWeight: 'bold' }}>Adăugarea a cel puțin un interval este obligatorie.</small>
                             </div>
                             <div className="form-group">
                                 <label>URL Imagine</label>

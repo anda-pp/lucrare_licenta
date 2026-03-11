@@ -92,6 +92,35 @@ export default function EventDetail() {
                             )}
                         </div>
                     </section>
+
+                    {/* Secțiunea Bilete / Rezervare */}
+                    <section className="event-tickets-section" style={{ marginTop: '2rem' }}>
+                        {event.isGratuit ? (
+                            <div className="detail-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2.5rem' }}>
+                                <Ticket size={48} color="var(--color-primary)" style={{ marginBottom: '1rem', opacity: 0.8 }} />
+                                <h3 style={{ fontSize: '1.4rem', color: 'var(--color-navy)', marginBottom: '0.5rem' }}>Acest eveniment este gratuit!</h3>
+                                <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', maxWidth: '400px' }}>Rezervă-ți locul acum gratuit pentru a primi biletul nominal în format PDF împreună cu un cod de acces QR.</p>
+                                <button
+                                    className="buy-tickets-btn reserve-btn"
+                                    onClick={() => navigate(`/user/reserve/${event.id}`)}
+                                    style={{ maxWidth: '300px', width: '100%', padding: '1rem', fontSize: '1.1rem' }}
+                                >
+                                    <Ticket size={20} /> Rezervă-ți Locul
+                                </button>
+                            </div>
+                        ) : (
+                            (event.ticketTypes?.length > 0) ? (
+                                <div className="detail-section">
+                                    <h2 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>Bilete Disponibile</h2>
+                                    <LocationTickets tickets={event.ticketTypes} locationId={event.codUnicLocatie} />
+                                </div>
+                            ) : (
+                                <div className="detail-section" style={{ textAlign: 'center', padding: '3rem' }}>
+                                    <p className="empty-text">Biletele nu sunt disponibile momentan pentru achiziționare online.</p>
+                                </div>
+                            )
+                        )}
+                    </section>
                 </div>
 
                 <div className="event-sidebar-col">
@@ -129,21 +158,7 @@ export default function EventDetail() {
                         )}
 
                         <div className="card-actions">
-                            {event.isGratuit ? (
-                                <button
-                                    className="buy-tickets-btn reserve-btn"
-                                    onClick={() => navigate(`/user/reserve/${event.id}`)}
-                                >
-                                    <Ticket size={18} /> Rezervă-ți Locul
-                                </button>
-                            ) : (
-                                (event.ticketTypes?.length > 0) ? (
-                                    <LocationTickets tickets={event.ticketTypes} locationId={event.codUnicLocatie} />
-                                ) : (
-                                    <div className="event-error" style={{ padding: '1rem', textAlign: 'left' }}>Biletele nu sunt disponibile momentan.</div>
-                                )
-                            )}
-                            <button className="share-btn" style={{ marginTop: '1rem', width: '100%' }}>
+                            <button className="share-btn" style={{ width: '100%' }}>
                                 <Share2 size={18} /> Distribuie
                             </button>
                         </div>

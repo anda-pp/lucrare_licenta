@@ -58,7 +58,12 @@ export default function EventReservation() {
                     // Pre-select first day and time interval
                     const days = generateDays(ev.dataStart, ev.dataSfarsit);
                     setZiuaAleasa(days[0].toISOString().split('T')[0]);
-                    setIntervalOrar(`${formatTime(ev.dataStart)} – ${ev.dataSfarsit ? formatTime(ev.dataSfarsit) : '—'}`);
+
+                    if (ev.intervaleOrare && ev.intervaleOrare.length > 0) {
+                        setIntervalOrar(ev.intervaleOrare[0]);
+                    } else {
+                        setIntervalOrar(`${formatTime(ev.dataStart)} – ${ev.dataSfarsit ? formatTime(ev.dataSfarsit) : '—'}`);
+                    }
                 }
             })
             .catch(() => navigate(-1))
@@ -170,12 +175,17 @@ export default function EventReservation() {
 
                             <div className="er-input-group">
                                 <label><Clock size={14} /> Interval Orar</label>
-                                <input
-                                    type="text"
-                                    value={intervalOrar}
-                                    onChange={e => setIntervalOrar(e.target.value)}
-                                    placeholder="ex: 18:00 – 21:00"
-                                />
+                                {event.intervaleOrare && event.intervaleOrare.length > 0 ? (
+                                    <select value={intervalOrar} onChange={e => setIntervalOrar(e.target.value)} required>
+                                        {event.intervaleOrare.map((intv, idx) => (
+                                            <option key={idx} value={intv}>{intv}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <div style={{ padding: '0.75rem', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.9rem' }}>
+                                        Nu sunt intervale disponibile.
+                                    </div>
+                                )}
                             </div>
 
                             <div className="er-input-group">

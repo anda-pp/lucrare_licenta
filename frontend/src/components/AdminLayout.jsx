@@ -15,7 +15,11 @@ import {
     CalendarCheck,
     Brush,
     Sun,
-    Moon
+    Moon,
+    Gift,
+    Trophy,
+    Map,
+    Ticket
 } from 'lucide-react';
 import './AdminLayout.css';
 
@@ -97,9 +101,26 @@ export default function AdminLayout() {
                         <Star size={20} />
                         <span className="nav-label">Recenzii</span>
                     </Link>
+                    <Link to="/admin/trails" className={`nav-item ${isActive('/admin/trails') ? 'active' : ''}`}>
+                        <Map size={20} />
+                        <span className="nav-label">Trasee Culturale</span>
+                    </Link>
                     <Link to="/admin/loyalty-cards" className={`nav-item ${isActive('/admin/loyalty-cards') ? 'active' : ''}`}>
                         <CreditCard size={20} />
                         <span className="nav-label">Carduri Fidelitate</span>
+                    </Link>
+                    <div className="nav-divider" />
+                    <Link to="/admin/rewards" className={`nav-item ${isActive('/admin/rewards') ? 'active' : ''}`}>
+                        <Gift size={20} />
+                        <span className="nav-label">Catalog Recompense</span>
+                    </Link>
+                    <Link to="/admin/badges" className={`nav-item ${isActive('/admin/badges') ? 'active' : ''}`}>
+                        <Trophy size={20} />
+                        <span className="nav-label">Catalog Insigne</span>
+                    </Link>
+                    <Link to="/admin/vouchers" className={`nav-item ${isActive('/admin/vouchers') ? 'active' : ''}`}>
+                        <Ticket size={20} />
+                        <span className="nav-label">Istoric Vouchere</span>
                     </Link>
                 </nav>
 
