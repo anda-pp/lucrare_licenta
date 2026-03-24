@@ -76,14 +76,19 @@ export const requireRole = (roles) => {
 };
 
 /**
- * Middleware to check if user is admin
+ * Middleware to check if user is superadmin
  */
-export const requireAdmin = requireRole(['Admin']);
+export const requireSuperadmin = requireRole(['Superadmin']);
 
 /**
- * Middleware to check if user is admin or personal
+ * Middleware to check if user is admin or superadmin
  */
-export const requireStaff = requireRole(['Personal']);
+export const requireAdmin = requireRole(['Admin', 'Superadmin']);
+
+/**
+ * Middleware to check if user is staff, admin, or superadmin
+ */
+export const requireStaff = requireRole(['Personal', 'Admin', 'Superadmin']);
 
 /**
  * Middleware to check if user owns the resource or is admin
@@ -104,7 +109,7 @@ export const requireOwnerOrAdmin = async (req, res, next) => {
 
         const userId = req.params.userId || req.body.userId || req.params.id;
         const isOwner = session.user.id === userId;
-        const isAdmin = session.user.role === 'Admin';
+        const isAdmin = session.user.role === 'Admin' || session.user.role === 'Superadmin';
 
         if (!isOwner && !isAdmin) {
             return res.status(403).json({

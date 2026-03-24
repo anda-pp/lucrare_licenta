@@ -72,11 +72,13 @@ export const getEventById = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         }
 
-        // Fetch ticket types for the event's location
-        const tickets = await db
-            .select()
-            .from(tipuriBilete)
-            .where(eq(tipuriBilete.codUnicLocatie, event.codUnicLocatie));
+        // Fetch ticket types for the event (daca nu e gratuit)
+        const tickets = event.isGratuit
+            ? []
+            : await db
+                .select()
+                .from(tipuriBilete)
+                .where(eq(tipuriBilete.codUnicEveniment, id));
 
         event.intervaleOrare = event.intervaleOrare ? JSON.parse(event.intervaleOrare) : [];
 
@@ -175,6 +177,8 @@ export const deleteEvent = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         }
 
+        // Sterge biletele evenimentului inainte
+        await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicEveniment, id));
         await db.delete(evenimente).where(eq(evenimente.id, id));
 
         res.json({

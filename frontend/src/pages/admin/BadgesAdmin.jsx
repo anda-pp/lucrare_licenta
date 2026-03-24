@@ -111,7 +111,7 @@ export default function BadgesAdmin() {
                     <h1>Catalog Insigne (Gamification)</h1>
                     <p>Gestionează vizualizarea grafică și textele insignelor acordate utilizatorilor.</p>
                 </div>
-                <button className="admin-btn-primary" onClick={() => handleOpenModal()}>
+                <button className="btn-primary icon-btn" onClick={() => handleOpenModal()}>
                     <Plus size={18} /> Adaugă Insignă
                 </button>
             </header>

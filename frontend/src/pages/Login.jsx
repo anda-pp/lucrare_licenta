@@ -43,12 +43,14 @@ export default function Login() {
                 const userRole = session?.data?.user?.role;
 
                 // Redirect based on role
-                if (userRole === 'Admin') {
-                    navigate('/admin');
+                if (userRole === 'Superadmin') {
+                    navigate('/superadmin');
+                } else if (userRole === 'Admin') {
+                    navigate('/admin'); 
                 } else if (userRole === 'Personal') {
                     navigate('/staff');
                 } else {
-                    navigate('/');
+                    navigate('/user');
                 }
             }
         } catch (err) {

@@ -1,12 +1,12 @@
 import express from 'express';
 import { upload, uploadLocationImages, getLocationImages, deleteImage } from '../controllers/upload.controller.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // All upload routes require authentication
 router.use(requireAuth);
-router.use(requireAdmin);
+router.use(requireSuperadmin);
 
 // Upload images for a location (admin only)
 router.post('/location/:locationId', upload.array('images', 10), uploadLocationImages);

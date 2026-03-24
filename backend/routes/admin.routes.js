@@ -6,13 +6,13 @@ import {
     getDashboardStats,
     getAllReservations,
 } from '../controllers/admin.controller.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // All admin routes require authentication and admin role
 router.use(requireAuth);
-router.use(requireAdmin);
+router.use(requireSuperadmin);
 
 // Dashboard
 router.get('/dashboard', getDashboardStats);

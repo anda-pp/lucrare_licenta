@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Create SQLite database connection — absolute path to backend/museum.db
-const sqlite = new Database(join(__dirname, '..', 'museum.db'));
+const sqlite = new Database(join(__dirname, 'museum.db'));
 
 // Enable foreign keys
 sqlite.pragma('foreign_keys = ON');

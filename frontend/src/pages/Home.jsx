@@ -10,13 +10,23 @@ export default function Home() {
 
     // Redirect users to their respective dashboards
     useEffect(() => {
-        if (!isPending && session?.user) {
-            if (session.user.role === 'Admin') {
-                navigate('/admin');
-            } else if (session.user.role === 'Personal') {
-                navigate('/staff');
-            } else if (session.user.role === 'Utilizator') {
-                navigate('/user');
+        if (!isPending) {
+            if (session?.user) {
+                if (session.user.role === 'Superadmin') {
+                    navigate('/superadmin');
+                } else if (session.user.role === 'Admin') {
+                    navigate('/admin');
+                } else if (session.user.role === 'Personal') {
+                    navigate('/staff');
+                } else if (session.user.role === 'Utilizator') {
+                    navigate('/user');
+                } else {
+                    // Fallback
+                    navigate('/user');
+                }
+            } else {
+                // If not logged in, take them straight to the Login/Welcome page
+                navigate('/login');
             }
         }
     }, [session, isPending, navigate]);
@@ -39,40 +49,8 @@ export default function Home() {
             <div className="home-content">
                 {session ? (
                     <div className="user-dashboard">
-                        <div className="welcome-header">
-                            <h1>Salut, {session.user.prenumeUtil}!</h1>
-                            <p className="welcome-subtitle">Bine ai revenit pe platformă</p>
-                        </div>
-
-                        <div className="construction-area">
-                            <div className="icon-wrapper">
-                                <Hammer size={48} strokeWidth={1.5} />
-                            </div>
-                            <h2>Aplicație în Lucru</h2>
-                            <p>
-                                Platforma pentru utilizatori este momentan în curs de dezvoltare.
-                                Revenim curând cu noutăți culturale!
-                            </p>
-
-                            <div className="progress-container">
-                                <div className="progress-bar">
-                                    <div className="progress-fill"></div>
-                                </div>
-                                <span className="progress-text">Progres: 30%</span>
-                            </div>
-                        </div>
-
-                        <div className="notify-card">
-                            <Mail className="notify-icon" size={20} strokeWidth={1.5} />
-                            <p>Te vom anunța pe <strong>{session.user.email}</strong> la lansare.</p>
-                        </div>
-
-                        <div className="actions">
-                            <button onClick={handleLogout} className="logout-button">
-                                <LogOut size={18} />
-                                Deconectare
-                            </button>
-                        </div>
+                        <div className="loading-spinner"></div>
+                        <p style={{marginTop: '1rem', color: '#666'}}>Te redirecționăm către panoul tău...</p>
                     </div>
                 ) : (
                     <div className="guest-info">

@@ -6,7 +6,7 @@ import {
     updateEvent,
     deleteEvent
 } from '../controllers/events.controller.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,8 +15,8 @@ router.get('/', getAllEvents);
 router.get('/:id', getEventById);
 
 // Protected routes (Admin only for now, could be Staff too based on business rules)
-router.post('/', requireAuth, requireAdmin, createEvent);
-router.put('/:id', requireAuth, requireAdmin, updateEvent);
-router.delete('/:id', requireAuth, requireAdmin, deleteEvent);
+router.post('/', requireAuth, requireSuperadmin, createEvent);
+router.put('/:id', requireAuth, requireSuperadmin, updateEvent);
+router.delete('/:id', requireAuth, requireSuperadmin, deleteEvent);
 
 export default router;

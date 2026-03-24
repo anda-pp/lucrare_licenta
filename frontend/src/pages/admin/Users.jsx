@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Filter, Trash2, ArrowUpDown, ArrowUp, ArrowDown, User, AlertCircle } from 'lucide-react';
+import { Filter, Trash2, ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from 'lucide-react';
 import './Users.css';
 
 export default function Users() {
@@ -10,7 +10,6 @@ export default function Users() {
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
-    const [filterRole, setFilterRole] = useState('');
     const [filterCard, setFilterCard] = useState('');
 
     useEffect(() => {
@@ -78,7 +77,6 @@ export default function Users() {
 
     // Filter users
     const filteredUsers = users.filter(user => {
-        if (filterRole && user.role !== filterRole) return false;
         if (filterCard && user.cardName !== filterCard) return false;
         return true;
     });
@@ -124,12 +122,6 @@ export default function Users() {
     };
 
     const getEmptyMessage = () => {
-        if (filterRole && filterCard) {
-            return `Nu există utilizatori cu rolul "${filterRole}" și cardul "${filterCard}"`;
-        }
-        if (filterRole) {
-            return `Nu există utilizatori cu rolul "${filterRole}"`;
-        }
         if (filterCard) {
             return `Nu există utilizatori cu cardul "${filterCard}"`;
         }
@@ -144,22 +136,10 @@ export default function Users() {
         <div className="users-page">
             <div className="page-header">
                 <h1>Utilizatori</h1>
+                <p className="subtitle">Conturi de vizitatori înregistrați în platformă.</p>
             </div>
 
             <div className="filters">
-                <div className="filter-group">
-                    <Filter size={18} className="filter-icon" />
-                    <select
-                        value={filterRole}
-                        onChange={(e) => setFilterRole(e.target.value)}
-                        className="filter-select"
-                    >
-                        <option value="">Toate rolurile</option>
-                        <option value="Utilizator">Utilizator</option>
-                        <option value="Personal">Personal</option>
-                    </select>
-                </div>
-
                 <div className="filter-group">
                     <Filter size={18} className="filter-icon" />
                     <select
@@ -192,7 +172,6 @@ export default function Users() {
                                     Utilizator {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th>Rol</th>
                             <th>Card Fidelitate</th>
                             <th onClick={() => handleSort('date')} className="sortable">
                                 <div className="th-content">
@@ -227,11 +206,6 @@ export default function Users() {
                                     </div>
                                 </td>
                                 <td>
-                                    <span className={`badge badge-role${user.role === 'Personal' ? ' badge-role-personal' : ''}`}>
-                                        {user.role || 'Utilizator'}
-                                    </span>
-                                </td>
-                                <td>
                                     <span className="badge user-badge-card">{user.cardName}</span>
                                 </td>
                                 <td>{formatDate(user.createdAt)}</td>
@@ -262,10 +236,10 @@ export default function Users() {
                             <AlertCircle size={48} />
                         </div>
                         <p>{getEmptyMessage()}</p>
-                        {(filterRole || filterCard) && (
+                        {filterCard && (
                             <button
                                 className="btn-reset-filters"
-                                onClick={() => { setFilterRole(''); setFilterCard(''); }}
+                                onClick={() => setFilterCard('')}
                             >
                                 Resetează filtrele
                             </button>

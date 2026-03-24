@@ -23,6 +23,16 @@ import RewardsAdmin from './pages/admin/RewardsAdmin';
 import BadgesAdmin from './pages/admin/BadgesAdmin';
 import TrailsAdmin from './pages/admin/TrailsAdmin';
 import VouchersAdmin from './pages/admin/VouchersAdmin';
+import StaffAccountsAdmin from './pages/admin/StaffAccountsAdmin';
+
+import MuseumAdminLayout from './components/MuseumAdminLayout';
+import MuseumDashboard from './pages/museum-admin/Dashboard';
+import MyMuseum from './pages/museum-admin/MyMuseum';
+import MuseumEvents from './pages/museum-admin/Events';
+import MuseumReservations from './pages/museum-admin/Reservations';
+import MuseumOrders from './pages/museum-admin/Orders';
+import MuseumReviews from './pages/museum-admin/Reviews';
+
 import StaffLayout from './components/StaffLayout';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Reports from './pages/staff/Reports';
@@ -41,6 +51,8 @@ import EventReservation from './pages/users/EventReservation';
 import Badges from './pages/users/Badges';
 import Rewards from './pages/users/Rewards';
 import CulturalTrails from './pages/users/CulturalTrails';
+import PaymentSuccess from './pages/users/PaymentSuccess';
+import PaymentCancel from './pages/users/PaymentCancel';
 import './App.css';
 
 function App() {
@@ -73,10 +85,12 @@ function App() {
                     <Route path="badges" element={<Badges />} />
                     <Route path="rewards" element={<Rewards />} />
                     <Route path="trails" element={<CulturalTrails />} />
+                    <Route path="payment/success" element={<PaymentSuccess />} />
+                    <Route path="payment/cancel" element={<PaymentCancel />} />
                 </Route>
 
-                {/* Admin routes */}
-                <Route path="/admin" element={<AdminLayout />}>
+                {/* Superadmin routes */}
+                <Route path="/superadmin" element={<AdminLayout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="locations" element={<Locations />} />
                     <Route path="users" element={<Users />} />
@@ -90,6 +104,17 @@ function App() {
                     <Route path="badges" element={<BadgesAdmin />} />
                     <Route path="trails" element={<TrailsAdmin />} />
                     <Route path="vouchers" element={<VouchersAdmin />} />
+                    <Route path="staff-accounts" element={<StaffAccountsAdmin />} />
+                </Route>
+
+                {/* Museum Admin routes (Manager Local) */}
+                <Route path="/admin" element={<MuseumAdminLayout />}>
+                    <Route index element={<MuseumDashboard />} />
+                    <Route path="my-museum" element={<MyMuseum />} />
+                    <Route path="events" element={<MuseumEvents />} />
+                    <Route path="reservations" element={<MuseumReservations />} />
+                    <Route path="orders" element={<MuseumOrders />} />
+                    <Route path="reviews" element={<MuseumReviews />} />
                 </Route>
 
                 {/* Staff routes */}

@@ -1,6 +1,6 @@
 import { db } from '../db/db.js';
 import { user, recenzii, comenzi, carduriClienti, cardFidelitate, locatiiPublice, rezervariEvenimente, evenimente } from '../db/schema.js';
-import { eq, sql, ne, desc } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 
 /**
  * GET /api/admin/users
@@ -28,7 +28,7 @@ export const getAllUsers = async (req, res) => {
             .leftJoin(cardFidelitate, eq(carduriClienti.tipUnicCard, cardFidelitate.tipUnicCard))
             .leftJoin(comenzi, eq(user.id, comenzi.codUnicUtilizator))
             .leftJoin(recenzii, eq(user.id, recenzii.codUnicUtilizator))
-            .where(ne(user.role, 'Admin')) // Exclude admin users
+            .where(eq(user.role, 'Utilizator'))
             .groupBy(user.id);
 
         res.json({

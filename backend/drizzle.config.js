@@ -2,10 +2,10 @@ import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
     schema: './db/schema.js',
-    out: './drizzle',
+    out: './db/drizzle',
     dialect: 'sqlite',
     dbCredentials: {
-        url: './museum.db',
+        url: './db/museum.db',
     },
     verbose: true,
     strict: true,

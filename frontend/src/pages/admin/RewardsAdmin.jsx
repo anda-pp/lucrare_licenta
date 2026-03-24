@@ -97,8 +97,8 @@ export default function RewardsAdmin() {
                     <h1>Management Recompense</h1>
                     <p>Adaugă, editează sau dezactivează recompensele disponibile la schimb pe puncte.</p>
                 </div>
-                <button className="admin-btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Recompensă Nouă
+                <button className="btn-primary icon-btn" onClick={() => handleOpenModal()}>
+                    <Plus size={18} /> Adaugă Recompensă
                 </button>
             </header>
 
@@ -158,7 +158,7 @@ export default function RewardsAdmin() {
             {showModal && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h2>{editingId ? 'Editează Recompensa' : 'Recompensă Nouă'}</h2>
+                        <h2>{editingId ? 'Editează Recompensa' : 'Adaugă Recompensă'}</h2>
                         <form onSubmit={handleSave} className="admin-form">
                             <div className="form-group">
                                 <label>Nume Recompensă *</label>

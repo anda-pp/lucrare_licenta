@@ -32,7 +32,7 @@ export default function AdminLayout() {
     useEffect(() => {
         if (!isPending && !session) {
             navigate('/login');
-        } else if (!isPending && session && session.user.role !== 'Admin') {
+        } else if (!isPending && session && session.user.role !== 'Superadmin') {
             navigate('/');
         }
     }, [session, isPending, navigate]);
@@ -50,7 +50,7 @@ export default function AdminLayout() {
         return null;
     }
 
-    if (session.user.role !== 'Admin') {
+    if (session.user.role !== 'Superadmin') {
         return null;
     }
 
@@ -62,65 +62,70 @@ export default function AdminLayout() {
                 <div className="sidebar-header">
                     <div className="logo-area">
                         <Palette className="logo-icon-small" size={24} />
-                        <h2>Admin Panel</h2>
+                        <h2>Superadmin Dashboard</h2>
                     </div>
                     <p className="user-info">{session.user.name}</p>
                 </div>
 
                 <nav className="sidebar-nav">
-                    <Link to="/admin" className={`nav-item ${isActive('/admin') ? 'active' : ''}`}>
+                    <Link to="/superadmin" className={`nav-item ${isActive('/superadmin') ? 'active' : ''}`}>
                         <LayoutDashboard size={20} />
                         <span className="nav-label">Dashboard</span>
                     </Link>
-                    <Link to="/admin/locations" className={`nav-item ${isActive('/admin/locations') ? 'active' : ''}`}>
+                    <Link to="/superadmin/locations" className={`nav-item ${isActive('/superadmin/locations') ? 'active' : ''}`}>
                         <Building2 size={20} />
                         <span className="nav-label">Muzee &amp; Galerii</span>
                     </Link>
-                    <Link to="/admin/events" className={`nav-item ${isActive('/admin/events') ? 'active' : ''}`}>
+                    <Link to="/superadmin/events" className={`nav-item ${isActive('/superadmin/events') ? 'active' : ''}`}>
                         <Calendar size={20} />
                         <span className="nav-label">Evenimente</span>
                     </Link>
-                    <Link to="/admin/reservations" className={`nav-item ${isActive('/admin/reservations') ? 'active' : ''}`}>
+                    <Link to="/superadmin/reservations" className={`nav-item ${isActive('/superadmin/reservations') ? 'active' : ''}`}>
                         <CalendarCheck size={20} />
                         <span className="nav-label">Rezervări</span>
                     </Link>
-                    <Link to="/admin/artists" className={`nav-item ${isActive('/admin/artists') ? 'active' : ''}`}>
+                    <Link to="/superadmin/artists" className={`nav-item ${isActive('/superadmin/artists') ? 'active' : ''}`}>
                         <Brush size={20} />
                         <span className="nav-label">Artiști</span>
                     </Link>
                     <div className="nav-divider" />
-                    <Link to="/admin/users" className={`nav-item ${isActive('/admin/users') ? 'active' : ''}`}>
+                    <Link to="/superadmin/users" className={`nav-item ${isActive('/superadmin/users') ? 'active' : ''}`}>
                         <Users size={20} />
                         <span className="nav-label">Utilizatori</span>
                     </Link>
-                    <Link to="/admin/orders" className={`nav-item ${isActive('/admin/orders') ? 'active' : ''}`}>
+                    <Link to="/superadmin/orders" className={`nav-item ${isActive('/superadmin/orders') ? 'active' : ''}`}>
                         <ShoppingBag size={20} />
                         <span className="nav-label">Comenzi</span>
                     </Link>
-                    <Link to="/admin/reviews" className={`nav-item ${isActive('/admin/reviews') ? 'active' : ''}`}>
+                    <Link to="/superadmin/reviews" className={`nav-item ${isActive('/superadmin/reviews') ? 'active' : ''}`}>
                         <Star size={20} />
                         <span className="nav-label">Recenzii</span>
                     </Link>
-                    <Link to="/admin/trails" className={`nav-item ${isActive('/admin/trails') ? 'active' : ''}`}>
+                    <Link to="/superadmin/trails" className={`nav-item ${isActive('/superadmin/trails') ? 'active' : ''}`}>
                         <Map size={20} />
                         <span className="nav-label">Trasee Culturale</span>
                     </Link>
-                    <Link to="/admin/loyalty-cards" className={`nav-item ${isActive('/admin/loyalty-cards') ? 'active' : ''}`}>
+                    <Link to="/superadmin/loyalty-cards" className={`nav-item ${isActive('/superadmin/loyalty-cards') ? 'active' : ''}`}>
                         <CreditCard size={20} />
                         <span className="nav-label">Carduri Fidelitate</span>
                     </Link>
                     <div className="nav-divider" />
-                    <Link to="/admin/rewards" className={`nav-item ${isActive('/admin/rewards') ? 'active' : ''}`}>
+                    <Link to="/superadmin/rewards" className={`nav-item ${isActive('/superadmin/rewards') ? 'active' : ''}`}>
                         <Gift size={20} />
                         <span className="nav-label">Catalog Recompense</span>
                     </Link>
-                    <Link to="/admin/badges" className={`nav-item ${isActive('/admin/badges') ? 'active' : ''}`}>
+                    <Link to="/superadmin/badges" className={`nav-item ${isActive('/superadmin/badges') ? 'active' : ''}`}>
                         <Trophy size={20} />
                         <span className="nav-label">Catalog Insigne</span>
                     </Link>
-                    <Link to="/admin/vouchers" className={`nav-item ${isActive('/admin/vouchers') ? 'active' : ''}`}>
+                    <Link to="/superadmin/vouchers" className={`nav-item ${isActive('/superadmin/vouchers') ? 'active' : ''}`}>
                         <Ticket size={20} />
-                        <span className="nav-label">Istoric Vouchere</span>
+                        <span className="nav-label">Vouchere</span>
+                    </Link>
+                    <div className="nav-divider" />
+                    <Link to="/superadmin/staff-accounts" className={`nav-item ${isActive('/superadmin/staff-accounts') ? 'active' : ''}`}>
+                        <Users size={20} />
+                        <span className="nav-label">Staff & Admini Muzee</span>
                     </Link>
                 </nav>
 

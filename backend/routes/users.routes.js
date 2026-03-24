@@ -1,8 +1,9 @@
 import express from 'express';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 import { db } from '../db/db.js';
 import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi, rezervariEvenimente, user, recompenzeRevendicate, recompense } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
+import { updateUserLoyaltyPoints } from '../services/loyaltyPoints.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
@@ -198,22 +199,9 @@ router.post('/checkout', requireAuth, async (req, res) => {
             totalFactura: finalTotal
         });
 
-        // 4. Acordare puncte fidelitate (1 leu cheltuit = 1 punct)
-        const puncteDeAdaugat = Math.floor(finalTotal);
-        if (puncteDeAdaugat > 0) {
-            // Cautam cardul utilizatorului
-            const userCard = await db.select().from(carduriClienti)
-                .where(eq(carduriClienti.codUnicUtilizator, req.user.id))
-                .limit(1);
-
-            if (userCard.length > 0) {
-                // Adaugam punctele
-                await db.update(carduriClienti)
-                    .set({
-                        puncteAcumulate: sql`${carduriClienti.puncteAcumulate} + ${puncteDeAdaugat}`
-                    })
-                    .where(eq(carduriClienti.nrUnicCard, userCard[0].nrUnicCard));
-            }
+        // 4. Acordare puncte fidelitate (1 leu cheltuit = 1 punct, auto-upgrade card tier)
+        if (finalTotal > 0) {
+            await updateUserLoyaltyPoints(req.user.id, finalTotal);
         }
 
         // 5. Marcam Promo Code ca folosit
@@ -572,7 +560,7 @@ router.delete('/my-favorites/:locationId', requireAuth, async (req, res) => {
  * GET /api/users
  * Get all users (Admin only)
  */
-router.get('/', requireAdmin, async (req, res) => {
+router.get('/', requireSuperadmin, async (req, res) => {
     try {
         // TODO: Implement get all users from database
         res.json({
@@ -624,7 +612,7 @@ router.put('/:id', requireAuth, async (req, res) => {
  * DELETE /api/users/:id
  * Delete user (Admin only)
  */
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireSuperadmin, async (req, res) => {
     try {
         // TODO: Implement delete user from database
         res.json({

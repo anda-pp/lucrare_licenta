@@ -6,7 +6,7 @@ import {
     updateArtist,
     deleteArtist
 } from '../controllers/artists.controller.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,8 +15,8 @@ router.get('/', getAllArtists);
 router.get('/:id', getArtistById);
 
 // Protected routes (Admin only for now)
-router.post('/', requireAuth, requireAdmin, createArtist);
-router.put('/:id', requireAuth, requireAdmin, updateArtist);
-router.delete('/:id', requireAuth, requireAdmin, deleteArtist);
+router.post('/', requireAuth, requireSuperadmin, createArtist);
+router.put('/:id', requireAuth, requireSuperadmin, updateArtist);
+router.delete('/:id', requireAuth, requireSuperadmin, deleteArtist);
 
 export default router;

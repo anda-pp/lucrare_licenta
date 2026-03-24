@@ -2,7 +2,7 @@ import express from 'express';
 import { db } from '../db/db.js';
 import { sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -185,7 +185,7 @@ router.post('/check', async (req, res) => {
 // ==========================================
 
 // GET /api/badges/admin - Obține catalogul complet pentru admin
-router.get('/admin', requireAdmin, async (req, res) => {
+router.get('/admin', requireSuperadmin, async (req, res) => {
     try {
         const badges = await db.all(sql`SELECT * FROM insigne ORDER BY valoare_conditie ASC`);
         res.json({ success: true, data: badges });
@@ -196,7 +196,7 @@ router.get('/admin', requireAdmin, async (req, res) => {
 });
 
 // POST /api/badges/admin - Adăugare insignă nouă (doar vizual/catalog)
-router.post('/admin', requireAdmin, async (req, res) => {
+router.post('/admin', requireSuperadmin, async (req, res) => {
     try {
         const { id, nume, descriere, iconita, conditie, valoareConditie, culoare, mesajMotivatie } = req.body;
 
@@ -217,7 +217,7 @@ router.post('/admin', requireAdmin, async (req, res) => {
 });
 
 // PUT /api/badges/admin/:id - Editare insignă existentă
-router.put('/admin/:id', requireAdmin, async (req, res) => {
+router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, iconita, conditie, valoareConditie, culoare, mesajMotivatie } = req.body;
         const badgeId = req.params.id;
@@ -242,7 +242,7 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/badges/admin/:id - Ștergere insignă din catalog
-router.delete('/admin/:id', requireAdmin, async (req, res) => {
+router.delete('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const badgeId = req.params.id;
 

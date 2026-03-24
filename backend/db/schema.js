@@ -14,7 +14,9 @@ export const user = sqliteTable('user', {
     image: text('image'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-    role: text('role').default('Utilizator'), // Admin, Personal, Utilizator
+    role: text('role').default('Utilizator'), // Superadmin, Admin, Personal, Utilizator
+    muzeuId: text('muzeu_id'), // FK -> locatii_publice.cod_unic_locatie (constraint in DB)
+    telefon: text('telefon'),
 });
 
 // BetterAuth Session table
@@ -77,7 +79,8 @@ export const utilizatori = sqliteTable('utilizatori', {
     orasUtil: text('oras_util').notNull(),
     judetUtil: text('judet_util').references(() => judete.codJudet),
     adresaUtil: text('adresa_util').notNull(),
-    rolUtil: text('rol_util', { enum: ['Admin', 'Utilizator', 'Personal'] }).notNull(),
+    rolUtil: text('rol_util', { enum: ['Superadmin', 'Admin', 'Utilizator', 'Personal'] }).notNull(),
+    muzeuId: text('muzeu_id').references(() => locatiiPublice.codUnicLocatie),
     dataInregistrare: text('data_inregistrare').default(sql`CURRENT_TIMESTAMP`),
     avatarUrl: text('avatar_url'), // Pentru upload avatar
 });
@@ -119,6 +122,7 @@ export const locatiiPublice = sqliteTable('locatii_publice', {
 export const tipuriBilete = sqliteTable('tipuri_bilete', {
     codUnicTipBilet: text('cod_unic_tip_bilet').primaryKey(),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
+    codUnicEveniment: text('cod_unic_eveniment').references(() => evenimente.id), // FK catre evenimente.id (adaugat prin migrare)
     tipBilet: text('tip_bilet', { enum: ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'] }).notNull(),
     pret: real('pret').notNull(),
 });
@@ -192,6 +196,7 @@ export const evenimente = sqliteTable('evenimente', {
     imagineUrl: text('imagine_url'),
     isGratuit: integer('is_gratuit', { mode: 'boolean' }).default(0),
     intervaleOrare: text('intervale_orare'), // Stocheaza un array JSON de stringuri: '["10:00-12:00"]'
+    bilete: text('bilete'), // Array JSON de obiecte: '[{"tip":"Adult","pret":30}]'
 });
 
 // Tabela Artisti

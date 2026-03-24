@@ -3,7 +3,7 @@ import { db } from '../db/db.js';
 import { trasee, traseeLocatii, locatiiPublice } from '../db/schema.js';
 import { sql, eq, and, asc } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
 });
 
 // Admin-only rutes: POST, PUT, DELETE
-router.post('/admin', requireAdmin, async (req, res) => {
+router.post('/admin', requireSuperadmin, async (req, res) => {
     try {
         const { titlu, descriere, durataEstimata, oras, imagineUrl, activ, locatiiValide } = req.body;
 
@@ -102,7 +102,7 @@ router.post('/admin', requireAdmin, async (req, res) => {
     }
 });
 
-router.put('/admin/:id', requireAdmin, async (req, res) => {
+router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const trailId = req.params.id;
         const { titlu, descriere, durataEstimata, oras, imagineUrl, activ, locatiiValide } = req.body;
@@ -133,7 +133,7 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
     }
 });
 
-router.delete('/admin/:id', requireAdmin, async (req, res) => {
+router.delete('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const trailId = req.params.id;
         db.delete(trasee).where(eq(trasee.id, trailId)).run(); // cascade will delete links

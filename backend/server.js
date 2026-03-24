@@ -15,9 +15,13 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
 }));
+
+// Stripe webhook needs raw body BEFORE express.json()
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -66,6 +70,7 @@ app.all('/api/auth/*', async (req, res) => {
 
 // API Routes
 import usersRoutes from './routes/users.routes.js';
+import superadminRoutes from './routes/superadmin.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import loyaltyCardsRoutes from './routes/loyaltyCards.routes.js';
@@ -81,6 +86,8 @@ import artistsRoutes from './routes/artists.routes.js';
 import badgesRoutes from './routes/badges.js';
 import rewardsRoutes from './routes/rewards.js';
 import trailsRoutes from './routes/trails.js';
+import stripeRoutes from './routes/stripe.routes.js';
+import museumAdminRoutes from './routes/museum-admin.routes.js';
 
 app.use('/api/users', usersRoutes);
 app.use('/api/locations', locationsRoutes);
@@ -98,6 +105,9 @@ app.use('/api/artists', artistsRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/trails', trailsRoutes);
+app.use('/api/users/superadmin', superadminRoutes);
+app.use('/api/museum-admin', museumAdminRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

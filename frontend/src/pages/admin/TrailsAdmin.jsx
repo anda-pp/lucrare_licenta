@@ -125,8 +125,8 @@ export default function TrailsAdmin() {
                     <h1>Trasee Culturale Personalizate</h1>
                     <p>Creează pachete și tururi personalizate grupând locațiile existente.</p>
                 </div>
-                <button className="admin-btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Traseu Nou
+                <button className="btn-primary icon-btn" onClick={() => handleOpenModal()}>
+                    <Plus size={18} /> Adaugă Traseu
                 </button>
             </header>
 

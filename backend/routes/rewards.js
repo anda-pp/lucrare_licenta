@@ -3,7 +3,7 @@ import { db } from '../db/db.js';
 import { sql, eq, desc } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { recompense, recompenzeRevendicate, user } from '../db/schema.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -131,7 +131,7 @@ router.post('/:id/claim', async (req, res) => {
 // ==========================================
 
 // POST /api/rewards — Creare recompensă nouă (Doar Admin)
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, puncteNecesare, tip } = req.body;
         const valoare = parseFloat(req.body.valoare) || 0;
@@ -154,7 +154,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // PUT /api/rewards/:id — Editare recompensă (Doar Admin)
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, puncteNecesare, tip, activ } = req.body;
         const valoare = parseFloat(req.body.valoare) || 0;
@@ -179,7 +179,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/rewards/:id — Ștergere/Dezactivare recompensă (Doar Admin)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireSuperadmin, async (req, res) => {
     try {
         const rewardId = req.params.id;
 
@@ -197,7 +197,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/rewards/admin/claims — Istoric recompense revendicate (Doar Admin)
-router.get('/admin/claims', requireAdmin, async (req, res) => {
+router.get('/admin/claims', requireSuperadmin, async (req, res) => {
     try {
         const claims = await db.select({
             id: recompenzeRevendicate.id,

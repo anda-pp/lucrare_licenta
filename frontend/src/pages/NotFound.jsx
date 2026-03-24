@@ -15,9 +15,9 @@ export default function NotFound() {
                     <Link to="/" className="btn-home">
                         🏠 Acasă
                     </Link>
-                    <button onClick={() => window.history.back()} className="btn-back">
-                        ← Înapoi
-                    </button>
+                    <Link to="/login" className="btn-back" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+                        ← Înapoi la Autentificare
+                    </Link>
                 </div>
             </div>
         </div>

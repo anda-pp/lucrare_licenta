@@ -6,7 +6,7 @@ import {
     updateLoyaltyCard,
     deleteLoyaltyCard,
 } from '../controllers/loyaltyCards.controller.js';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
+import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,8 +15,8 @@ router.get('/', getAllLoyaltyCards);
 router.get('/:id', getLoyaltyCardById);
 
 // Admin only routes
-router.post('/', requireAdmin, createLoyaltyCard);
-router.put('/:id', requireAdmin, updateLoyaltyCard);
-router.delete('/:id', requireAdmin, deleteLoyaltyCard);
+router.post('/', requireSuperadmin, createLoyaltyCard);
+router.put('/:id', requireSuperadmin, updateLoyaltyCard);
+router.delete('/:id', requireSuperadmin, deleteLoyaltyCard);
 
 export default router;
