@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Gift, Star, Ticket, MapPin, Zap, BookOpen, CheckCircle, Tag, Info } from 'lucide-react';
+import { useToast } from '../../components/common/Toast';
 import './Rewards.css';
 
 const TIP_ICON = {
@@ -20,6 +21,7 @@ export default function Rewards() {
     const [loading, setLoading] = useState(true);
     const [claimingId, setClaimingId] = useState(null);
     const [tab, setTab] = useState('catalog');
+    const toast = useToast();
 
     useEffect(() => {
         fetchData();
@@ -49,11 +51,11 @@ export default function Rewards() {
         try {
             const res = await axios.post(`http://localhost:5000/api/rewards/${id}/claim`, {}, { withCredentials: true });
             if (res.data.success) {
-                alert(`✅ Recompensă revendicată!\nCod voucher: ${res.data.data.codVoucher}`);
+                toast.success(`Cod voucher: ${res.data.data.codVoucher}`, 'Recompensă revendicată!');
                 fetchData();
             }
         } catch (err) {
-            alert(err.response?.data?.message || 'Eroare la revendicare');
+            toast.error(err.response?.data?.message || 'Eroare la revendicare');
         } finally {
             setClaimingId(null);
         }

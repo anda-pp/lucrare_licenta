@@ -1,8 +1,9 @@
 import { db } from '../db/db.js';
-import { locatiiPublice, recenzii, tipuriBilete } from '../db/schema.js';
+import { locatiiPublice, recenzii, tipuriBilete, user } from '../db/schema.js';
 import { eq, sql, and, like } from 'drizzle-orm';
 import { createLocationSchema, updateLocationSchema } from '../validators/schemas.js';
 import crypto from 'crypto';
+import { sendNewMuseum } from '../lib/mailer.js';
 
 /**
  * GET /api/locations
@@ -142,6 +143,24 @@ export const createLocation = async (req, res) => {
             message: 'Locația a fost creată cu succes',
             data: { codUnicLocatie },
         });
+
+        // Notify all users about the new museum/gallery (fire-and-forget)
+        if (validatedData.statusLocatie === 'Activ') {
+            (async () => {
+                try {
+                    const allUsers = await db.select({ email: user.email })
+                        .from(user).where(eq(user.role, 'Utilizator'));
+                    for (const u of allUsers) {
+                        if (!u.email) continue;
+                        await sendNewMuseum(u.email, {
+                            locationName: validatedData.numeLoc,
+                            city: validatedData.orasLoc,
+                            type: validatedData.tipLocatie || 'Muzeu',
+                        }).catch(e => console.error(`New museum email to ${u.email} failed:`, e.message));
+                    }
+                } catch (e) { console.error('New museum notification error:', e.message); }
+            })();
+        }
     } catch (error) {
         if (error.name === 'ZodError') {
             return res.status(400).json({

@@ -25,7 +25,7 @@ function getStripe() {
  */
 router.post('/create-payment-intent', requireAuth, async (req, res) => {
     try {
-        const { locationId, tickets, promoCode } = req.body;
+        const { locationId, tickets, promoCode, dataVizita } = req.body;
 
         if (!locationId || !tickets || tickets.length === 0) {
             return res.status(400).json({ success: false, error: 'Date invalide' });
@@ -111,6 +111,7 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
                 tickets: JSON.stringify(validTickets),
                 promoCode: promoCode || '',
                 promoId: promoDetails?.id || '',
+                dataVizita: dataVizita || '',
             },
         });
 
@@ -149,6 +150,7 @@ router.post('/webhook', async (req, res) => {
             const userId = meta.userId;
             const tickets = JSON.parse(meta.tickets || '[]');
             const promoId = meta.promoId;
+            const dataVizita = meta.dataVizita || null;
             const finalTotal = pi.amount / 100;
 
             // 1. Create Order
@@ -167,6 +169,7 @@ router.post('/webhook', async (req, res) => {
                     codUnicTipBilet: t.codUnicTipBilet,
                     numarComanda: newOrder.id,
                     cantitate: t.cantitate,
+                    dataVizita: dataVizita || null,
                 }));
 
             if (ticketInserts.length > 0) {

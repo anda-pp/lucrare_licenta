@@ -122,7 +122,7 @@ export default function LocationDetail() {
 
                     {/* Ticket prices */}
                     {location.ticketTypes?.length > 0 && (
-                        <LocationTickets tickets={location.ticketTypes} locationId={id} />
+                        <LocationTickets tickets={location.ticketTypes} locationId={id} orar={location.orar} />
                     )}
                 </div>
 
@@ -134,7 +134,13 @@ export default function LocationDetail() {
 
             {/* Reviews (Full Width) */}
             <div className="loc-detail-reviews-container" style={{ marginTop: '2rem' }}>
-                <LocationReviews reviews={location.reviews || []} avgRating={avgRating} />
+                <LocationReviews
+                    reviews={location.reviews || []}
+                    avgRating={avgRating}
+                    session={session}
+                    locationId={id}
+                    onReviewAdded={fetchLocation}
+                />
             </div>
         </div>
     );

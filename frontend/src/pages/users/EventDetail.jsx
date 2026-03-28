@@ -112,7 +112,12 @@ export default function EventDetail() {
                             (event.ticketTypes?.length > 0) ? (
                                 <div className="detail-section">
                                     <h2 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>Bilete Disponibile</h2>
-                                    <LocationTickets tickets={event.ticketTypes} locationId={event.codUnicLocatie} />
+                                    <LocationTickets
+                                    tickets={event.ticketTypes}
+                                    locationId={event.codUnicLocatie}
+                                    minDate={event.dataStart?.split('T')[0]}
+                                    maxDate={event.dataSfarsit?.split('T')[0] || event.dataStart?.split('T')[0]}
+                                />
                                 </div>
                             ) : (
                                 <div className="detail-section" style={{ textAlign: 'center', padding: '3rem' }}>

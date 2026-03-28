@@ -305,6 +305,100 @@
     margin: 0 0 1rem;
 }
 
+/* ── Date picker ────────────────────────────────────────────────── */
+.loc-date-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.1rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.loc-date-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.loc-date-input {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-input-bg, var(--color-bg));
+    color: var(--color-navy);
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.loc-date-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+}
+
+.loc-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    filter: invert(0.3) sepia(1) saturate(3) hue-rotate(230deg);
+}
+
+.loc-date-input--error {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.loc-date-input--error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.loc-date-closed-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.55rem 0.75rem;
+    background: rgba(239, 68, 68, 0.07);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.loc-date-closed-msg svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.loc-date-hint {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.dark-theme .loc-date-input {
+    background: var(--color-card);
+    color: var(--color-text-main);
+}
+
+.dark-theme .loc-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+}
+
+.dark-theme .loc-date-closed-msg {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
 .loc-tickets-list {
     display: flex;
     flex-direction: column;
@@ -503,6 +597,15 @@
     color: var(--color-text-muted);
     min-width: 50px;
     text-align: center;
+}
+
+/* ---- REVIEW FORM ---- */
+.loc-review-form {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    background: linear-gradient(135deg, #faf5ff, #f5f3ff);
+    border: 1px solid #ede9fe;
+    border-radius: var(--radius-md);
 }
 
 /* ---- TICKET SELECTION & ACTIONS ---- */

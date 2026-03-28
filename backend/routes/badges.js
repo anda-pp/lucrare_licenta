@@ -14,84 +14,57 @@ const parseDateToEpoch = (dateVal) => {
     return Math.floor(new Date(dateVal).getTime() / 1000);
 };
 
-// All badge conditions and their DB queries
-const BADGE_DEFINITIONS = [
-    {
-        id: 'b_reviews_5',
-        conditie: 'reviews_5',
-        valoareConditie: 5,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} ORDER BY data_recenzie ASC`);
-            return { score: rows.length, achievedAt: rows.length >= 5 ? parseDateToEpoch(rows[4].dt) : null };
-        }
+// Badge condition handlers — keyed by `conditie` value from DB
+// Each handler receives (userId, targetValue) and returns { score, achievedAt }
+const BADGE_HANDLERS = {
+    reviews: async (userId, target) => {
+        const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} ORDER BY data_recenzie ASC`);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-    {
-        id: 'b_reviews_1_rating5',
-        conditie: 'rating_5',
-        valoareConditie: 1,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} AND rating = 5 ORDER BY data_recenzie ASC`);
-            return { score: rows.length, achievedAt: rows.length >= 1 ? parseDateToEpoch(rows[0].dt) : null };
-        }
+    perfect_rating: async (userId, target) => {
+        const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} AND rating = 5 ORDER BY data_recenzie ASC`);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-    {
-        id: 'b_orders_10',
-        conditie: 'orders_10',
-        valoareConditie: 10,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`SELECT data_comanda as dt FROM comenzi WHERE cod_unic_utilizator = ${userId} AND status_plata = 'Plătit' ORDER BY data_comanda ASC`);
-            return { score: rows.length, achievedAt: rows.length >= 10 ? parseDateToEpoch(rows[9].dt) : null };
-        }
+    orders: async (userId, target) => {
+        const rows = await db.all(sql`SELECT data_comanda as dt FROM comenzi WHERE cod_unic_utilizator = ${userId} AND status_plata = 'Plătit' ORDER BY data_comanda ASC`);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-    {
-        id: 'b_museums_3',
-        conditie: 'museums_3',
-        valoareConditie: 3,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`
-                SELECT MIN(c.data_comanda) as dt
-                FROM comenzi c
-                JOIN bilete_cumparate bc ON bc.numar_comanda = c.numar_comanda
-                JOIN tipuri_bilete tb ON bc.cod_unic_tip_bilet = tb.cod_unic_tip_bilet
-                WHERE c.cod_unic_utilizator = ${userId} AND c.status_plata = 'Plătit'
-                GROUP BY tb.cod_unic_locatie
-                ORDER BY dt ASC
-            `);
-            return { score: rows.length, achievedAt: rows.length >= 3 ? parseDateToEpoch(rows[2].dt) : null };
-        }
+    museums: async (userId, target) => {
+        const rows = await db.all(sql`
+            SELECT MIN(c.data_comanda) as dt
+            FROM comenzi c
+            JOIN bilete_cumparate bc ON bc.numar_comanda = c.numar_comanda
+            JOIN tipuri_bilete tb ON bc.cod_unic_tip_bilet = tb.cod_unic_tip_bilet
+            WHERE c.cod_unic_utilizator = ${userId} AND c.status_plata = 'Plătit'
+            GROUP BY tb.cod_unic_locatie
+            ORDER BY dt ASC
+        `);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-    {
-        id: 'b_events_3',
-        conditie: 'events_3',
-        valoareConditie: 3,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`SELECT data_rezervare as dt FROM rezervari_evenimente WHERE user_id = ${userId} ORDER BY data_rezervare ASC`);
-            return { score: rows.length, achievedAt: rows.length >= 3 ? parseDateToEpoch(rows[2].dt) : null };
-        }
+    events: async (userId, target) => {
+        const rows = await db.all(sql`SELECT data_rezervare as dt FROM rezervari_evenimente WHERE user_id = ${userId} ORDER BY data_rezervare ASC`);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-    {
-        id: 'b_loyalty_gold',
-        conditie: 'loyalty_gold',
-        valoareConditie: 1,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`
-                SELECT cc.nr_unic_card FROM carduri_clienti cc
-                JOIN card_fidelitate cf ON cc.tip_unic_card = cf.tip_unic_card
-                WHERE cc.cod_unic_utilizator = ${userId} AND cf.tip_unic_card IN ('GOLD','PLATINUM')
-            `);
-            return { score: rows.length, achievedAt: rows.length >= 1 ? Math.floor(Date.now() / 1000) : null };
-        }
+    loyalty_gold: async (userId) => {
+        const rows = await db.all(sql`
+            SELECT cc.nr_unic_card FROM carduri_clienti cc
+            JOIN card_fidelitate cf ON cc.tip_unic_card = cf.tip_unic_card
+            WHERE cc.cod_unic_utilizator = ${userId} AND cf.tip_unic_card IN ('GOLD','PLATINUM')
+        `);
+        return { score: rows.length, achievedAt: rows.length >= 1 ? Math.floor(Date.now() / 1000) : null };
     },
-    {
-        id: 'b_favorites_5',
-        conditie: 'favorites_5',
-        valoareConditie: 5,
-        getScore: async (userId) => {
-            const rows = await db.all(sql`SELECT data_adaugarii as dt FROM favorite_locatii WHERE cod_unic_utilizator = ${userId} ORDER BY data_adaugarii ASC`);
-            return { score: rows.length, achievedAt: rows.length >= 5 ? parseDateToEpoch(rows[4].dt) : null };
-        }
+    favorites_5: async (userId, target) => {
+        const rows = await db.all(sql`SELECT data_adaugarii as dt FROM favorite_locatii WHERE cod_unic_utilizator = ${userId} ORDER BY data_adaugarii ASC`);
+        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
     },
-];
+};
+
+// Evaluates a badge's condition for a given user using the handler keyed by badge.conditie
+async function evaluateBadge(badge, userId) {
+    const handler = BADGE_HANDLERS[badge.conditie];
+    if (!handler) return { score: 0, achievedAt: null };
+    return handler(userId, badge.valoare_conditie);
+}
 
 // GET /api/badges/my — insignele utilizatorului + toate disponibile
 router.get('/my', async (req, res) => {
@@ -114,8 +87,7 @@ router.get('/my', async (req, res) => {
         const newlyEarned = [];
 
         for (const badge of allBadges) {
-            const def = BADGE_DEFINITIONS.find(d => d.id === badge.id);
-            const { score, achievedAt } = def ? await def.getScore(userId) : { score: 0, achievedAt: null };
+            const { score, achievedAt } = await evaluateBadge(badge, userId);
             let isEarned = earnedMap.has(badge.id);
             let badgeDate = isEarned ? earnedMap.get(badge.id) : null;
 
@@ -152,24 +124,23 @@ router.post('/check', async (req, res) => {
         const userId = req.user?.id;
         if (!userId) return res.status(401).json({ success: false, message: 'Neautentificat' });
 
+        const allBadges = await db.all(sql`SELECT * FROM insigne`);
         const newlyEarned = [];
 
-        for (const def of BADGE_DEFINITIONS) {
-            // Check if already earned
+        for (const badge of allBadges) {
             const existing = await db.all(sql`
-                SELECT id FROM insigne_utilizatori WHERE user_id = ${userId} AND insigna_id = ${def.id}
+                SELECT id FROM insigne_utilizatori WHERE user_id = ${userId} AND insigna_id = ${badge.id}
             `);
             if (existing.length > 0) continue;
 
-            const score = await def.getScore(userId);
-            if (score >= def.valoareConditie) {
-                // Award the badge
+            const { score, achievedAt } = await evaluateBadge(badge, userId);
+            if (score >= badge.valoare_conditie) {
+                const awardDate = achievedAt || Math.floor(Date.now() / 1000);
                 await db.run(sql`
                     INSERT INTO insigne_utilizatori (id, user_id, insigna_id, data_obtinerii)
-                    VALUES (${uuidv4()}, ${userId}, ${def.id}, ${Math.floor(Date.now() / 1000)})
+                    VALUES (${uuidv4()}, ${userId}, ${badge.id}, ${awardDate})
                 `);
-                const badge = await db.get(sql`SELECT * FROM insigne WHERE id = ${def.id}`);
-                if (badge) newlyEarned.push(badge);
+                newlyEarned.push(badge);
             }
         }
 

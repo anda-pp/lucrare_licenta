@@ -25,10 +25,15 @@ const storage = multer.diskStorage({
     },
 });
 
-// File filter - only images
+// File filter - only images (validate both MIME type and extension)
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimeOk = ALLOWED_MIME_TYPES.includes(file.mimetype);
+    const extOk = ALLOWED_EXTENSIONS.includes(ext);
+    if (mimeOk && extOk) {
         cb(null, true);
     } else {
         cb(new Error('Tip de fișier invalid. Sunt permise doar imagini (JPEG, PNG, GIF, WebP).'), false);

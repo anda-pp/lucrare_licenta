@@ -1,9 +1,10 @@
 import express from 'express';
 import { db } from '../db/db.js';
-import { sql, eq, desc } from 'drizzle-orm';
+import { sql, eq, desc, gte } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { recompense, recompenzeRevendicate, user } from '../db/schema.js';
+import { recompense, recompenzeRevendicate, user, carduriClienti } from '../db/schema.js';
 import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
+import { sendNewRewardAvailable } from '../lib/mailer.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -147,6 +148,25 @@ router.post('/', requireSuperadmin, async (req, res) => {
                     `);
 
         res.status(201).json({ success: true, message: 'Recompensă creată cu succes', data: { id: newId } });
+
+        // Notify users who have enough points (fire-and-forget)
+        (async () => {
+            try {
+                const eligibleUsers = await db.select({ email: user.email, puncte: carduriClienti.puncteAcumulate })
+                    .from(carduriClienti)
+                    .leftJoin(user, eq(carduriClienti.codUnicUtilizator, user.id))
+                    .where(gte(carduriClienti.puncteAcumulate, puncteNecesare));
+                for (const u of eligibleUsers) {
+                    if (!u.email) continue;
+                    await sendNewRewardAvailable(u.email, {
+                        rewardName: nume,
+                        rewardDescription: descriere || '',
+                        pointsCost: puncteNecesare,
+                        userPoints: u.puncte,
+                    }).catch(e => console.error(`Reward email to ${u.email} failed:`, e.message));
+                }
+            } catch (e) { console.error('New reward notification error:', e.message); }
+        })();
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Eroare la crearea recompensei' });

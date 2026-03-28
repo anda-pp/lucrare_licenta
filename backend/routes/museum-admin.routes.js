@@ -1,8 +1,11 @@
 import express from 'express';
 import { requireAdmin } from '../middleware/authMiddleware.js';
+import { validateBody } from '../middleware/validateBody.js';
+import { createTicketTypeSchema, updateTicketTypeSchema } from '../validators/schemas.js';
 import { db } from '../db/db.js';
 import { eq, and, sql, desc } from 'drizzle-orm';
-import { comenzi, rezervariEvenimente, evenimente, recenzii, locatiiPublice, bileteCumparate, user, tipuriBilete } from '../db/schema.js';
+import { comenzi, rezervariEvenimente, evenimente, recenzii, locatiiPublice, bileteCumparate, user, tipuriBilete, favoriteLocatii } from '../db/schema.js';
+import { sendNewEventAtFavorite } from '../lib/mailer.js';
 
 const router = express.Router();
 
@@ -166,7 +169,7 @@ router.put('/my-museum', async (req, res) => {
  * POST /api/museum-admin/tickets
  * Adaugare nou pachet de bilete curentului muzeu
  */
-router.post('/tickets', async (req, res) => {
+router.post('/tickets', validateBody(createTicketTypeSchema), async (req, res) => {
     try {
         const { tipBilet, pret } = req.body;
         if (!tipBilet || pret === undefined) {
@@ -192,7 +195,7 @@ router.post('/tickets', async (req, res) => {
  * PUT /api/museum-admin/tickets/:id
  * Actualizare pachet bilete
  */
-router.put('/tickets/:id', async (req, res) => {
+router.put('/tickets/:id', validateBody(updateTicketTypeSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const { tipBilet, pret } = req.body;
@@ -307,6 +310,30 @@ router.post('/events', async (req, res) => {
         }
 
         res.json({ success: true, message: 'Eveniment creat.', data: { id: newId } });
+
+        // Notify users who favorited this museum (fire-and-forget)
+        (async () => {
+            try {
+                const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
+                    .from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, req.muzeuId)).limit(1);
+                if (!loc) return;
+
+                const favUsers = await db.select({ email: user.email })
+                    .from(favoriteLocatii)
+                    .leftJoin(user, eq(favoriteLocatii.codUnicUtilizator, user.id))
+                    .where(eq(favoriteLocatii.codUnicLocatie, req.muzeuId));
+
+                for (const u of favUsers) {
+                    if (!u.email) continue;
+                    await sendNewEventAtFavorite(u.email, {
+                        eventTitle: titlu,
+                        eventType: tipEveniment || 'General',
+                        locationName: loc.numeLoc,
+                        dataStart: start,
+                    }).catch(e => console.error(`Email to ${u.email} failed:`, e.message));
+                }
+            } catch (e) { console.error('Notify favorites error:', e.message); }
+        })();
     } catch (error) {
         console.error('Error creating event:', error);
         res.status(500).json({ success: false, error: 'Eroare la crearea evenimentului.' });

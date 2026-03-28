@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Star, MessageSquareQuote, Edit2, Trash2, Save, X, ArrowLeft } from 'lucide-react';
 import { useSession } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import './MyReviews.css';
 
 const API = 'http://localhost:5000';
@@ -10,10 +12,12 @@ const API = 'http://localhost:5000';
 export default function MyReviews() {
     const { data: session } = useSession();
     const navigate = useNavigate();
+    const toast = useToast();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Edit states
+    const [confirmTarget, setConfirmTarget] = useState(null);
     const [editingId, setEditingId] = useState(null);
     const [editRating, setEditRating] = useState(0);
     const [editDesc, setEditDesc] = useState('');
@@ -37,15 +41,16 @@ export default function MyReviews() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Ești sigur că vrei să ștergi această recenzie?')) return;
         try {
             const res = await axios.delete(`${API}/api/users/my-reviews/${id}`, { withCredentials: true });
             if (res.data.success) {
                 setReviews(prev => prev.filter(r => r.numarRecenzie !== id));
             }
         } catch (err) {
-            alert('Eroare la ștergerea recenziei.');
+            toast.error('Eroare la ștergerea recenziei.');
             console.error('Delete error:', err);
+        } finally {
+            setConfirmTarget(null);
         }
     };
 
@@ -63,7 +68,7 @@ export default function MyReviews() {
 
     const saveEdit = async (id) => {
         if (editRating < 1 || editRating > 5) {
-            alert('Te rugăm să acorzi un rating între 1 și 5 stele.');
+            toast.error('Te rugăm să acorzi un rating între 1 și 5 stele.');
             return;
         }
         setSaving(true);
@@ -80,7 +85,7 @@ export default function MyReviews() {
                 cancelEdit();
             }
         } catch (err) {
-            alert('Eroare la actualizarea recenziei.');
+            toast.error('Eroare la actualizarea recenziei.');
             console.error('Edit error:', err);
         } finally {
             setSaving(false);
@@ -164,7 +169,7 @@ export default function MyReviews() {
                                                 <button className="icon-btn edit-btn" onClick={() => startEdit(rev)} title="Editează">
                                                     <Edit2 size={16} />
                                                 </button>
-                                                <button className="icon-btn delete-btn" onClick={() => handleDelete(rev.numarRecenzie)} title="Șterge">
+                                                <button className="icon-btn delete-btn" onClick={() => setConfirmTarget(rev.numarRecenzie)} title="Șterge">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
@@ -215,6 +220,13 @@ export default function MyReviews() {
                     })}
                 </div>
             )}
+            <ConfirmDialog
+                show={!!confirmTarget}
+                title="Ștergere Recenzie"
+                message="Ești sigur că vrei să ștergi această recenzie?"
+                onConfirm={() => handleDelete(confirmTarget)}
+                onCancel={() => setConfirmTarget(null)}
+            />
         </div>
     );
 }

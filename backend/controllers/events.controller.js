@@ -1,8 +1,9 @@
 import { db } from '../db/db.js';
-import { evenimente, locatiiPublice, tipuriBilete } from '../db/schema.js';
+import { evenimente, locatiiPublice, tipuriBilete, favoriteLocatii, user } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { createEventSchema, updateEventSchema } from '../validators/schemas.js';
 import { v4 as uuidv4 } from 'uuid';
+import { sendNewEventAtFavorite } from '../lib/mailer.js';
 
 /**
  * GET /api/events
@@ -117,6 +118,15 @@ export const createEvent = async (req, res) => {
             data: { id: newEventId, ...validation.data },
             message: 'Eveniment creat cu succes'
         });
+
+        // Send email to users who have this location as favorite (fire-and-forget)
+        if (validation.data.codUnicLocatie) {
+            notifyFavoriteUsersAboutEvent(validation.data.codUnicLocatie, {
+                eventTitle: validation.data.titlu,
+                eventType: validation.data.tipEveniment || 'General',
+                dataStart: validation.data.dataStart,
+            }).catch(err => console.error('Notify favorites email error:', err.message));
+        }
     } catch (error) {
         console.error('Eroare creare eveniment:', error);
         res.status(500).json({ success: false, error: 'Eroare la crearea evenimentului' });
@@ -190,3 +200,26 @@ export const deleteEvent = async (req, res) => {
         res.status(500).json({ success: false, error: 'Eroare la ștergerea evenimentului' });
     }
 };
+
+// ─── Helper: notify users who favorited a location about a new event ─────────
+async function notifyFavoriteUsersAboutEvent(locationId, { eventTitle, eventType, dataStart }) {
+    const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
+        .from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, locationId)).limit(1);
+    if (!loc) return;
+
+    const favUsers = await db.select({ email: user.email })
+        .from(favoriteLocatii)
+        .leftJoin(user, eq(favoriteLocatii.codUnicUtilizator, user.id))
+        .where(eq(favoriteLocatii.codUnicLocatie, locationId));
+
+    for (const u of favUsers) {
+        if (!u.email) continue;
+        try {
+            await sendNewEventAtFavorite(u.email, {
+                eventTitle, eventType, locationName: loc.numeLoc, dataStart,
+            });
+        } catch (e) {
+            console.error(`Email to ${u.email} failed:`, e.message);
+        }
+    }
+}

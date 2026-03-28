@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Search, Calendar, MapPin, Trash2 } from 'lucide-react';
 import { useSession } from '../../lib/auth';
+import { useToast } from '../../components/common/Toast';
 import './MyInterests.css';
 
 const API = 'http://localhost:5000';
@@ -10,6 +11,7 @@ const API = 'http://localhost:5000';
 export default function MyInterests() {
     const { data: session } = useSession();
     const navigate = useNavigate();
+    const toast = useToast();
     const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -40,7 +42,7 @@ export default function MyInterests() {
             }
         } catch (err) {
             console.error('Error removing interest:', err);
-            alert('Eroare la ștergerea interesului.');
+            toast.error('Eroare la ștergerea interesului.');
         }
     };
 

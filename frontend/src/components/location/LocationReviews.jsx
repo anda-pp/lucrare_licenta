@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Star, MessageSquare, ChevronLeft, ChevronRight, UserCircle2 } from 'lucide-react';
+import { Star, MessageSquare, ChevronLeft, ChevronRight, UserCircle2, Send } from 'lucide-react';
+import axios from 'axios';
+import { useToast } from '../common/Toast';
 
+const API = 'http://localhost:5000';
 const PAGE_SIZE = 3;
 
 function timeAgo(dateString) {
@@ -19,24 +22,79 @@ function timeAgo(dateString) {
 
 function renderStars(rating) {
     return Array.from({ length: 5 }, (_, i) => (
-        <Star
-            key={i}
-            size={14}
-            fill={i < rating ? '#f59e0b' : 'none'}
-            stroke={i < rating ? '#f59e0b' : '#475569'}
-        />
+        <Star key={i} size={14} fill={i < rating ? '#f59e0b' : 'none'} stroke={i < rating ? '#f59e0b' : '#475569'} />
     ));
 }
 
+function InteractiveStars({ value, onChange }) {
+    const [hover, setHover] = useState(0);
+    return (
+        <div style={{ display: 'flex', gap: '4px', cursor: 'pointer' }}>
+            {Array.from({ length: 5 }, (_, i) => (
+                <Star
+                    key={i}
+                    size={24}
+                    fill={(hover || value) > i ? '#f59e0b' : 'none'}
+                    stroke={(hover || value) > i ? '#f59e0b' : '#cbd5e1'}
+                    onMouseEnter={() => setHover(i + 1)}
+                    onMouseLeave={() => setHover(0)}
+                    onClick={() => onChange(i + 1)}
+                />
+            ))}
+        </div>
+    );
+}
+
 /**
- * LocationReviews — paginated review carousel, 3 per page,
- * showing author name, relative time, stars and message.
+ * LocationReviews — paginated review carousel + review form.
+ *
+ * Props:
+ *  - reviews, avgRating  (existing)
+ *  - session             (auth session, null if not logged in)
+ *  - locationId          (string)
+ *  - onReviewAdded       (callback to refresh location data)
  */
-export default function LocationReviews({ reviews, avgRating }) {
+export default function LocationReviews({ reviews, avgRating, session, locationId, onReviewAdded }) {
     const [page, setPage] = useState(0);
+    const toast = useToast();
+
+    // Review form state
+    const [rating, setRating] = useState(0);
+    const [text, setText] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     const totalPages = Math.ceil(reviews.length / PAGE_SIZE);
     const visibleReviews = reviews.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
+    const alreadyReviewed = session && reviews.some(
+        r => r.codUnicUtilizator === session.user?.id
+    );
+
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+        if (rating < 1) {
+            toast.error('Te rugăm să acorzi cel puțin o stea.');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            const res = await axios.post(`${API}/api/users/reviews`, {
+                codUnicLocatie: locationId,
+                rating,
+                descriereRecenzie: text.trim() || undefined,
+            }, { withCredentials: true });
+            if (res.data.success) {
+                toast.success('Recenzia ta a fost adăugată!');
+                setRating(0);
+                setText('');
+                if (onReviewAdded) onReviewAdded();
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.error || 'Eroare la adăugarea recenziei.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
         <div className="loc-reviews-card">
@@ -50,6 +108,55 @@ export default function LocationReviews({ reviews, avgRating }) {
                     </div>
                 )}
             </div>
+
+            {/* Review Form */}
+            {session && !alreadyReviewed && (
+                <form onSubmit={handleSubmitReview} className="loc-review-form">
+                    <h4 style={{ margin: '0 0 0.75rem', color: 'var(--color-text-main)', fontSize: '0.95rem' }}>
+                        Scrie o recenzie
+                    </h4>
+                    <InteractiveStars value={rating} onChange={setRating} />
+                    <textarea
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        placeholder="Împărtășește-ți experiența (opțional)..."
+                        rows={3}
+                        style={{
+                            width: '100%', marginTop: '0.75rem', padding: '0.75rem 1rem',
+                            borderRadius: 'var(--radius-md)', border: '2px solid var(--color-border)',
+                            background: 'var(--color-input-bg)', color: 'var(--color-text-main)',
+                            fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit',
+                        }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                        <button
+                            type="submit"
+                            disabled={submitting || rating < 1}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                padding: '0.6rem 1.5rem', borderRadius: '25px',
+                                background: rating < 1 ? '#e2e8f0' : 'linear-gradient(135deg, #7c3aed, #9333ea)',
+                                color: rating < 1 ? '#94a3b8' : '#fff',
+                                border: 'none', cursor: rating < 1 ? 'not-allowed' : 'pointer',
+                                fontWeight: 600, fontSize: '0.9rem',
+                                transition: 'all 0.2s ease',
+                            }}
+                        >
+                            <Send size={16} /> {submitting ? 'Se trimite...' : 'Trimite Recenzia'}
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {session && alreadyReviewed && (
+                <div style={{
+                    padding: '0.75rem 1rem', background: '#f0fdf4', border: '1px solid #bbf7d0',
+                    borderRadius: 'var(--radius-md)', marginBottom: '1rem',
+                    color: '#166534', fontSize: '0.88rem', fontWeight: 500,
+                }}>
+                    Ai adăugat deja o recenzie pentru această locație. O poți edita din secțiunea "Recenziile Mele".
+                </div>
+            )}
 
             {reviews.length === 0 ? (
                 <p className="loc-reviews-empty">Nicio recenzie încă. Fii primul!</p>
@@ -81,21 +188,11 @@ export default function LocationReviews({ reviews, avgRating }) {
 
                     {totalPages > 1 && (
                         <div className="loc-reviews-pagination">
-                            <button
-                                className="loc-reviews-nav-btn"
-                                onClick={() => setPage(p => Math.max(0, p - 1))}
-                                disabled={page === 0}
-                            >
+                            <button className="loc-reviews-nav-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
                                 <ChevronLeft size={18} />
                             </button>
-                            <span className="loc-reviews-page-info">
-                                {page + 1} / {totalPages}
-                            </span>
-                            <button
-                                className="loc-reviews-nav-btn"
-                                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                                disabled={page === totalPages - 1}
-                            >
+                            <span className="loc-reviews-page-info">{page + 1} / {totalPages}</span>
+                            <button className="loc-reviews-nav-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}>
                                 <ChevronRight size={18} />
                             </button>
                         </div>

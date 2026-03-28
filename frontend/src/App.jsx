@@ -35,7 +35,7 @@ import MuseumReviews from './pages/museum-admin/Reviews';
 
 import StaffLayout from './components/StaffLayout';
 import StaffDashboard from './pages/staff/StaffDashboard';
-import Reports from './pages/staff/Reports';
+import MuseumReports from './pages/staff/MuseumReports';
 import UserLayout from './components/UserLayout';
 import UserDashboard from './pages/users/UserDashboard';
 import LoyaltyCard from './pages/users/LoyaltyCard';
@@ -53,10 +53,13 @@ import Rewards from './pages/users/Rewards';
 import CulturalTrails from './pages/users/CulturalTrails';
 import PaymentSuccess from './pages/users/PaymentSuccess';
 import PaymentCancel from './pages/users/PaymentCancel';
+import { ToastProvider } from './components/common/Toast';
+import './components/common/Toast.css';
 import './App.css';
 
 function App() {
     return (
+        <ToastProvider>
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Home />} />
@@ -120,13 +123,14 @@ function App() {
                 {/* Staff routes */}
                 <Route path="/staff" element={<StaffLayout />}>
                     <Route index element={<StaffDashboard />} />
-                    <Route path="reports" element={<Reports />} />
+                    <Route path="museum-reports" element={<MuseumReports />} />
                 </Route>
 
                 {/* 404 Catch-all route */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
+        </ToastProvider>
     );
 }
 

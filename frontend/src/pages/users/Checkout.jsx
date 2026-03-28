@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck, Ticket, Tag, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import OrderSummaryCard from '../../components/common/OrderSummaryCard';
+import PromoCodeInput from '../../components/common/PromoCodeInput';
 import './Checkout.css';
 
 const API = 'http://localhost:5000';
@@ -26,7 +28,7 @@ function StripePaymentForm({ finalTotal, onSuccess }) {
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             confirmParams: { return_url: `${window.location.origin}/user/payment/success` },
-            redirect: 'if_required', // stay on page if no redirect needed
+            redirect: 'if_required',
         });
 
         if (error) {
@@ -40,12 +42,7 @@ function StripePaymentForm({ finalTotal, onSuccess }) {
     return (
         <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ background: 'var(--color-input-bg)', borderRadius: 'var(--radius-md)', padding: '1.25rem', border: '1px solid var(--color-border)' }}>
-                <PaymentElement
-                    options={{
-                        layout: 'tabs',
-                        wallets: { applePay: 'never', googlePay: 'never' }
-                    }}
-                />
+                <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'never', googlePay: 'never' } }} />
             </div>
 
             {errorMsg && (
@@ -54,17 +51,11 @@ function StripePaymentForm({ finalTotal, onSuccess }) {
                 </div>
             )}
 
-            <button
-                type="submit"
-                className="base-btn primary-btn checkout-submit-btn"
-                disabled={!stripe || isProcessing}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
-            >
-                {isProcessing ? (
-                    <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Se procesează...</>
-                ) : (
-                    <>Plătește {finalTotal.toFixed(2)} Lei</>
-                )}
+            <button type="submit" className="base-btn primary-btn checkout-submit-btn" disabled={!stripe || isProcessing}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+                {isProcessing
+                    ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Se procesează...</>
+                    : <>Plătește {finalTotal.toFixed(2)} Lei</>}
             </button>
         </form>
     );
@@ -93,7 +84,7 @@ export default function Checkout() {
 
     if (!state) return null;
 
-    const { locationId, tickets, total } = state;
+    const { locationId, tickets, total, dataVizita } = state;
 
     let finalTotal = total;
     if (appliedPromo) {
@@ -115,7 +106,6 @@ export default function Checkout() {
             const res = await axios.post(`${API}/api/users/checkout/validate-promo`, { promoCode }, { withCredentials: true });
             if (res.data.success) {
                 setAppliedPromo(res.data.data);
-                // Reset intent so it gets recreated with new total
                 setClientSecret('');
             }
         } catch (err) {
@@ -131,14 +121,11 @@ export default function Checkout() {
         setIntentError('');
         try {
             const res = await axios.post(`${API}/api/stripe/create-payment-intent`, {
-                locationId,
-                tickets,
+                locationId, tickets,
                 promoCode: appliedPromo ? promoCode : undefined,
+                dataVizita: dataVizita || undefined,
             }, { withCredentials: true });
-
-            if (res.data.success) {
-                setClientSecret(res.data.clientSecret);
-            }
+            if (res.data.success) setClientSecret(res.data.clientSecret);
         } catch (err) {
             setIntentError(err.response?.data?.error || 'Eroare la inițializarea plății.');
         } finally {
@@ -162,16 +149,12 @@ export default function Checkout() {
         );
     }
 
-    // ── Stripe appearance matching app theme ──────────────────────────────────
     const stripeAppearance = {
         theme: 'stripe',
         variables: {
-            colorPrimary: '#9333ea',
-            colorBackground: '#faf5ff',
-            colorText: '#2e1065',
-            colorDanger: '#ef4444',
-            fontFamily: 'Outfit, system-ui, sans-serif',
-            borderRadius: '10px',
+            colorPrimary: '#9333ea', colorBackground: '#faf5ff',
+            colorText: '#2e1065', colorDanger: '#ef4444',
+            fontFamily: 'Outfit, system-ui, sans-serif', borderRadius: '10px',
         },
     };
 
@@ -184,69 +167,23 @@ export default function Checkout() {
             <div className="checkout-layout">
                 {/* Left Column: Order Summary */}
                 <div className="checkout-summary-col">
-                    <div className="checkout-card">
-                        <h3>Sumar Comandă</h3>
-                        <div className="checkout-tickets-list">
-                            {tickets.map((t, idx) => (
-                                <div key={idx} className="checkout-ticket-item">
-                                    <div className="checkout-ticket-info">
-                                        <Ticket size={16} className="text-muted" />
-                                        <span>{t.cantitate}x {t.tipBilet}</span>
-                                    </div>
-                                    <strong>{(t.pret * t.cantitate).toFixed(2)} Lei</strong>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Promo Code */}
-                        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Ai un cod promoțional?</label>
-
-                            {!appliedPromo ? (
-                                <>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Ex: ART-X9B2"
-                                            value={promoCode}
-                                            onChange={e => { setPromoCode(e.target.value.toUpperCase()); if (promoError) setPromoError(''); }}
-                                            style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '2px solid var(--color-border)', background: 'var(--color-input-bg)', color: 'var(--color-text-main)', fontSize: '0.95rem' }}
-                                        />
-                                        <button type="button" className="checkout-apply-btn" onClick={handleApplyPromo} disabled={isApplyingPromo || !promoCode.trim()}>
-                                            {isApplyingPromo ? 'Validare...' : 'Aplică'}
-                                        </button>
-                                    </div>
-                                    {promoError && <p style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: '0.5rem' }}>{promoError}</p>}
-                                </>
-                            ) : (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: '#ecfdf5', border: '1px solid #10b981', borderRadius: 'var(--radius-md)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#047857', fontWeight: 500 }}>
-                                        <Tag size={18} />
-                                        <span>Cod <strong style={{ letterSpacing: '1px' }}>{promoCode}</strong> aplicat!</span>
-                                    </div>
-                                    <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); setClientSecret(''); }} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
-                                        Șterge
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Totals */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--color-bg)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                                <span>Subtotal</span><span>{total.toFixed(2)} Lei</span>
-                            </div>
-                            {appliedPromo && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success)', fontWeight: 600 }}>
-                                    <span>Reducere Promo</span><span>- {(total - finalTotal).toFixed(2)} Lei</span>
-                                </div>
-                            )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1px dashed var(--color-border)', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--color-text-muted)', fontSize: '1.1rem', fontWeight: 600 }}>Total de plată</span>
-                                <h2 style={{ color: 'var(--color-primary)', margin: 0, fontSize: '1.6rem' }}>{finalTotal.toFixed(2)} Lei</h2>
-                            </div>
-                        </div>
-                    </div>
+                    <OrderSummaryCard
+                        tickets={tickets}
+                        dataVizita={dataVizita}
+                        subtotal={total}
+                        finalTotal={finalTotal}
+                        appliedPromo={appliedPromo}
+                    >
+                        <PromoCodeInput
+                            promoCode={promoCode}
+                            onCodeChange={v => { setPromoCode(v); if (promoError) setPromoError(''); }}
+                            onApply={handleApplyPromo}
+                            onRemove={() => { setAppliedPromo(null); setPromoCode(''); setClientSecret(''); }}
+                            appliedPromo={appliedPromo}
+                            isApplying={isApplyingPromo}
+                            error={promoError}
+                        />
+                    </OrderSummaryCard>
                 </div>
 
                 {/* Right Column: Embedded Stripe */}
@@ -270,27 +207,16 @@ export default function Checkout() {
                                         </div>
                                     )}
 
-                                    <button
-                                        className="base-btn primary-btn checkout-submit-btn"
-                                        onClick={handleCreateIntent}
-                                        disabled={isLoadingIntent}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
-                                    >
+                                    <button className="base-btn primary-btn checkout-submit-btn" onClick={handleCreateIntent} disabled={isLoadingIntent}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
                                         {isLoadingIntent
                                             ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Se pregătește...</>
-                                            : <>Continuă spre plată — {finalTotal.toFixed(2)} Lei</>
-                                        }
+                                            : <>Continuă spre plată — {finalTotal.toFixed(2)} Lei</>}
                                     </button>
                                 </div>
                             ) : (
-                                <Elements
-                                    stripe={stripePromise}
-                                    options={{ clientSecret, appearance: stripeAppearance }}
-                                >
-                                    <StripePaymentForm
-                                        finalTotal={finalTotal}
-                                        onSuccess={() => setIsSuccess(true)}
-                                    />
+                                <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+                                    <StripePaymentForm finalTotal={finalTotal} onSuccess={() => setIsSuccess(true)} />
                                 </Elements>
                             )}
                         </div>

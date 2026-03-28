@@ -160,6 +160,7 @@ export const bileteCumparate = sqliteTable('bilete_cumparate', {
     codUnicTipBilet: text('cod_unic_tip_bilet').references(() => tipuriBilete.codUnicTipBilet),
     numarComanda: integer('numar_comanda').references(() => comenzi.numarComanda),
     cantitate: integer('cantitate').notNull(),
+    dataVizita: text('data_vizita'),
 });
 
 // Tabela Facturi
@@ -196,7 +197,6 @@ export const evenimente = sqliteTable('evenimente', {
     imagineUrl: text('imagine_url'),
     isGratuit: integer('is_gratuit', { mode: 'boolean' }).default(0),
     intervaleOrare: text('intervale_orare'), // Stocheaza un array JSON de stringuri: '["10:00-12:00"]'
-    bilete: text('bilete'), // Array JSON de obiecte: '[{"tip":"Adult","pret":30}]'
 });
 
 // Tabela Artisti

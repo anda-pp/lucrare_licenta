@@ -371,6 +371,50 @@
     gap: 0.5rem;
 }
 
+/* ---- EVENTS TABLE CELLS ---- */
+.ev-title {
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.ev-date-primary {
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+.ev-date-secondary {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+}
+
+.ev-badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.ev-badge--free {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.ev-badge--paid {
+    background: rgba(139, 92, 246, 0.08);
+    color: var(--color-primary);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.ev-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
 /* ---- EVENT TICKETS SECTION (Events modal) ---- */
 .ma-tickets-section {
     border: 1.5px solid var(--color-border);

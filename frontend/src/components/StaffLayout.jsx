@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '../lib/auth';
-import { LayoutDashboard, ClipboardList, LogOut, UserCheck, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, BarChart2, LogOut, UserCheck, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './StaffLayout.css';
 
@@ -68,9 +68,9 @@ export default function StaffLayout() {
                         <LayoutDashboard size={20} />
                         <span className="nav-label">Dashboard</span>
                     </Link>
-                    <Link to="/staff/reports" className={`nav-item ${isActive('/staff/reports') ? 'active' : ''}`}>
-                        <ClipboardList size={20} />
-                        <span className="nav-label">Rapoarte</span>
+                    <Link to="/staff/museum-reports" className={`nav-item ${isActive('/staff/museum-reports') ? 'active' : ''}`}>
+                        <BarChart2 size={20} />
+                        <span className="nav-label">Rapoarte Muzeu</span>
                     </Link>
                 </nav>
 

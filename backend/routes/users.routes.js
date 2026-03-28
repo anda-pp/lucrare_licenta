@@ -1,5 +1,7 @@
 import express from 'express';
 import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js';
+import { validateBody } from '../middleware/validateBody.js';
+import { checkoutSchema, updateReviewSchema, createReviewSchema } from '../validators/schemas.js';
 import { db } from '../db/db.js';
 import { comenzi, recenzii, carduriClienti, cardFidelitate, locatiiPublice, favoriteLocatii, intereseEvenimente, evenimente, bileteCumparate, tipuriBilete, facturi, rezervariEvenimente, user, recompenzeRevendicate, recompense } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
@@ -7,6 +9,7 @@ import { updateUserLoyaltyPoints } from '../services/loyaltyPoints.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import { sendOrderConfirmation } from '../lib/mailer.js';
 
 const router = express.Router();
 
@@ -106,15 +109,33 @@ router.post('/checkout/validate-promo', requireAuth, async (req, res) => {
  * POST /api/users/checkout
  * Process ticket purchase and create order
  */
-router.post('/checkout', requireAuth, async (req, res) => {
+router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, res) => {
     try {
-        const { locationId, tickets, total, promoCode } = req.body;
+        const { locationId, tickets, promoCode, dataVizita } = req.body;
 
-        if (!locationId || !tickets || tickets.length === 0 || total === undefined) {
+        if (!locationId || !tickets || tickets.length === 0) {
             return res.status(400).json({ success: false, error: 'Date invalide' });
         }
 
-        let finalTotal = total;
+        // Recalculate total server-side from DB prices (prevents price manipulation)
+        let calculatedTotal = 0;
+        const validTickets = [];
+        for (const t of tickets) {
+            if (!t.codUnicTipBilet || !t.cantitate || t.cantitate <= 0) continue;
+            const ticketType = await db.select()
+                .from(tipuriBilete)
+                .where(eq(tipuriBilete.codUnicTipBilet, t.codUnicTipBilet))
+                .limit(1);
+            if (ticketType.length === 0) continue;
+            calculatedTotal += parseFloat(ticketType[0].pret) * t.cantitate;
+            validTickets.push({ ...t, pret: ticketType[0].pret });
+        }
+
+        if (validTickets.length === 0) {
+            return res.status(400).json({ success: false, error: 'Nu au fost găsite bilete valide' });
+        }
+
+        let finalTotal = calculatedTotal;
         let voucherIdFolosit = null;
 
         // Validam si Aplicam Promo Code daca exista
@@ -174,13 +195,14 @@ router.post('/checkout', requireAuth, async (req, res) => {
 
         // 2. Insert Tickets
         const ticketInserts = [];
-        for (const t of tickets) {
+        for (const t of validTickets) {
             if (t.cantitate > 0) {
                 ticketInserts.push({
                     nrBiletCumparat: uuidv4(),
                     codUnicTipBilet: t.codUnicTipBilet,
                     numarComanda: newOrder.id,
-                    cantitate: t.cantitate
+                    cantitate: t.cantitate,
+                    dataVizita: dataVizita || null
                 });
             }
         }
@@ -190,7 +212,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
         }
 
         // 3. Create Invoice
-        const serie = 'FCT-' + Math.floor(Math.random() * 10000);
+        const serie = 'FCT-' + uuidv4().slice(0, 8).toUpperCase();
         await db.insert(facturi).values({
             numarComanda: newOrder.id,
             serieFactura: serie,
@@ -212,6 +234,56 @@ router.post('/checkout', requireAuth, async (req, res) => {
         }
 
         res.json({ success: true, message: 'Comandă plasată cu succes!', orderId: newOrder.id });
+
+        // 6. Send order confirmation email (fire-and-forget)
+        try {
+            const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
+                .from(tipuriBilete)
+                .leftJoin(locatiiPublice, eq(tipuriBilete.codUnicLocatie, locatiiPublice.codUnicLocatie))
+                .where(eq(tipuriBilete.codUnicTipBilet, validTickets[0].codUnicTipBilet))
+                .limit(1);
+
+            const ticketDetails = await db.select({
+                cantitate: bileteCumparate.cantitate,
+                tipBilet: tipuriBilete.tipBilet,
+                pret: tipuriBilete.pret,
+            }).from(bileteCumparate)
+                .leftJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
+                .where(eq(bileteCumparate.numarComanda, newOrder.id));
+
+            // Generate PDF buffer for attachment
+            const pdfBuffer = await new Promise((resolve, reject) => {
+                const doc = new PDFDocument({ margin: 50, size: 'A4' });
+                const chunks = [];
+                doc.on('data', chunk => chunks.push(chunk));
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+                doc.on('error', reject);
+                doc.font('Helvetica-Bold').fontSize(22).text('BILET DE ACCES', { align: 'center' });
+                doc.moveDown();
+                doc.font('Helvetica').fontSize(14).text(`Comanda #${newOrder.id}`);
+                doc.text(`Locatie: ${loc?.numeLoc || 'N/A'}`);
+                doc.text(`Data vizitei: ${dataVizita || 'Nedefinita'}`);
+                doc.moveDown();
+                ticketDetails.forEach(t => {
+                    doc.text(`${t.cantitate}x ${t.tipBilet} - ${(t.pret * t.cantitate).toFixed(2)} Lei`);
+                });
+                doc.moveDown();
+                doc.text(`Total: ${finalTotal.toFixed(2)} Lei`);
+                doc.moveDown(2);
+                doc.fontSize(10).text('Prezinta acest document la intrare. Multumim!', { align: 'center' });
+                doc.end();
+            });
+
+            await sendOrderConfirmation(req.user.email, {
+                orderId: newOrder.id,
+                total: finalTotal,
+                tickets: ticketDetails,
+                locationName: loc?.numeLoc || 'N/A',
+                dataVizita,
+            }, pdfBuffer);
+        } catch (emailErr) {
+            console.error('Order confirmation email failed:', emailErr.message);
+        }
     } catch (error) {
         console.error('Checkout error:', error);
         res.status(500).json({ success: false, error: 'Eroare la procesarea comenzii' });
@@ -377,6 +449,42 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/users/reviews
+ * Create a review for a location
+ */
+router.post('/reviews', requireAuth, validateBody(createReviewSchema), async (req, res) => {
+    try {
+        const { codUnicLocatie, rating, descriereRecenzie } = req.body;
+
+        // Check location exists
+        const [loc] = await db.select().from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, codUnicLocatie)).limit(1);
+        if (!loc) return res.status(404).json({ success: false, error: 'Locația nu există.' });
+
+        // Check if user already reviewed this location
+        const existing = await db.select().from(recenzii)
+            .where(and(eq(recenzii.codUnicUtilizator, req.user.id), eq(recenzii.codUnicLocatie, codUnicLocatie)))
+            .limit(1);
+        if (existing.length > 0) {
+            return res.status(400).json({ success: false, error: 'Ai adăugat deja o recenzie pentru această locație.' });
+        }
+
+        const reviewId = uuidv4();
+        await db.insert(recenzii).values({
+            numarRecenzie: reviewId,
+            codUnicUtilizator: req.user.id,
+            codUnicLocatie: codUnicLocatie,
+            rating,
+            descriereRecenzie: descriereRecenzie || null,
+        });
+
+        res.status(201).json({ success: true, message: 'Recenzia a fost adăugată!', data: { id: reviewId } });
+    } catch (error) {
+        console.error('Create review error:', error);
+        res.status(500).json({ success: false, error: 'Eroare server.' });
+    }
+});
+
+/**
  * GET /api/users/my-reviews
  * Get reviews written by the current logged-in user
  */
@@ -407,7 +515,7 @@ router.get('/my-reviews', requireAuth, async (req, res) => {
  * PUT /api/users/my-reviews/:id
  * Edit an existing review
  */
-router.put('/my-reviews/:id', requireAuth, async (req, res) => {
+router.put('/my-reviews/:id', requireAuth, validateBody(updateReviewSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const { rating, descriereRecenzie } = req.body;
@@ -476,7 +584,7 @@ router.get('/my-card', requireAuth, async (req, res) => {
         res.json({ success: true, data: card || null });
     } catch (error) {
         console.error('Get my card error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'Eroare server.' });
     }
 });
 
@@ -502,7 +610,7 @@ router.get('/my-favorites', requireAuth, async (req, res) => {
         res.json({ success: true, count: favs.length, data: favs });
     } catch (error) {
         console.error('Get my favorites error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'Eroare server.' });
     }
 });
 
@@ -530,7 +638,7 @@ router.post('/my-favorites/:locationId', requireAuth, async (req, res) => {
         res.json({ success: true, favorited: true, message: 'Adăugat la favorite!' });
     } catch (error) {
         console.error('Add favorite error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'Eroare server.' });
     }
 });
 
@@ -552,7 +660,7 @@ router.delete('/my-favorites/:locationId', requireAuth, async (req, res) => {
         res.json({ success: true, favorited: false, message: 'Eliminat din favorite' });
     } catch (error) {
         console.error('Remove favorite error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'Eroare server.' });
     }
 });
 
@@ -659,7 +767,7 @@ router.get('/my-interests', requireAuth, async (req, res) => {
         res.json({ success: true, count: interests.length, data: interests });
     } catch (error) {
         console.error('Get my interests error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'Eroare server.' });
     }
 });
 
@@ -706,7 +814,12 @@ router.delete('/my-interests/:eventId', requireAuth, async (req, res) => {
 
         await db
             .delete(intereseEvenimente)
-            .where(eq(intereseEvenimente.codUnicEveniment, eventId));
+            .where(
+                and(
+                    eq(intereseEvenimente.codUnicEveniment, eventId),
+                    eq(intereseEvenimente.codUnicUtilizator, req.user.id)
+                )
+            );
 
         res.json({ success: true, interested: false, message: 'Interes eliminat' });
     } catch (error) {

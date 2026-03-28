@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, Users, CheckCircle, Download, Ticket } from 'lucide-react';
 import axios from 'axios';
 import { useSession } from '../../lib/auth';
+import { useToast } from '../../components/common/Toast';
 import './EventReservation.css';
 
 const API = 'http://localhost:5000';
@@ -36,6 +37,7 @@ export default function EventReservation() {
     const navigate = useNavigate();
     const { data: session } = useSession();
 
+    const toast = useToast();
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +81,7 @@ export default function EventReservation() {
             }, { withCredentials: true });
             if (res.data.success) setReservationId(res.data.reservationId);
         } catch (err) {
-            alert(err.response?.data?.error || 'Eroare la rezervare.');
+            toast.error(err.response?.data?.error || 'Eroare la rezervare.');
         } finally {
             setIsSubmitting(false);
         }

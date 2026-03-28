@@ -1,36 +1,32 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import FormModal from '../../components/common/FormModal';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import './GamificationAdmin.css';
 
 const API = 'http://localhost:5000';
+
+const EMPTY_FORM = { nume: '', descriere: '', puncteNecesare: 100, tip: 'voucher', valoare: 0, activ: true };
 
 export default function RewardsAdmin() {
     const [rewards, setRewards] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal state
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [formData, setFormData] = useState({
-        nume: '',
-        descriere: '',
-        puncteNecesare: 100,
-        tip: 'voucher',
-        valoare: '',
-        activ: true
-    });
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState('');
 
-    useEffect(() => {
-        fetchRewards();
-    }, []);
+    const [confirmTarget, setConfirmTarget] = useState(null);
+
+    useEffect(() => { fetchRewards(); }, []);
 
     const fetchRewards = async () => {
         try {
             const res = await axios.get(`${API}/api/rewards`, { withCredentials: true });
-            if (res.data.success) {
-                setRewards(res.data.data);
-            }
+            if (res.data.success) setRewards(res.data.data);
         } catch (err) {
             console.error('Error fetching rewards:', err);
         } finally {
@@ -42,29 +38,22 @@ export default function RewardsAdmin() {
         if (reward) {
             setEditingId(reward.id);
             setFormData({
-                nume: reward.nume,
-                descriere: reward.descriere || '',
-                puncteNecesare: reward.puncte_necesare,
-                tip: reward.tip || 'voucher',
-                valoare: reward.valoare || '',
-                activ: reward.activ === 1 || reward.activ === true
+                nume: reward.nume, descriere: reward.descriere || '',
+                puncteNecesare: reward.puncte_necesare, tip: reward.tip || 'voucher',
+                valoare: reward.valoare || '', activ: reward.activ === 1 || reward.activ === true
             });
         } else {
             setEditingId(null);
-            setFormData({
-                nume: '',
-                descriere: '',
-                puncteNecesare: 100,
-                tip: 'voucher',
-                valoare: 0,
-                activ: true
-            });
+            setFormData(EMPTY_FORM);
         }
+        setFormError('');
         setShowModal(true);
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setSaving(true);
+        setFormError('');
         try {
             if (editingId) {
                 await axios.put(`${API}/api/rewards/${editingId}`, formData, { withCredentials: true });
@@ -74,19 +63,25 @@ export default function RewardsAdmin() {
             setShowModal(false);
             fetchRewards();
         } catch (err) {
-            alert(err.response?.data?.message || 'Eroare la salvarea recompensei.');
+            setFormError(err.response?.data?.message || 'Eroare la salvarea recompensei.');
+        } finally {
+            setSaving(false);
         }
     };
 
-    const handleDeactivate = async (id) => {
-        if (!confirm('Ești sigur că vrei să dezactivezi această recompensă?')) return;
+    const handleDeactivate = async () => {
+        if (!confirmTarget) return;
         try {
-            await axios.delete(`${API}/api/rewards/${id}`, { withCredentials: true });
+            await axios.delete(`${API}/api/rewards/${confirmTarget}`, { withCredentials: true });
             fetchRewards();
         } catch (err) {
             alert('Eroare la dezactivare.');
+        } finally {
+            setConfirmTarget(null);
         }
     };
+
+    const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
 
     if (loading) return <div className="admin-loading">Se încarcă catalogul...</div>;
 
@@ -122,12 +117,14 @@ export default function RewardsAdmin() {
                                     <strong>{r.nume}</strong>
                                     <div className="text-muted text-sm">{r.descriere}</div>
                                 </td>
-                                <td>
-                                    <span className="badge-points">{r.puncte_necesare} pct</span>
-                                </td>
+                                <td><span className="badge-points">{r.puncte_necesare} pct</span></td>
                                 <td>
                                     <span className="badge-type">{r.tip}</span>
-                                    {r.valoare && <div className="text-sm">({r.valoare})</div>}
+                                    {r.valoare > 0 && (
+                                        <div className="text-sm">
+                                            ({r.tip === 'reducere' ? `${r.valoare}%` : `${r.valoare} Lei`})
+                                        </div>
+                                    )}
                                 </td>
                                 <td>
                                     {r.activ ? (
@@ -142,7 +139,7 @@ export default function RewardsAdmin() {
                                             <Edit2 size={16} />
                                         </button>
                                         {r.activ === 1 && (
-                                            <button className="btn-icon delete" onClick={() => handleDeactivate(r.id)} title="Dezactivează">
+                                            <button className="btn-icon delete" onClick={() => setConfirmTarget(r.id)} title="Dezactivează">
                                                 <Trash2 size={16} />
                                             </button>
                                         )}
@@ -154,61 +151,66 @@ export default function RewardsAdmin() {
                 </table>
             </div>
 
-            {/* Modal - A simplified overlay */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>{editingId ? 'Editează Recompensa' : 'Adaugă Recompensă'}</h2>
-                        <form onSubmit={handleSave} className="admin-form">
-                            <div className="form-group">
-                                <label>Nume Recompensă *</label>
-                                <input required type="text" value={formData.nume} onChange={e => setFormData({ ...formData, nume: e.target.value })} placeholder="ex: Bilet Gratuit" />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Descriere</label>
-                                <textarea value={formData.descriere} onChange={e => setFormData({ ...formData, descriere: e.target.value })} rows="3"></textarea>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group flex-1">
-                                    <label>Cost Puncte *</label>
-                                    <input required type="number" min="1" value={formData.puncteNecesare} onChange={e => setFormData({ ...formData, puncteNecesare: parseInt(e.target.value) || 0 })} />
-                                </div>
-                                <div className="form-group flex-1">
-                                    <label>Tip Beneficiu *</label>
-                                    <select value={formData.tip} onChange={e => setFormData({ ...formData, tip: e.target.value })}>
-                                        <option value="bilet_gratuit">Bilet Gratuit</option>
-                                        <option value="reducere">Reducere %</option>
-                                        <option value="voucher">Voucher Bani</option>
-                                        <option value="tur_ghidat">Tur Ghidat</option>
-                                        <option value="suvenir">Suvenir</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Valoare Nominală (ex: 15 lei, 10%) - Cifră exactă *</label>
-                                <input required type="number" step="0.01" value={formData.valoare} onChange={e => setFormData({ ...formData, valoare: parseFloat(e.target.value) || 0 })} placeholder="ex: 10, 50, 0" />
-                            </div>
-
-                            {editingId && (
-                                <div className="form-checkbox">
-                                    <label>
-                                        <input type="checkbox" checked={formData.activ} onChange={e => setFormData({ ...formData, activ: e.target.checked })} />
-                                        <span>Recompensă Activă (vizibilă pentru clienți)</span>
-                                    </label>
-                                </div>
-                            )}
-
-                            <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Anulare</button>
-                                <button type="submit" className="btn-primary">Salvează</button>
-                            </div>
-                        </form>
+            <FormModal
+                show={showModal}
+                title={editingId ? 'Editează Recompensa' : 'Adaugă Recompensă'}
+                onClose={() => setShowModal(false)}
+                onSubmit={handleSave}
+                saving={saving}
+                error={formError}
+            >
+                <div className="form-group">
+                    <label>Nume Recompensă *</label>
+                    <input required type="text" value={formData.nume} onChange={e => set('nume', e.target.value)} placeholder="ex: Bilet Gratuit" />
+                </div>
+                <div className="form-group">
+                    <label>Descriere</label>
+                    <textarea value={formData.descriere} onChange={e => set('descriere', e.target.value)} rows="3" />
+                </div>
+                <div className="form-row">
+                    <div className="form-group flex-1">
+                        <label>Cost Puncte *</label>
+                        <input required type="number" min="1" value={formData.puncteNecesare} onChange={e => set('puncteNecesare', parseInt(e.target.value) || 0)} />
+                    </div>
+                    <div className="form-group flex-1">
+                        <label>Tip Beneficiu *</label>
+                        <select value={formData.tip} onChange={e => set('tip', e.target.value)}>
+                            <option value="bilet_gratuit">Bilet Gratuit</option>
+                            <option value="reducere">Reducere %</option>
+                            <option value="voucher">Voucher Bani</option>
+                            <option value="tur_ghidat">Tur Ghidat</option>
+                            <option value="suvenir">Suvenir</option>
+                        </select>
                     </div>
                 </div>
-            )}
+                <div className="form-group">
+                    <label>{formData.tip === 'reducere' ? 'Valoare Reducere (%)' : 'Valoare Nominală (Lei)'}</label>
+                    <input
+                        required type="number" step="0.01" min="0"
+                        max={formData.tip === 'reducere' ? 100 : undefined}
+                        value={formData.valoare}
+                        onChange={e => set('valoare', parseFloat(e.target.value) || 0)}
+                        placeholder={formData.tip === 'reducere' ? 'ex: 10, 20, 50' : 'ex: 15, 30, 50'}
+                    />
+                </div>
+                {editingId && (
+                    <div className="form-checkbox">
+                        <label>
+                            <input type="checkbox" checked={formData.activ} onChange={e => set('activ', e.target.checked)} />
+                            <span>Recompensă Activă (vizibilă pentru clienți)</span>
+                        </label>
+                    </div>
+                )}
+            </FormModal>
+
+            <ConfirmDialog
+                show={!!confirmTarget}
+                title="Dezactivare Recompensă"
+                message="Ești sigur că vrei să dezactivezi această recompensă?"
+                confirmLabel="Da, dezactivează"
+                onConfirm={handleDeactivate}
+                onCancel={() => setConfirmTarget(null)}
+            />
         </div>
     );
 }

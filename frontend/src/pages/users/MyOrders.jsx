@@ -3,6 +3,7 @@ import axios from 'axios';
 import { PackageOpen, Clock, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useSession } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/common/Toast';
 import './MyOrders.css';
 
 const API = 'http://localhost:5000';
@@ -10,6 +11,7 @@ const API = 'http://localhost:5000';
 export default function MyOrders() {
     const { data: session } = useSession();
     const navigate = useNavigate();
+    const toast = useToast();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -65,7 +67,7 @@ export default function MyOrders() {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Eroare descărcare bilete:', error);
-            alert('A apărut o eroare la descărcarea biletelor. Te rugăm să încerci din nou.');
+            toast.error('A apărut o eroare la descărcarea biletelor. Te rugăm să încerci din nou.');
         }
     };
 

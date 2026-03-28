@@ -65,3 +65,30 @@ export const createArtistSchema = z.object({
 });
 
 export const updateArtistSchema = createArtistSchema.partial();
+
+// Ticket type validation schema (museum-admin)
+export const createTicketTypeSchema = z.object({
+    tipBilet: z.enum(['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'], {
+        errorMap: () => ({ message: 'Tip bilet invalid.' }),
+    }),
+    pret: z.number({ invalid_type_error: 'Prețul trebuie să fie un număr.' }).min(0, 'Prețul nu poate fi negativ.'),
+});
+
+export const updateTicketTypeSchema = createTicketTypeSchema.partial();
+
+// Review update schema
+export const updateReviewSchema = z.object({
+    rating: z.number().int().min(1, 'Rating minim 1').max(5, 'Rating maxim 5'),
+    descriereRecenzie: z.string().max(2000, 'Recenzia este prea lungă.').optional(),
+});
+
+// Checkout schema
+export const checkoutSchema = z.object({
+    locationId: z.string().min(1, 'locationId lipsă'),
+    tickets: z.array(z.object({
+        codUnicTipBilet: z.string().min(1),
+        cantitate: z.number().int().min(1),
+    })).min(1, 'Selectează cel puțin un bilet'),
+    promoCode: z.string().optional(),
+    dataVizita: z.string().optional(),
+});

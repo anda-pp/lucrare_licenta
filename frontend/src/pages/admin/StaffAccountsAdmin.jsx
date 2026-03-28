@@ -1,36 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, MapPin, Building, Trash2, Mail, Phone, Users, Edit } from 'lucide-react';
+import { Plus, Search, Building, Trash2, Mail, Phone, Users, Edit } from 'lucide-react';
 import axios from 'axios';
+import FormModal from '../../components/common/FormModal';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import './admin-shared.css';
 import './GamificationAdmin.css';
 
 const API = 'http://localhost:5000';
+
+const EMPTY_FORM = { nume: '', prenume: '', email: '', password: '', telefon: '', rol: 'Admin', muzeuId: '' };
 
 export default function StaffAccountsAdmin() {
     const [staff, setStaff] = useState([]);
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    
-    // Modal states
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        nume: '',
-        prenume: '',
-        email: '',
-        password: '',
-        telefon: '',
-        rol: 'Admin',
-        muzeuId: ''
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [editingUserId, setEditingUserId] = useState(null);
-    const [errorMsg, setErrorMsg] = useState('');
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    const [showModal, setShowModal] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState('');
+
+    const [confirmTarget, setConfirmTarget] = useState(null);
+
+    useEffect(() => { fetchData(); }, []);
 
     const fetchData = async () => {
         setLoading(true);
@@ -41,9 +35,7 @@ export default function StaffAccountsAdmin() {
             ]);
             if (staffRes.data.success) setStaff(staffRes.data.staff);
             if (locationsRes.data.success) {
-                // Filter only explicit museums/galleries (Active)
-                const activeLocations = locationsRes.data.data.filter(l => l.statusLocatie === 'Activ');
-                setLocations(activeLocations);
+                setLocations(locationsRes.data.data.filter(l => l.statusLocatie === 'Activ'));
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -52,89 +44,55 @@ export default function StaffAccountsAdmin() {
         }
     };
 
-    const handleAddClick = () => {
-        setIsEditMode(false);
-        setEditingUserId(null);
-        setFormData({
-            nume: '',
-            prenume: '',
-            email: '',
-            password: '',
-            telefon: '',
-            rol: 'Admin',
-            muzeuId: ''
-        });
-        setErrorMsg('');
-        setIsAddModalOpen(true);
+    const handleOpenModal = (staffMember = null) => {
+        if (staffMember) {
+            setEditingId(staffMember.codUnicUtilizator);
+            setFormData({
+                nume: staffMember.numeUtil, prenume: staffMember.prenumeUtil,
+                email: staffMember.emailUtil, password: '',
+                telefon: staffMember.telefonUtil || '', rol: staffMember.rolUtil,
+                muzeuId: staffMember.muzeuId || ''
+            });
+        } else {
+            setEditingId(null);
+            setFormData(EMPTY_FORM);
+        }
+        setFormError('');
+        setShowModal(true);
     };
 
-    const handleCloseModal = () => {
-        setIsAddModalOpen(false);
-        setIsEditMode(false);
-        setEditingUserId(null);
-    };
-
-    const handleEditClick = (staffMember) => {
-        setIsEditMode(true);
-        setEditingUserId(staffMember.codUnicUtilizator);
-        setFormData({
-            nume: staffMember.numeUtil,
-            prenume: staffMember.prenumeUtil,
-            email: staffMember.emailUtil,
-            password: '', // Blank unless they want to change it
-            telefon: staffMember.telefonUtil || '',
-            rol: staffMember.rolUtil,
-            muzeuId: staffMember.muzeuId || ''
-        });
-        setErrorMsg('');
-        setIsAddModalOpen(true);
-    };
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        setErrorMsg('');
-        setIsSubmitting(true);
-
+        setSaving(true);
+        setFormError('');
         try {
-            if (isEditMode) {
-                const res = await axios.put(`${API}/api/users/superadmin/staff/${editingUserId}`, formData, { withCredentials: true });
-                if (res.data.success) {
-                    fetchData();
-                    handleCloseModal();
-                }
+            if (editingId) {
+                const res = await axios.put(`${API}/api/users/superadmin/staff/${editingId}`, formData, { withCredentials: true });
+                if (res.data.success) { fetchData(); setShowModal(false); }
             } else {
                 const res = await axios.post(`${API}/api/users/superadmin/staff`, formData, { withCredentials: true });
-                if (res.data.success) {
-                    fetchData();
-                    handleCloseModal();
-                }
+                if (res.data.success) { fetchData(); setShowModal(false); }
             }
         } catch (error) {
-            setErrorMsg(error.response?.data?.error || 'A apărut o eroare la crearea contului.');
+            setFormError(error.response?.data?.error || 'A apărut o eroare la crearea contului.');
         } finally {
-            setIsSubmitting(false);
+            setSaving(false);
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Ești sigur că dorești să ștergi acest cont de Staff/Admin?')) return;
-        
+    const handleDelete = async () => {
+        if (!confirmTarget) return;
         try {
-            const res = await axios.delete(`${API}/api/users/superadmin/staff/${id}`, { withCredentials: true });
-            if (res.data.success) {
-                fetchData();
-            }
+            const res = await axios.delete(`${API}/api/users/superadmin/staff/${confirmTarget}`, { withCredentials: true });
+            if (res.data.success) fetchData();
         } catch (error) {
             alert(error.response?.data?.error || 'A apărut o eroare la ștergerea contului.');
+        } finally {
+            setConfirmTarget(null);
         }
     };
 
-    const filteredStaff = staff.filter(s => 
+    const filteredStaff = staff.filter(s =>
         s.numeUtil.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.prenumeUtil.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.emailUtil.toLowerCase().includes(searchTerm.toLowerCase())
@@ -146,6 +104,8 @@ export default function StaffAccountsAdmin() {
         return loc ? loc.numeLoc : 'Locație Ștearsă';
     };
 
+    const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
+
     if (loading) return <div className="loading">Se încarcă...</div>;
 
     return (
@@ -155,7 +115,7 @@ export default function StaffAccountsAdmin() {
                     <Users size={28} className="text-primary" />
                     <h1 style={{ margin: 0 }}>Gestiune Conturi Staff & Admini Muzee</h1>
                 </div>
-                <button className="btn-primary icon-btn" onClick={handleAddClick}>
+                <button className="btn-primary icon-btn" onClick={() => handleOpenModal()}>
                     <Plus size={18} /> Adaugă Cont
                 </button>
             </div>
@@ -163,8 +123,8 @@ export default function StaffAccountsAdmin() {
             <div className="admin-filters" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', width: '300px' }}>
                 <div className="search-box">
                     <Search size={18} className="search-icon" />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Caută după nume sau email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,10 +177,10 @@ export default function StaffAccountsAdmin() {
                                     <td>{new Date(s.dataInregistrare).toLocaleDateString()}</td>
                                     <td>
                                         <div className="table-actions" style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button className="btn-secondary" style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Editează Cont" onClick={() => handleEditClick(s)} aria-label="Editează">
+                                            <button className="btn-secondary" style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Editează Cont" onClick={() => handleOpenModal(s)} aria-label="Editează">
                                                 <Edit size={16} />
                                             </button>
-                                            <button className="btn-danger" style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Șterge Cont" onClick={() => handleDelete(s.codUnicUtilizator)} aria-label="Sterge">
+                                            <button className="btn-danger" style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Șterge Cont" onClick={() => setConfirmTarget(s.codUnicUtilizator)} aria-label="Sterge">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
@@ -232,75 +192,69 @@ export default function StaffAccountsAdmin() {
                 </table>
             </div>
 
-            {/* Add Modal */}
-            {isAddModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '500px' }}>
-                        <div className="modal-header">
-                            <h2>{isEditMode ? 'Editează Cont Staff/Admin' : 'Creează un cont nou (Staff/Admin)'}</h2>
-                        </div>
-                        
-                        {errorMsg && <div className="error-message" style={{ background: '#fef2f2', color: '#dc2626', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>{errorMsg}</div>}
-
-                        <form onSubmit={handleSubmit} className="admin-form">
-                            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>Nume</label>
-                                    <input type="text" name="nume" value={formData.nume} onChange={handleInputChange} required className="admin-input" placeholder="Popescu" />
-                                </div>
-                                <div className="form-group">
-                                    <label>Prenume</label>
-                                    <input type="text" name="prenume" value={formData.prenume} onChange={handleInputChange} required className="admin-input" placeholder="Ion" />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Email</label>
-                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="admin-input" placeholder="ion.popescu@muzeuart.ro" />
-                            </div>
-
-                            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>Parolă {isEditMode && <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'gray' }}>(opțional)</span>}</label>
-                                    <input type="password" name="password" value={formData.password} onChange={handleInputChange} required={!isEditMode} className="admin-input" placeholder={isEditMode ? "Lasă gol pentru a o păstra..." : "Parolă temporară..."} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Telefon (Opțional)</label>
-                                    <input type="tel" name="telefon" value={formData.telefon} onChange={handleInputChange} className="admin-input" placeholder="07xx xxx xxx" />
-                                </div>
-                            </div>
-
-                            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>Rol în Sistem</label>
-                                    <select name="rol" value={formData.rol} onChange={handleInputChange} className="admin-input" required>
-                                        <option value="Admin">Administrator Muzeu</option>
-                                        <option value="Personal">Personal / Staff</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Muzeu Alocat</label>
-                                    <select name="muzeuId" value={formData.muzeuId} onChange={handleInputChange} className="admin-input">
-                                        <option value="">- Niciunul (Acces Restrâns) -</option>
-                                        {locations.map(loc => (
-                                            <option key={loc.codUnicLocatie} value={loc.codUnicLocatie}>{loc.numeLoc}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-actions mt-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                                <button type="button" className="btn-secondary" style={{ borderRadius: '25px', padding: '0.6rem 1.5rem' }} onClick={handleCloseModal} disabled={isSubmitting}>
-                                    Anulează
-                                </button>
-                                <button type="submit" className="btn-primary" style={{ borderRadius: '25px', padding: '0.6rem 1.5rem' }} disabled={isSubmitting}>
-                                    {isSubmitting ? 'Se salvează...' : (isEditMode ? 'Salvează' : 'Creează')}
-                                </button>
-                            </div>
-                        </form>
+            <FormModal
+                show={showModal}
+                title={editingId ? 'Editează Cont Staff/Admin' : 'Creează un cont nou (Staff/Admin)'}
+                onClose={() => setShowModal(false)}
+                onSubmit={handleSave}
+                saving={saving}
+                error={formError}
+                submitLabel={editingId ? 'Salvează' : 'Creează'}
+            >
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                        <label>Nume</label>
+                        <input type="text" value={formData.nume} onChange={e => set('nume', e.target.value)} required placeholder="Popescu" />
+                    </div>
+                    <div className="form-group">
+                        <label>Prenume</label>
+                        <input type="text" value={formData.prenume} onChange={e => set('prenume', e.target.value)} required placeholder="Ion" />
                     </div>
                 </div>
-            )}
+
+                <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" value={formData.email} onChange={e => set('email', e.target.value)} required placeholder="ion.popescu@muzeuart.ro" />
+                </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                        <label>Parolă {editingId && <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'gray' }}>(opțional)</span>}</label>
+                        <input type="password" value={formData.password} onChange={e => set('password', e.target.value)} required={!editingId} placeholder={editingId ? "Lasă gol pentru a o păstra..." : "Parolă temporară..."} />
+                    </div>
+                    <div className="form-group">
+                        <label>Telefon (Opțional)</label>
+                        <input type="tel" value={formData.telefon} onChange={e => set('telefon', e.target.value)} placeholder="07xx xxx xxx" />
+                    </div>
+                </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                        <label>Rol în Sistem</label>
+                        <select value={formData.rol} onChange={e => set('rol', e.target.value)} required>
+                            <option value="Admin">Administrator Muzeu</option>
+                            <option value="Personal">Personal / Staff</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Muzeu Alocat</label>
+                        <select value={formData.muzeuId} onChange={e => set('muzeuId', e.target.value)}>
+                            <option value="">- Niciunul (Acces Restrâns) -</option>
+                            {locations.map(loc => (
+                                <option key={loc.codUnicLocatie} value={loc.codUnicLocatie}>{loc.numeLoc}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </FormModal>
+
+            <ConfirmDialog
+                show={!!confirmTarget}
+                title="Ștergere Cont"
+                message="Ești sigur că dorești să ștergi acest cont de Staff/Admin?"
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmTarget(null)}
+            />
         </div>
     );
 }
