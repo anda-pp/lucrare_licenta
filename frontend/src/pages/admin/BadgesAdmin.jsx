@@ -140,7 +140,7 @@ export default function BadgesAdmin() {
                                     </div>
                                 </td>
                                 <td>
-                                    <span className="badge-points" style={{ background: '#f1f5f9', color: '#0f172a' }}>
+                                    <span className="badge-points">
                                         {b.conditie} &ge; {b.valoare_conditie}
                                     </span>
                                 </td>

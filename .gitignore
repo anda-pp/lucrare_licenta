@@ -1,5 +1,25 @@
+# Environment
 **/.env
 **/.env.local
 **/.env.production
 **/.env.development
+
+# Dependencies
 **/node_modules
+
+# Documentation / thesis writing (not needed to run the app)
+*.md
+machete/
+
+# Office / thesis documents
+*.docx
+*.doc
+*.pdf
+~$*
+
+# Database backups and drizzle artifacts
+backend/.drizzle/
+*.db.backup-*
+
+# Editor / tooling
+.claude/scheduled_tasks.lock

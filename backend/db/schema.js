@@ -67,24 +67,6 @@ export const judete = sqliteTable('judete', {
     numeJudet: text('nume_judet').notNull().unique(),
 });
 
-// Tabela Utilizatori
-export const utilizatori = sqliteTable('utilizatori', {
-    codUnicUtilizator: text('cod_unic_utilizator').primaryKey(),
-    numeUtil: text('nume_util').notNull(),
-    prenumeUtil: text('prenume_util').notNull(),
-    emailUtil: text('email_util').notNull(),
-    usernameUtil: text('username_util').notNull().unique(),
-    parolaUtil: text('parola_util').notNull(),
-    telefonUtil: text('telefon_util'),
-    orasUtil: text('oras_util').notNull(),
-    judetUtil: text('judet_util').references(() => judete.codJudet),
-    adresaUtil: text('adresa_util').notNull(),
-    rolUtil: text('rol_util', { enum: ['Superadmin', 'Admin', 'Utilizator', 'Personal'] }).notNull(),
-    muzeuId: text('muzeu_id').references(() => locatiiPublice.codUnicLocatie),
-    dataInregistrare: text('data_inregistrare').default(sql`CURRENT_TIMESTAMP`),
-    avatarUrl: text('avatar_url'), // Pentru upload avatar
-});
-
 // Tabela Card Fidelitate (tipuri de carduri)
 export const cardFidelitate = sqliteTable('card_fidelitate', {
     tipUnicCard: text('tip_unic_card').primaryKey(),
@@ -125,13 +107,6 @@ export const tipuriBilete = sqliteTable('tipuri_bilete', {
     codUnicEveniment: text('cod_unic_eveniment').references(() => evenimente.id), // FK catre evenimente.id (adaugat prin migrare)
     tipBilet: text('tip_bilet', { enum: ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'] }).notNull(),
     pret: real('pret').notNull(),
-});
-
-// Tabela Favorite
-export const favorite = sqliteTable('favorite', {
-    numarFavorite: text('numar_favorite').primaryKey(),
-    codUnicUtilizator: text('cod_unic_utilizator').references(() => utilizatori.codUnicUtilizator),
-    codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
 });
 
 // Tabela Recenzii

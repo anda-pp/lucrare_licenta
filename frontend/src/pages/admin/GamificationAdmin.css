@@ -20,6 +20,10 @@
     color: #64748b;
 }
 
+.dark-theme .admin-page-header p {
+    color: var(--color-text-muted);
+}
+
 .admin-btn-primary {
     display: flex;
     align-items: center;
@@ -36,6 +40,14 @@
 
 .admin-btn-primary:hover {
     background-color: var(--color-primary-dark);
+}
+
+.dark-theme .admin-btn-primary {
+    color: #1e1b4b;
+}
+
+.dark-theme .admin-btn-primary:hover {
+    color: var(--color-text-main);
 }
 
 .admin-table-container {
@@ -120,6 +132,16 @@
     color: #991b1b;
 }
 
+.dark-theme .status-badge.success {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+.dark-theme .status-badge.error {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
 .action-buttons {
     display: flex;
     gap: 0.5rem;
@@ -136,6 +158,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.dark-theme .btn-icon {
+    color: var(--color-text-muted);
+}
+
+.dark-theme .btn-icon.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
 }
 
 .btn-icon.edit:hover {
@@ -281,7 +312,7 @@
     background: rgba(255,255,255,0.05);
 }
 
-.btn-primary {
+.modal-actions .btn-primary {
     background-color: var(--color-primary);
     color: white;
     border: none;
@@ -292,6 +323,14 @@
     transition: all 0.2s;
 }
 
-.btn-primary:hover {
+.modal-actions .btn-primary:hover {
     background-color: var(--color-primary-dark);
+}
+
+.dark-theme .modal-actions .btn-primary {
+    color: #1e1b4b;
+}
+
+.dark-theme .modal-actions .btn-primary:hover {
+    color: var(--color-text-main);
 }

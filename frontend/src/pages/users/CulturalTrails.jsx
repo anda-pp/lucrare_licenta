@@ -99,7 +99,7 @@ export default function CulturalTrails() {
                                         </div>
 
                                         {trail.descriere && (
-                                            <div style={{ padding: '0 1.5rem', fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem' }}>
+                                            <div style={{ padding: '0 1.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
                                                 {trail.descriere}
                                             </div>
                                         )}

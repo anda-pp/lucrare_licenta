@@ -184,7 +184,7 @@ export default function EventReservation() {
                                         ))}
                                     </select>
                                 ) : (
-                                    <div style={{ padding: '0.75rem', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.9rem' }}>
+                                    <div style={{ padding: '0.75rem', background: 'var(--color-input-bg)', borderRadius: '4px', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                                         Nu sunt intervale disponibile.
                                     </div>
                                 )}

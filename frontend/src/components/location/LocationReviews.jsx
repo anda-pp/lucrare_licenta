@@ -35,7 +35,7 @@ function InteractiveStars({ value, onChange }) {
                     key={i}
                     size={24}
                     fill={(hover || value) > i ? '#f59e0b' : 'none'}
-                    stroke={(hover || value) > i ? '#f59e0b' : '#cbd5e1'}
+                    stroke={(hover || value) > i ? '#f59e0b' : 'var(--color-border)'}
                     onMouseEnter={() => setHover(i + 1)}
                     onMouseLeave={() => setHover(0)}
                     onClick={() => onChange(i + 1)}
@@ -135,10 +135,13 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                                 padding: '0.6rem 1.5rem', borderRadius: '25px',
-                                background: rating < 1 ? '#e2e8f0' : 'linear-gradient(135deg, #7c3aed, #9333ea)',
-                                color: rating < 1 ? '#94a3b8' : '#fff',
+                                background: rating < 1
+                                    ? 'var(--color-border)'
+                                    : 'linear-gradient(135deg, var(--color-primary-dark), var(--color-primary))',
+                                color: rating < 1 ? 'var(--color-text-muted)' : '#fff',
                                 border: 'none', cursor: rating < 1 ? 'not-allowed' : 'pointer',
                                 fontWeight: 600, fontSize: '0.9rem',
+                                opacity: rating < 1 ? 0.7 : 1,
                                 transition: 'all 0.2s ease',
                             }}
                         >
@@ -149,11 +152,7 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
             )}
 
             {session && alreadyReviewed && (
-                <div style={{
-                    padding: '0.75rem 1rem', background: '#f0fdf4', border: '1px solid #bbf7d0',
-                    borderRadius: 'var(--radius-md)', marginBottom: '1rem',
-                    color: '#166534', fontSize: '0.88rem', fontWeight: 500,
-                }}>
+                <div className="loc-review-already">
                     Ai adăugat deja o recenzie pentru această locație. O poți edita din secțiunea "Recenziile Mele".
                 </div>
             )}

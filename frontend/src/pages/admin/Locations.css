@@ -323,3 +323,57 @@
 .btn-reset-filters:hover {
     opacity: 0.85;
 }
+
+/* ---- DARK THEME OVERRIDES ---- */
+.dark-theme .badge-muzeu {
+    background: rgba(192, 132, 252, 0.2);
+    color: #ddd6fe;
+}
+
+.dark-theme .badge-galerie {
+    background: rgba(56, 189, 248, 0.2);
+    color: #7dd3fc;
+}
+
+.dark-theme .status-activ {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.dark-theme .status-inactiv {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.dark-theme .status-cerere {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+}
+
+.dark-theme .btn-gallery {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: rgba(192, 132, 252, 0.4);
+    color: #ddd6fe;
+}
+
+.dark-theme .btn-gallery:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #1e1b4b;
+}
+
+.dark-theme .btn-tickets {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #7dd3fc;
+}
+
+.dark-theme .btn-tickets:hover {
+    background: #38bdf8;
+    border-color: #38bdf8;
+    color: #082f49;
+}
+
+.dark-theme .btn-reset-filters {
+    color: #1e1b4b;
+}

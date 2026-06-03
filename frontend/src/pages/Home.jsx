@@ -50,7 +50,7 @@ export default function Home() {
                 {session ? (
                     <div className="user-dashboard">
                         <div className="loading-spinner"></div>
-                        <p style={{marginTop: '1rem', color: '#666'}}>Te redirecționăm către panoul tău...</p>
+                        <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)' }}>Te redirecționăm către panoul tău...</p>
                     </div>
                 ) : (
                     <div className="guest-info">

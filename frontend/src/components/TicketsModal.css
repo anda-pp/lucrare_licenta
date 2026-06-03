@@ -1,0 +1,152 @@
+/* Tickets modal — scoped to .tickets-modal so global .modal-content rules don't bleed */
+
+.tickets-modal {
+    padding: 1.25rem 1.5rem;
+}
+
+.tickets-loading,
+.tickets-empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 1rem;
+}
+
+.tickets-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    color: var(--color-text-main);
+}
+
+.tickets-table thead tr {
+    border-bottom: 2px solid var(--color-border);
+}
+
+.tickets-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.tickets-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tickets-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.tickets-table td {
+    padding: 0.6rem 0.75rem;
+    color: var(--color-text-main);
+}
+
+.tickets-table .td-type {
+    font-weight: 600;
+}
+
+.tickets-table .td-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+/* Inputs / selects inside the tickets modal */
+.tickets-input,
+.tickets-select {
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--color-border);
+    font-size: 0.88rem;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tickets-input.compact,
+.tickets-select.compact {
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    border-width: 1px;
+    font-size: 0.85rem;
+}
+
+.tickets-input.price-edit {
+    width: 80px;
+}
+
+.tickets-input.price-new {
+    width: 90px;
+}
+
+.tickets-select {
+    width: 100%;
+}
+
+.tickets-input:focus,
+.tickets-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15);
+}
+
+.tickets-input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.7;
+}
+
+/* Add-form */
+.tickets-add-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.tickets-add-form .field {
+    flex: 1;
+}
+
+.tickets-add-form label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-main);
+}
+
+.tickets-add-form .actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tickets-add-trigger {
+    margin-top: 1rem;
+}
+
+/* Compact action buttons in the table */
+.tickets-table .btn-primary.compact,
+.tickets-table .btn-secondary.compact,
+.tickets-table .btn-danger.compact {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+}
+
+/* ---- Dark theme refinements ---- */
+.dark-theme .tickets-select option {
+    background: var(--color-white);
+    color: var(--color-text-main);
+}
+
+.dark-theme .tickets-input::placeholder {
+    color: rgba(216, 180, 254, 0.5);
+}
+
+.dark-theme .tickets-input:focus,
+.dark-theme .tickets-select:focus {
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.25);
+}

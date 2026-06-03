@@ -192,6 +192,22 @@
     color: #059669;
 }
 
+.dark-theme .badge-role-personal {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+}
+
+.dark-theme .badge-role-admin {
+    background: rgba(13, 148, 136, 0.22);
+    color: #5eead4;
+}
+
+.dark-theme .user-badge-card,
+.dark-theme .badge-success {
+    background: rgba(16, 185, 129, 0.22);
+    color: #6ee7b7;
+}
+
 .user-badge-info {
     background: var(--color-accent);
     color: var(--color-primary);

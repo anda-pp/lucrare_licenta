@@ -603,9 +603,20 @@
 .loc-review-form {
     padding: 1.25rem;
     margin-bottom: 1.25rem;
-    background: linear-gradient(135deg, #faf5ff, #f5f3ff);
-    border: 1px solid #ede9fe;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
+}
+
+.loc-review-already {
+    padding: 0.75rem 1rem;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    color: var(--color-success);
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 /* ---- TICKET SELECTION & ACTIONS ---- */

@@ -237,3 +237,37 @@
 .btn-reset-filters:hover {
     opacity: 0.85;
 }
+
+/* ---- DARK THEME OVERRIDES ---- */
+.dark-theme .status-paid,
+.dark-theme .status-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.dark-theme .status-pending {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+}
+
+.dark-theme .status-failed,
+.dark-theme .status-cancelled {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.dark-theme .btn-cancel {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+}
+
+.dark-theme .btn-activate {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+}
+
+.dark-theme .btn-reset-filters {
+    color: #1e1b4b;
+}

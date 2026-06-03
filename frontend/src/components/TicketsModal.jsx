@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Plus, Trash2, Save, Edit2 } from 'lucide-react';
+import './TicketsModal.css';
 
 const API = 'http://localhost:5000';
 
@@ -74,55 +75,67 @@ export default function TicketsModal({ location, onClose }) {
                     <button className="modal-close" onClick={onClose}><X size={20} /></button>
                 </div>
 
-                <div style={{ padding: '1.25rem 1.5rem' }}>
+                <div className="tickets-modal">
                     {loading ? (
-                        <p style={{ textAlign: 'center', color: '#94a3b8' }}>Se încarcă...</p>
+                        <p className="tickets-loading">Se încarcă...</p>
                     ) : (
                         <>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                            <table className="tickets-table">
                                 <thead>
-                                    <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                                        <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase' }}>Tip</th>
-                                        <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase' }}>Preț (Lei)</th>
+                                    <tr>
+                                        <th>Tip</th>
+                                        <th>Preț (Lei)</th>
                                         <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {tickets.map(t => (
-                                        <tr key={t.codUnicTipBilet} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <tr key={t.codUnicTipBilet}>
                                             {editingId === t.codUnicTipBilet ? (
                                                 <>
-                                                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                                                        <select value={editForm.tipBilet} onChange={e => setEditForm({ ...editForm, tipBilet: e.target.value })}
-                                                            style={{ padding: '0.3rem 0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}>
+                                                    <td>
+                                                        <select
+                                                            className="tickets-select compact"
+                                                            value={editForm.tipBilet}
+                                                            onChange={e => setEditForm({ ...editForm, tipBilet: e.target.value })}
+                                                        >
                                                             {TICKET_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
                                                         </select>
                                                     </td>
-                                                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                                                        <input type="number" step="0.01" min="0" value={editForm.pret}
+                                                    <td>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            className="tickets-input compact price-edit"
+                                                            value={editForm.pret}
                                                             onChange={e => setEditForm({ ...editForm, pret: e.target.value })}
-                                                            style={{ width: '80px', padding: '0.3rem 0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.85rem' }} />
+                                                        />
                                                     </td>
-                                                    <td style={{ padding: '0.5rem 0.75rem', display: 'flex', gap: '0.4rem' }}>
-                                                        <button className="btn-primary icon-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} disabled={saving} onClick={() => handleUpdate(t.codUnicTipBilet)}>
+                                                    <td className="td-actions">
+                                                        <button className="btn-primary icon-btn compact" disabled={saving} onClick={() => handleUpdate(t.codUnicTipBilet)}>
                                                             <Save size={14} /> Salvează
                                                         </button>
-                                                        <button className="btn-secondary icon-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => setEditingId(null)}>
+                                                        <button className="btn-secondary icon-btn compact" onClick={() => setEditingId(null)}>
                                                             Anulează
                                                         </button>
                                                     </td>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>{t.tipBilet}</td>
-                                                    <td style={{ padding: '0.6rem 0.75rem' }}>{Number(t.pret).toFixed(2)} Lei</td>
-                                                    <td style={{ padding: '0.6rem 0.75rem', display: 'flex', gap: '0.4rem' }}>
-                                                        <button className="btn-secondary icon-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }}
-                                                            onClick={() => { setEditingId(t.codUnicTipBilet); setEditForm({ tipBilet: t.tipBilet, pret: t.pret }); }}>
+                                                    <td className="td-type">{t.tipBilet}</td>
+                                                    <td>{Number(t.pret).toFixed(2)} Lei</td>
+                                                    <td className="td-actions">
+                                                        <button
+                                                            className="btn-secondary icon-btn compact"
+                                                            onClick={() => { setEditingId(t.codUnicTipBilet); setEditForm({ tipBilet: t.tipBilet, pret: t.pret }); }}
+                                                        >
                                                             <Edit2 size={13} />
                                                         </button>
-                                                        <button className="btn-danger icon-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }}
-                                                            onClick={() => handleDelete(t.codUnicTipBilet)}>
+                                                        <button
+                                                            className="btn-danger icon-btn compact"
+                                                            onClick={() => handleDelete(t.codUnicTipBilet)}
+                                                        >
                                                             <Trash2 size={13} />
                                                         </button>
                                                     </td>
@@ -131,27 +144,37 @@ export default function TicketsModal({ location, onClose }) {
                                         </tr>
                                     ))}
                                     {tickets.length === 0 && (
-                                        <tr><td colSpan={3} style={{ textAlign: 'center', padding: '1rem', color: '#94a3b8' }}>Niciun tip de bilet definit.</td></tr>
+                                        <tr><td colSpan={3} className="tickets-empty">Niciun tip de bilet definit.</td></tr>
                                     )}
                                 </tbody>
                             </table>
 
                             {adding ? (
-                                <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Tip Bilet</label>
-                                        <select value={newForm.tipBilet} onChange={e => setNewForm({ ...newForm, tipBilet: e.target.value })}
-                                            style={{ padding: '0.5rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.88rem', width: '100%' }}>
+                                <form onSubmit={handleAdd} className="tickets-add-form">
+                                    <div className="field">
+                                        <label>Tip Bilet</label>
+                                        <select
+                                            className="tickets-select"
+                                            value={newForm.tipBilet}
+                                            onChange={e => setNewForm({ ...newForm, tipBilet: e.target.value })}
+                                        >
                                             {TICKET_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <label style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Preț (Lei)</label>
-                                        <input type="number" step="0.01" min="0" required placeholder="0.00" value={newForm.pret}
+                                        <label>Preț (Lei)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            required
+                                            placeholder="0.00"
+                                            className="tickets-input price-new"
+                                            value={newForm.pret}
                                             onChange={e => setNewForm({ ...newForm, pret: e.target.value })}
-                                            style={{ width: '90px', padding: '0.5rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.88rem' }} />
+                                        />
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <div className="actions">
                                         <button type="submit" className="btn-primary icon-btn" disabled={saving}>
                                             <Plus size={14} /> Adaugă
                                         </button>
@@ -159,7 +182,7 @@ export default function TicketsModal({ location, onClose }) {
                                     </div>
                                 </form>
                             ) : (
-                                <button className="btn-primary icon-btn" style={{ marginTop: '1rem' }} onClick={() => setAdding(true)}>
+                                <button className="btn-primary icon-btn tickets-add-trigger" onClick={() => setAdding(true)}>
                                     <Plus size={16} /> Adaugă Tip Bilet
                                 </button>
                             )}
