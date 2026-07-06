@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Users,
-    Building2,
     ShoppingBag,
     Star,
     TrendingUp,
     Calendar,
-    Trophy,
-    Award,
-    Banknote
+    Ticket,
+    Banknote,
+    MessageSquare
 } from 'lucide-react';
 import './StaffDashboard.css';
 
@@ -54,7 +53,11 @@ export default function StaffDashboard() {
             <div className="dashboard-header">
                 <div className="header-title">
                     <h1>Dashboard</h1>
-                    <p className="subtitle">Statistici {getRangeLabel()}</p>
+                    <p className="subtitle">
+                        {data?.muzeu?.name
+                            ? `${data.muzeu.name} · Statistici ${getRangeLabel()}`
+                            : `Statistici ${getRangeLabel()}`}
+                    </p>
                 </div>
                 <div className="date-filter">
                     <Calendar size={18} className="filter-icon" />
@@ -72,24 +75,13 @@ export default function StaffDashboard() {
 
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon-wrapper blue">
-                        <Building2 size={24} />
-                    </div>
-                    <div className="stat-content">
-                        <h3>Locații</h3>
-                        <p className="stat-number">{data?.stats?.locations || 0}</p>
-                        <p className="stat-label">Muzee & Galerii</p>
-                    </div>
-                </div>
-
-                <div className="stat-card">
                     <div className="stat-icon-wrapper purple">
                         <Users size={24} />
                     </div>
                     <div className="stat-content">
-                        <h3>Utilizatori Noi</h3>
+                        <h3>Clienți Noi</h3>
                         <p className="stat-number">{data?.stats?.newUsers || 0}</p>
-                        <p className="stat-label">{getRangeLabel()}</p>
+                        <p className="stat-label">prima comandă la noi {getRangeLabel()}</p>
                     </div>
                 </div>
 
@@ -121,30 +113,38 @@ export default function StaffDashboard() {
                     </div>
                     <div className="stat-content">
                         <h3>Venituri</h3>
-                        <p className="stat-number">{data?.stats?.totalRevenue?.toFixed(2) || 0} lei</p>
+                        <p className="stat-number">{Number(data?.stats?.totalRevenue || 0).toFixed(2)} lei</p>
                         <p className="stat-label">din comenzi plătite</p>
                     </div>
                 </div>
             </div>
 
             <div className="rankings-section">
+                {/* Top tipuri bilete */}
                 <div className="ranking-card">
                     <div className="ranking-header">
                         <div className="ranking-icon-wrapper gold">
-                            <Trophy size={20} />
+                            <Ticket size={20} />
                         </div>
                         <div>
-                            <h2>Top 5 Locații după Venituri</h2>
-                            <p className="ranking-subtitle">{getRangeLabel()}</p>
+                            <h2>Top Tipuri Bilete Vândute</h2>
+                            <p className="ranking-subtitle">comenzi plătite · {data?.muzeu?.name}</p>
                         </div>
                     </div>
                     <div className="ranking-list">
-                        {data?.topLocationsByRevenue?.length > 0 ? (
-                            data.topLocationsByRevenue.map((loc, index) => (
-                                <div key={loc.id} className="ranking-item">
+                        {data?.topTicketTypes?.length > 0 ? (
+                            data.topTicketTypes.map((ticket, index) => (
+                                <div key={`${ticket.tipBilet}-${ticket.pret}`} className="ranking-item">
                                     <span className={`rank rank-${index + 1}`}>{index + 1}</span>
-                                    <span className="location-name">{loc.name}</span>
-                                    <span className="location-value">{parseFloat(loc.revenue).toFixed(2)} lei</span>
+                                    <span className="location-name">
+                                        {ticket.tipBilet}
+                                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', marginLeft: '6px' }}>
+                                            {Number(ticket.pret).toFixed(2)} lei/buc
+                                        </span>
+                                    </span>
+                                    <span className="location-value">
+                                        {Number(ticket.cantitate)} buc · {Number(ticket.venituri).toFixed(2)} lei
+                                    </span>
                                 </div>
                             ))
                         ) : (
@@ -156,35 +156,42 @@ export default function StaffDashboard() {
                     </div>
                 </div>
 
+                {/* Recenzii recente */}
                 <div className="ranking-card">
                     <div className="ranking-header">
                         <div className="ranking-icon-wrapper purple">
-                            <Award size={20} />
+                            <MessageSquare size={20} />
                         </div>
                         <div>
-                            <h2>Top 5 Locații după Rating</h2>
-                            <p className="ranking-subtitle">Rating mediu din recenzii</p>
+                            <h2>Recenzii Recente</h2>
+                            <p className="ranking-subtitle">ultimele 5 recenzii · {data?.muzeu?.name}</p>
                         </div>
                     </div>
                     <div className="ranking-list">
-                        {data?.topLocationsByRating?.length > 0 ? (
-                            data.topLocationsByRating.map((loc, index) => (
-                                <div key={loc.id} className="ranking-item">
-                                    <span className={`rank rank-${index + 1}`}>{index + 1}</span>
-                                    <span className="location-name">{loc.name}</span>
-                                    <div className="location-rating">
-                                        <div className="stars">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    size={12}
-                                                    fill={i < Math.round(parseFloat(loc.avgRating)) ? "#0ea5e9" : "none"}
-                                                    stroke={i < Math.round(parseFloat(loc.avgRating)) ? "#0ea5e9" : "#cbd5e1"}
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="rating-number">{parseFloat(loc.avgRating).toFixed(1)}</span>
+                        {data?.recentReviews?.length > 0 ? (
+                            data.recentReviews.map((review) => (
+                                <div key={review.numarRecenzie} className="ranking-item" style={{ alignItems: 'flex-start', gap: '12px' }}>
+                                    <div className="stars" style={{ display: 'flex', gap: '2px', marginTop: '2px' }}>
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                size={12}
+                                                fill={i < review.rating ? '#f59e0b' : 'none'}
+                                                stroke={i < review.rating ? '#f59e0b' : '#cbd5e1'}
+                                            />
+                                        ))}
                                     </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ margin: 0, fontWeight: 600, fontSize: '0.85rem' }}>{review.userName || 'Utilizator anonim'}</p>
+                                        {review.descriere && (
+                                            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {review.descriere}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+                                        {review.data ? new Date(review.data).toLocaleDateString('ro-RO') : ''}
+                                    </span>
                                 </div>
                             ))
                         ) : (
@@ -199,4 +206,3 @@ export default function StaffDashboard() {
         </div>
     );
 }
-

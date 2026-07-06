@@ -10,8 +10,6 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireStaff);
 
-router.get('/dashboard', getStaffDashboard);
-
 // ── Middleware: preia muzeuId din DB pentru userul curent ──────────────────────
 const getMuzeuId = async (req, res, next) => {
     try {
@@ -26,6 +24,8 @@ const getMuzeuId = async (req, res, next) => {
         return res.status(500).json({ success: false, error: 'Eroare la identificarea muzeului.' });
     }
 };
+
+router.get('/dashboard', getMuzeuId, getStaffDashboard);
 
 // ── GET /api/staff/museum-reports/marketing ────────────────────────────────────
 router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
