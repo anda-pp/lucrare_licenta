@@ -10,11 +10,12 @@ const API = 'http://localhost:5000';
 
 const EMPTY_FORM = {
     id: '', nume: '', descriere: '', iconita: 'Star',
-    conditie: 'custom_condition', valoareConditie: 1, culoare: '#9333ea', mesajMotivatie: ''
+    conditie: '', valoareConditie: 1, culoare: '#9333ea', mesajMotivatie: ''
 };
 
 export default function BadgesAdmin() {
     const [badges, setBadges] = useState([]);
+    const [conditions, setConditions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
@@ -25,7 +26,7 @@ export default function BadgesAdmin() {
 
     const [confirmTarget, setConfirmTarget] = useState(null);
 
-    useEffect(() => { fetchBadges(); }, []);
+    useEffect(() => { fetchBadges(); fetchConditions(); }, []);
 
     const fetchBadges = async () => {
         try {
@@ -35,6 +36,15 @@ export default function BadgesAdmin() {
             console.error('Error fetching badges:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchConditions = async () => {
+        try {
+            const res = await axios.get(`${API}/api/badges/admin/conditions`, { withCredentials: true });
+            if (res.data.success) setConditions(res.data.data);
+        } catch (err) {
+            console.error('Error fetching conditions:', err);
         }
     };
 
@@ -49,7 +59,7 @@ export default function BadgesAdmin() {
             });
         } else {
             setEditingId(null);
-            setFormData(EMPTY_FORM);
+            setFormData({ ...EMPTY_FORM, conditie: conditions[0]?.conditie || '' });
         }
         setFormError('');
         setShowModal(true);
@@ -202,7 +212,27 @@ export default function BadgesAdmin() {
                 <div className={`form-row ${editingId ? 'opacity-50 select-none' : ''}`}>
                     <div className="form-group flex-1">
                         <label>Condiție Tehnică {!editingId ? '*' : '(read-only)'}</label>
-                        <input required type="text" value={formData.conditie} onChange={e => set('conditie', e.target.value)} disabled={!!editingId} />
+                        <select
+                            required
+                            value={formData.conditie}
+                            onChange={e => set('conditie', e.target.value)}
+                            disabled={!!editingId}
+                        >
+                            <option value="" disabled>-- Alege o condiție --</option>
+                            {/* La editare, condiția existentă poate fi una „legacy" care nu mai e în registru;
+                                o adăugăm ca opțiune ca să nu dispară din dropdown. */}
+                            {editingId && formData.conditie && !conditions.some(c => c.conditie === formData.conditie) && (
+                                <option value={formData.conditie}>{formData.conditie} (neimplementată)</option>
+                            )}
+                            {conditions.map(c => (
+                                <option key={c.conditie} value={c.conditie}>{c.label}</option>
+                            ))}
+                        </select>
+                        {!editingId && formData.conditie && (
+                            <small className="text-muted">
+                                {conditions.find(c => c.conditie === formData.conditie)?.description}
+                            </small>
+                        )}
                     </div>
                     <div className="form-group flex-1">
                         <label>Target Necesar {!editingId ? '*' : '(read-only)'}</label>

@@ -14,56 +14,97 @@ const parseDateToEpoch = (dateVal) => {
     return Math.floor(new Date(dateVal).getTime() / 1000);
 };
 
-// Badge condition handlers — keyed by `conditie` value from DB
-// Each handler receives (userId, targetValue) and returns { score, achievedAt }
-const BADGE_HANDLERS = {
-    reviews: async (userId, target) => {
-        const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} ORDER BY data_recenzie ASC`);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+// =============================================================================
+// REGISTRU DE CONDIȚII PENTRU INSIGNE  —  sursă unică de adevăr
+// -----------------------------------------------------------------------------
+// Fiecare condiție are:
+//   - label:       nume prietenos afișat în panoul de admin (dropdown)
+//   - description: explicație scurtă a ce numără condiția
+//   - evaluate:    (userId, target) => { score, achievedAt }
+//
+// Ca să adaugi un TIP NOU de condiție e suficient să adaugi o singură intrare
+// aici. Va apărea automat în dropdown-ul din admin (via GET /admin/conditions)
+// și va fi acceptată la crearea insignelor (validarea din POST /admin).
+// =============================================================================
+const BADGE_CONDITIONS = {
+    reviews: {
+        label: 'Recenzii scrise',
+        description: 'Numărul total de recenzii lăsate de utilizator.',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} ORDER BY data_recenzie ASC`);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
-    perfect_rating: async (userId, target) => {
-        const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} AND rating = 5 ORDER BY data_recenzie ASC`);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+    perfect_rating: {
+        label: 'Recenzii de 5 stele',
+        description: 'Numărul de recenzii cu rating maxim (5 stele).',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`SELECT data_recenzie as dt FROM recenzii WHERE cod_unic_utilizator = ${userId} AND rating = 5 ORDER BY data_recenzie ASC`);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
-    orders: async (userId, target) => {
-        const rows = await db.all(sql`SELECT data_comanda as dt FROM comenzi WHERE cod_unic_utilizator = ${userId} AND status_plata = 'Plătit' ORDER BY data_comanda ASC`);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+    orders: {
+        label: 'Comenzi plătite',
+        description: 'Numărul de comenzi finalizate (status „Plătit").',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`SELECT data_comanda as dt FROM comenzi WHERE cod_unic_utilizator = ${userId} AND status_plata = 'Plătit' ORDER BY data_comanda ASC`);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
-    museums: async (userId, target) => {
-        const rows = await db.all(sql`
-            SELECT MIN(c.data_comanda) as dt
-            FROM comenzi c
-            JOIN bilete_cumparate bc ON bc.numar_comanda = c.numar_comanda
-            JOIN tipuri_bilete tb ON bc.cod_unic_tip_bilet = tb.cod_unic_tip_bilet
-            WHERE c.cod_unic_utilizator = ${userId} AND c.status_plata = 'Plătit'
-            GROUP BY tb.cod_unic_locatie
-            ORDER BY dt ASC
-        `);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+    museums: {
+        label: 'Muzee vizitate',
+        description: 'Numărul de locații distincte pentru care s-au cumpărat bilete.',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`
+                SELECT MIN(c.data_comanda) as dt
+                FROM comenzi c
+                JOIN bilete_cumparate bc ON bc.numar_comanda = c.numar_comanda
+                JOIN tipuri_bilete tb ON bc.cod_unic_tip_bilet = tb.cod_unic_tip_bilet
+                WHERE c.cod_unic_utilizator = ${userId} AND c.status_plata = 'Plătit'
+                GROUP BY tb.cod_unic_locatie
+                ORDER BY dt ASC
+            `);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
-    events: async (userId, target) => {
-        const rows = await db.all(sql`SELECT data_rezervare as dt FROM rezervari_evenimente WHERE user_id = ${userId} ORDER BY data_rezervare ASC`);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+    events: {
+        label: 'Evenimente rezervate',
+        description: 'Numărul de rezervări la evenimente.',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`SELECT data_rezervare as dt FROM rezervari_evenimente WHERE user_id = ${userId} ORDER BY data_rezervare ASC`);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
-    loyalty_gold: async (userId) => {
-        const rows = await db.all(sql`
-            SELECT cc.nr_unic_card FROM carduri_clienti cc
-            JOIN card_fidelitate cf ON cc.tip_unic_card = cf.tip_unic_card
-            WHERE cc.cod_unic_utilizator = ${userId} AND cf.tip_unic_card IN ('GOLD','PLATINUM')
-        `);
-        return { score: rows.length, achievedAt: rows.length >= 1 ? Math.floor(Date.now() / 1000) : null };
+    loyalty_gold: {
+        label: 'Card fidelitate Gold/Platinum',
+        description: 'Deține un card de fidelitate de nivel GOLD sau PLATINUM (condiție binară — target ignorat).',
+        evaluate: async (userId) => {
+            const rows = await db.all(sql`
+                SELECT cc.nr_unic_card FROM carduri_clienti cc
+                JOIN card_fidelitate cf ON cc.tip_unic_card = cf.tip_unic_card
+                WHERE cc.cod_unic_utilizator = ${userId} AND cf.tip_unic_card IN ('GOLD','PLATINUM')
+            `);
+            return { score: rows.length, achievedAt: rows.length >= 1 ? Math.floor(Date.now() / 1000) : null };
+        },
     },
-    favorites_5: async (userId, target) => {
-        const rows = await db.all(sql`SELECT data_adaugarii as dt FROM favorite_locatii WHERE cod_unic_utilizator = ${userId} ORDER BY data_adaugarii ASC`);
-        return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+    favorites_5: {
+        label: 'Locații favorite',
+        description: 'Numărul de locații adăugate la favorite.',
+        evaluate: async (userId, target) => {
+            const rows = await db.all(sql`SELECT data_adaugarii as dt FROM favorite_locatii WHERE cod_unic_utilizator = ${userId} ORDER BY data_adaugarii ASC`);
+            return { score: rows.length, achievedAt: rows.length >= target ? parseDateToEpoch(rows[target - 1].dt) : null };
+        },
     },
 };
 
-// Evaluates a badge's condition for a given user using the handler keyed by badge.conditie
+// Lista cheilor valide — folosită la validarea condiției primite de la admin
+const VALID_CONDITIONS = Object.keys(BADGE_CONDITIONS);
+
+// Evaluează condiția unei insigne pentru un utilizator, pe baza cheii badge.conditie
 async function evaluateBadge(badge, userId) {
-    const handler = BADGE_HANDLERS[badge.conditie];
-    if (!handler) return { score: 0, achievedAt: null };
-    return handler(userId, badge.valoare_conditie);
+    const cond = BADGE_CONDITIONS[badge.conditie];
+    if (!cond) return { score: 0, achievedAt: null };
+    return cond.evaluate(userId, badge.valoare_conditie);
 }
 
 // GET /api/badges/my — insignele utilizatorului + toate disponibile
@@ -155,6 +196,17 @@ router.post('/check', async (req, res) => {
 // ADMIN ROUTES (CRUD INSIGNE)
 // ==========================================
 
+// GET /api/badges/admin/conditions - Lista condițiilor implementate în backend
+// (folosită de admin pentru a popula dropdown-ul „Condiție Tehnică")
+router.get('/admin/conditions', requireSuperadmin, (req, res) => {
+    const data = Object.entries(BADGE_CONDITIONS).map(([conditie, meta]) => ({
+        conditie,
+        label: meta.label,
+        description: meta.description,
+    }));
+    res.json({ success: true, data });
+});
+
 // GET /api/badges/admin - Obține catalogul complet pentru admin
 router.get('/admin', requireSuperadmin, async (req, res) => {
     try {
@@ -173,6 +225,14 @@ router.post('/admin', requireSuperadmin, async (req, res) => {
 
         if (!id || !nume || !conditie || valoareConditie === undefined) {
             return res.status(400).json({ success: false, message: 'Câmpurile obligatorii lipsesc.' });
+        }
+
+        // Nu permite crearea unei insigne cu o condiție care nu are implementare în backend
+        if (!VALID_CONDITIONS.includes(conditie)) {
+            return res.status(400).json({
+                success: false,
+                message: `Condiția "${conditie}" nu este implementată în backend. Alege una dintre: ${VALID_CONDITIONS.join(', ')}.`,
+            });
         }
 
         await db.run(sql`
