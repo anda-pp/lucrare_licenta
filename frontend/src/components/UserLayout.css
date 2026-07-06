@@ -67,7 +67,7 @@
 
 .user-info {
     font-size: 0.85rem;
-    color: var(--color-secondary);
+    color: var(--color-text-muted);
     margin-top: 0.5rem;
     padding-left: 0.5rem;
     opacity: 0;

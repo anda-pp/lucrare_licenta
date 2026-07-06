@@ -77,15 +77,28 @@ export const getStaffDashboard = async (req, res) => {
                 sql`${recenzii.dataRecenzie} >= ${dateFromISO}`
             ));
 
-        // Total revenue from PAID orders for this museum only
-        const revenueResult = await db
+        // Revenue from PAID orders — museum tickets only (no event association)
+        const revenueMuseumResult = await db
             .select({ total: sql`COALESCE(SUM(${comenzi.totalPlata}), 0)` })
             .from(comenzi)
             .innerJoin(bileteCumparate, eq(bileteCumparate.numarComanda, comenzi.numarComanda))
             .innerJoin(tipuriBilete, eq(tipuriBilete.codUnicTipBilet, bileteCumparate.codUnicTipBilet))
             .where(and(
                 eq(tipuriBilete.codUnicLocatie, muzeuId),
-                eq(comenzi.statusPlata, 'Plătit')
+                eq(comenzi.statusPlata, 'Plătit'),
+                sql`${tipuriBilete.codUnicEveniment} IS NULL`
+            ));
+
+        // Revenue from PAID orders — event tickets only (linked to an event)
+        const revenueEventsResult = await db
+            .select({ total: sql`COALESCE(SUM(${comenzi.totalPlata}), 0)` })
+            .from(comenzi)
+            .innerJoin(bileteCumparate, eq(bileteCumparate.numarComanda, comenzi.numarComanda))
+            .innerJoin(tipuriBilete, eq(tipuriBilete.codUnicTipBilet, bileteCumparate.codUnicTipBilet))
+            .where(and(
+                eq(tipuriBilete.codUnicLocatie, muzeuId),
+                eq(comenzi.statusPlata, 'Plătit'),
+                sql`${tipuriBilete.codUnicEveniment} IS NOT NULL`
             ));
 
         // Museum info
@@ -135,7 +148,8 @@ export const getStaffDashboard = async (req, res) => {
             firstTimeBuyers: usersResult[0]?.count,
             newOrders: ordersResult[0]?.count,
             newReviews: reviewsResult[0]?.count,
-            totalRevenue: revenueResult[0]?.total,
+            revenueMuseum: revenueMuseumResult[0]?.total,
+            revenueEvents: revenueEventsResult[0]?.total,
             dateFromISO,
         });
 
@@ -147,7 +161,8 @@ export const getStaffDashboard = async (req, res) => {
                     newUsers: usersResult[0]?.count || 0,
                     newOrders: ordersResult[0]?.count || 0,
                     newReviews: reviewsResult[0]?.count || 0,
-                    totalRevenue: revenueResult[0]?.total || 0,
+                    revenueMuseum: revenueMuseumResult[0]?.total || 0,
+                    revenueEvents: revenueEventsResult[0]?.total || 0,
                 },
                 topTicketTypes,
                 recentReviews,

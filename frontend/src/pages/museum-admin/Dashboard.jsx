@@ -7,7 +7,8 @@ import {
     CreditCard, 
     TrendingUp, 
     Activity,
-    Users
+    Users,
+    Banknote
 } from 'lucide-react';
 import { useSession } from '../../lib/auth';
 import '../admin/Dashboard.css';
@@ -20,8 +21,10 @@ export default function Dashboard() {
         events: 0,
         reviews: 0,
         orders: 0,
+        ticketsSold: 0,
         reservations: 0,
-        revenue: 0,
+        revenueMuseum: 0,
+        revenueEvents: 0,
         recentOrders: []
     });
     const [loading, setLoading] = useState(true);
@@ -47,8 +50,9 @@ export default function Dashboard() {
     if (error) return <div className="loading" style={{ color: 'var(--color-danger)' }}>{error}</div>;
 
     const statCardsData = [
-        { icon: <CreditCard size={28} />, label: 'Venituri Totale', value: `${stats.revenue?.toFixed(0)} Lei`, sub: 'Din comenzi', color: '#10b981' },
-        { icon: <Ticket size={28} />, label: 'Bilete Vândute', value: stats.orders, sub: 'Total bucăți', color: '#3b82f6' },
+        { icon: <CreditCard size={28} />, label: 'Venituri Muzeu', value: `${Number(stats.revenueMuseum || 0).toFixed(0)} Lei`, sub: 'Bilete intrare plătite', color: '#10b981' },
+        { icon: <Banknote size={28} />, label: 'Venituri Evenimente', value: `${Number(stats.revenueEvents || 0).toFixed(0)} Lei`, sub: 'Bilete evenimente plătite', color: '#6366f1' },
+        { icon: <Ticket size={28} />, label: 'Bilete Vândute', value: stats.ticketsSold, sub: 'Total bucăți (cantitate)', color: '#3b82f6' },
         { icon: <CalendarDays size={28} />, label: 'Evenimentele Tale', value: stats.events, sub: 'Organizate aici', color: '#8b5cf6' },
         { icon: <Users size={28} />, label: 'Prezențe Confirmate', value: stats.reservations, sub: 'Din rezervări', color: '#f59e0b' },
         { icon: <MessageSquare size={28} />, label: 'Recenzii Primite', value: stats.reviews, sub: 'Pentru acest muzeu', color: '#ec4899' }

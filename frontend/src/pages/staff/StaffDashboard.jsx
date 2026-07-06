@@ -6,6 +6,7 @@ import {
     Star,
     TrendingUp,
     Calendar,
+    CalendarDays,
     Ticket,
     Banknote,
     MessageSquare
@@ -112,9 +113,20 @@ export default function StaffDashboard() {
                         <Banknote size={24} />
                     </div>
                     <div className="stat-content">
-                        <h3>Venituri</h3>
-                        <p className="stat-number">{Number(data?.stats?.totalRevenue || 0).toFixed(2)} lei</p>
-                        <p className="stat-label">din comenzi plătite</p>
+                        <h3>Venituri Muzeu</h3>
+                        <p className="stat-number">{Number(data?.stats?.revenueMuseum || 0).toFixed(2)} lei</p>
+                        <p className="stat-label">bilete intrare plătite</p>
+                    </div>
+                </div>
+
+                <div className="stat-card highlight">
+                    <div className="stat-icon-wrapper white">
+                        <CalendarDays size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>Venituri Evenimente</h3>
+                        <p className="stat-number">{Number(data?.stats?.revenueEvents || 0).toFixed(2)} lei</p>
+                        <p className="stat-label">bilete evenimente plătite</p>
                     </div>
                 </div>
             </div>

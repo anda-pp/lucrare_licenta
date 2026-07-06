@@ -27,11 +27,45 @@ export default function Orders() {
         fetchOrders();
     }, []);
 
-    const filteredOrders = orders.filter(o => 
+    const filteredOrders = orders.filter(o =>
         (o.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         o.numarComanda.toString().includes(searchTerm)
     );
-    
+
+    const exportCSV = () => {
+        const headers = ['Nr. Comandă', 'Cumpărător', 'Email', 'Dată Achiziție', 'Total (LEI)', 'Status Plată'];
+
+        const escape = (val) => {
+            const str = val == null ? '' : String(val);
+            // Wrap in quotes if contains comma, quote or newline
+            return str.includes(',') || str.includes('"') || str.includes('\n')
+                ? `"${str.replace(/"/g, '""')}"`
+                : str;
+        };
+
+        const rows = filteredOrders.map(order => [
+            `#${order.numarComanda}`,
+            order.userName || 'Vizitator Anonim',
+            order.userEmail || '-',
+            new Date(order.dataComanda).toLocaleDateString('ro-RO'),
+            order.totalPlata.toFixed(2),
+            order.statusPlata,
+        ].map(escape).join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\r\n');
+        // Add BOM for correct diacritics display in Excel
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const today = new Date().toISOString().slice(0, 10);
+        link.href = url;
+        link.download = `comenzi-bilete-${today}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="dashboard-page">
             <div className="page-header museum-page-header">
@@ -39,7 +73,7 @@ export default function Orders() {
                     <h1 className="page-title">Comenzi Bilete</h1>
                     <p className="subtitle">Vizualizează tranzacțiile de bilete pentru muzeul tău.</p>
                 </div>
-                <button className="museum-header-action-btn success">
+                <button className="museum-header-action-btn success" onClick={exportCSV} disabled={loading || filteredOrders.length === 0}>
                     <Download size={18} /> Exportă Raport
                 </button>
             </div>
@@ -56,6 +90,12 @@ export default function Orders() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    {filteredOrders.length > 0 && (
+                        <span className="muted" style={{ fontSize: '0.85rem' }}>
+                            {filteredOrders.length} {filteredOrders.length === 1 ? 'comandă' : 'comenzi'}
+                            {searchTerm && ` pentru "${searchTerm}"`}
+                        </span>
+                    )}
                 </div>
                 
                 <div className="table-container museum-table-container">

@@ -55,21 +55,58 @@ router.get('/dashboard', async (req, res) => {
             .leftJoin(evenimente, eq(rezervariEvenimente.eventId, evenimente.id))
             .where(eq(evenimente.codUnicLocatie, mId)).get();
 
-        // 4. Comenzi pntru muzeul nostru.
-        // Comanda in sine nu are locatie, dar biletele cumparate o au prin `tipuriBilete`
-        const ordersRows = await db.select({
+        // Separate revenue: museum-only tickets vs event tickets
+        const museumTicketsRows = await db.select({
                 orderId: comenzi.numarComanda,
                 total: comenzi.totalPlata
             })
             .from(comenzi)
             .leftJoin(bileteCumparate, eq(comenzi.numarComanda, bileteCumparate.numarComanda))
             .leftJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
-            .where(eq(tipuriBilete.codUnicLocatie, mId))
+            .where(and(
+                eq(tipuriBilete.codUnicLocatie, mId),
+                eq(comenzi.statusPlata, 'Plătit'),
+                sql`${tipuriBilete.codUnicEveniment} IS NULL`
+            ))
             .groupBy(comenzi.numarComanda)
             .all();
 
-        const ordersCount = ordersRows.length;
-        const totalRevenue = ordersRows.reduce((sum, order) => sum + order.total, 0);
+        const eventTicketsRows = await db.select({
+                orderId: comenzi.numarComanda,
+                total: comenzi.totalPlata
+            })
+            .from(comenzi)
+            .leftJoin(bileteCumparate, eq(comenzi.numarComanda, bileteCumparate.numarComanda))
+            .leftJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
+            .where(and(
+                eq(tipuriBilete.codUnicLocatie, mId),
+                eq(comenzi.statusPlata, 'Plătit'),
+                sql`${tipuriBilete.codUnicEveniment} IS NOT NULL`
+            ))
+            .groupBy(comenzi.numarComanda)
+            .all();
+
+        const allOrderIds = new Set([
+            ...museumTicketsRows.map(o => o.orderId),
+            ...eventTicketsRows.map(o => o.orderId),
+        ]);
+        const ordersCount = allOrderIds.size;
+        const revenueMuseum = museumTicketsRows.reduce((sum, o) => sum + o.total, 0);
+        const revenueEvents = eventTicketsRows.reduce((sum, o) => sum + o.total, 0);
+
+        // Count total individual tickets sold (sum of cantitate) for paid orders at this museum
+        const ticketsSoldResult = await db.select({
+                total: sql`COALESCE(SUM(${bileteCumparate.cantitate}), 0)`
+            })
+            .from(bileteCumparate)
+            .innerJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
+            .innerJoin(comenzi, and(
+                eq(bileteCumparate.numarComanda, comenzi.numarComanda),
+                eq(comenzi.statusPlata, 'Plătit')
+            ))
+            .where(eq(tipuriBilete.codUnicLocatie, mId))
+            .get();
+        const ticketsSold = ticketsSoldResult?.total || 0;
 
         // 5. Ultimele 5 comenzi strict pnt muzeu
         const recentOrders = await db.select({
@@ -96,7 +133,9 @@ router.get('/dashboard', async (req, res) => {
                 reviews: revResult.count,
                 reservations: rezervari.count,
                 orders: ordersCount,
-                revenue: totalRevenue,
+                ticketsSold,
+                revenueMuseum,
+                revenueEvents,
                 recentOrders
             }
         });
