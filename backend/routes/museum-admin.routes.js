@@ -9,7 +9,8 @@ import { sendNewEventAtFavorite } from '../lib/mailer.js';
 
 const router = express.Router();
 
-// Middleware local pentru a ne asigura ca adminul are un muzeu valid alocat
+// Middleware local care verifică că adminul are un muzeu alocat în profilul său
+// Fără muzeuId, toate operațiunile de tip museum-admin sunt blocate
 const requireMuseumId = async (req, res, next) => {
     try {
         const u = await db.select({ muzeuId: user.muzeuId }).from(user).where(eq(user.id, req.user.id)).get();
@@ -26,36 +27,30 @@ const requireMuseumId = async (req, res, next) => {
     }
 };
 
-// Aplicare Middleware-uri
 router.use(requireAdmin);
 router.use(requireMuseumId);
 
-/**
- * GET /api/museum-admin/dashboard
- * Statistici specifice muzeului manageriat
- */
+// Dashboard-ul administratorului de muzeu: statistici specifice locației alocate
+// Calculăm separat veniturile din bilete de muzeu vs. bilete de eveniment
 router.get('/dashboard', async (req, res) => {
     try {
         const mId = req.muzeuId;
 
-        // 1. Numar Evenimente pentru acest muzeu
         const eventsResult = await db.select({ count: sql`COUNT(*)` })
             .from(evenimente)
             .where(eq(evenimente.codUnicLocatie, mId)).get();
 
-        // 2. Numar Recenzii strict pe locatie
         const revResult = await db.select({ count: sql`COUNT(*)` })
             .from(recenzii)
             .where(eq(recenzii.codUnicLocatie, mId)).get();
 
-        // 3. Rezervari pe evenimentele acestui muzeu
-        // (Trebuie un JOIN la Evenimente)
+        // Rezervările la evenimentele acestui muzeu (necesită JOIN la evenimente)
         const rezervari = await db.select({ count: sql`COUNT(*)` })
             .from(rezervariEvenimente)
             .leftJoin(evenimente, eq(rezervariEvenimente.eventId, evenimente.id))
             .where(eq(evenimente.codUnicLocatie, mId)).get();
 
-        // Separate revenue: museum-only tickets vs event tickets
+        // Comenzile cu bilete de muzeu (fără eveniment asociat)
         const museumTicketsRows = await db.select({
                 orderId: comenzi.numarComanda,
                 total: comenzi.totalPlata
@@ -71,6 +66,7 @@ router.get('/dashboard', async (req, res) => {
             .groupBy(comenzi.numarComanda)
             .all();
 
+        // Comenzile cu bilete de eveniment (au eveniment asociat)
         const eventTicketsRows = await db.select({
                 orderId: comenzi.numarComanda,
                 total: comenzi.totalPlata
@@ -86,6 +82,7 @@ router.get('/dashboard', async (req, res) => {
             .groupBy(comenzi.numarComanda)
             .all();
 
+        // Unificăm ID-urile comenzilor pentru a număra distinct comenzile totale
         const allOrderIds = new Set([
             ...museumTicketsRows.map(o => o.orderId),
             ...eventTicketsRows.map(o => o.orderId),
@@ -94,7 +91,7 @@ router.get('/dashboard', async (req, res) => {
         const revenueMuseum = museumTicketsRows.reduce((sum, o) => sum + o.total, 0);
         const revenueEvents = eventTicketsRows.reduce((sum, o) => sum + o.total, 0);
 
-        // Count total individual tickets sold (sum of cantitate) for paid orders at this museum
+        // Total bilete individuale vândute (suma cantităților din comenzile plătite)
         const ticketsSoldResult = await db.select({
                 total: sql`COALESCE(SUM(${bileteCumparate.cantitate}), 0)`
             })
@@ -108,7 +105,7 @@ router.get('/dashboard', async (req, res) => {
             .get();
         const ticketsSold = ticketsSoldResult?.total || 0;
 
-        // 5. Ultimele 5 comenzi strict pnt muzeu
+        // Ultimele 5 comenzi la această locație pentru feed-ul de activitate recentă
         const recentOrders = await db.select({
                 numarComanda: comenzi.numarComanda,
                 totalPlata: comenzi.totalPlata,
@@ -145,10 +142,7 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-/**
- * GET /api/museum-admin/my-museum
- * Preluare date profil Muzeu, Galerii Imagini si Tipuri Bilete
- */
+// Returnează profilul complet al muzeului administrat + tipurile de bilete de intrare
 router.get('/my-museum', async (req, res) => {
     try {
         const mId = req.muzeuId;
@@ -156,13 +150,12 @@ router.get('/my-museum', async (req, res) => {
         const muzeu = await db.select().from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, mId)).get();
         if (!muzeu) return res.status(404).json({ success: false, error: 'Locația nu a fost găsită.' });
 
-        // Bilete ale locatiei (exclude biletele de eveniment)
+        // Biletele de intrare la muzeu (excluzând biletele de eveniment care au codUnicEveniment setat)
         const bilete = await db.select().from(tipuriBilete)
             .where(and(eq(tipuriBilete.codUnicLocatie, mId), sql`${tipuriBilete.codUnicEveniment} IS NULL`))
             .all();
 
-        // Putem incude imagini in viitor, momentan doar array gol daca nu avem inca rutele gata
-        const imagini = []; 
+        const imagini = [];
 
         res.json({
             success: true,
@@ -178,10 +171,7 @@ router.get('/my-museum', async (req, res) => {
     }
 });
 
-/**
- * PUT /api/museum-admin/my-museum
- * Actualizare profil Muzeu (orar, descriere, imagini de coperta, link)
- */
+// Actualizarea informațiilor editabile ale muzeului: orar, descriere, site, adresă
 router.put('/my-museum', async (req, res) => {
     try {
         const mId = req.muzeuId;
@@ -204,10 +194,7 @@ router.put('/my-museum', async (req, res) => {
     }
 });
 
-/**
- * POST /api/museum-admin/tickets
- * Adaugare nou pachet de bilete curentului muzeu
- */
+// Adăugare tip de bilet nou pentru muzeul curent — validare cu Zod prin middleware validateBody
 router.post('/tickets', validateBody(createTicketTypeSchema), async (req, res) => {
     try {
         const { tipBilet, pret } = req.body;
@@ -230,10 +217,7 @@ router.post('/tickets', validateBody(createTicketTypeSchema), async (req, res) =
     }
 });
 
-/**
- * PUT /api/museum-admin/tickets/:id
- * Actualizare pachet bilete
- */
+// Editare tip de bilet — verificăm că biletul aparține muzeului curent înainte de update
 router.put('/tickets/:id', validateBody(updateTicketTypeSchema), async (req, res) => {
     try {
         const { id } = req.params;
@@ -260,15 +244,11 @@ router.put('/tickets/:id', validateBody(updateTicketTypeSchema), async (req, res
     }
 });
 
-/**
- * DELETE /api/museum-admin/tickets/:id
- * Stergere pachet bilete
- */
+// Ștergere tip de bilet — verificăm că aparține muzeului curent înainte de delete
 router.delete('/tickets/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Asigurare ca biletul ii apartine acestui muzeu
         const ticket = await db.select().from(tipuriBilete).where(eq(tipuriBilete.codUnicTipBilet, id)).get();
         if (!ticket || ticket.codUnicLocatie !== req.muzeuId) {
             return res.status(403).json({ success: false, error: 'Acces interzis la acest tip de bilet.' });
@@ -283,9 +263,10 @@ router.delete('/tickets/:id', async (req, res) => {
 });
 
 // ==========================================
-// 1. EVENIMENTE (CRUD STRICT PENTRU MUZEU)
+// EVENIMENTE — CRUD STRICT PENTRU MUZEU
 // ==========================================
 
+// Returnează evenimentele muzeului, cu biletele aferente atașate relațional
 router.get('/events', async (req, res) => {
     try {
         const eventsList = await db.select()
@@ -294,7 +275,6 @@ router.get('/events', async (req, res) => {
             .orderBy(desc(evenimente.dataStart))
             .all();
 
-        // Ataseaza biletele relational pentru fiecare eveniment
         const allTickets = await db.select().from(tipuriBilete)
             .where(eq(tipuriBilete.codUnicLocatie, req.muzeuId))
             .all();
@@ -313,6 +293,8 @@ router.get('/events', async (req, res) => {
     }
 });
 
+// Creare eveniment și tipurile de bilete asociate (dacă nu e gratuit)
+// După creare, notificăm asincron utilizatorii care au muzeul la favorite
 router.post('/events', async (req, res) => {
     try {
         const { titlu, descriere, dataStart, dataSfarsit, tipEveniment, isGratuit, intervaleOrare, bilete } = req.body;
@@ -334,7 +316,7 @@ router.post('/events', async (req, res) => {
             intervaleOrare: intervaleOrare ? JSON.stringify(intervaleOrare) : null,
         }).run();
 
-        // Daca evenimentul nu e gratuit, salveaza biletele in tipuri_bilete
+        // Dacă evenimentul are bilete cu plată, le inserăm în tipuri_bilete legate de eveniment
         if (!isGratuit && bilete && bilete.length > 0) {
             for (const b of bilete) {
                 if (!b.tip || b.pret === undefined) continue;
@@ -350,7 +332,7 @@ router.post('/events', async (req, res) => {
 
         res.json({ success: true, message: 'Eveniment creat.', data: { id: newId } });
 
-        // Notify users who favorited this museum (fire-and-forget)
+        // Trimitem email utilizatorilor care au acest muzeu la favorite (fire-and-forget)
         (async () => {
             try {
                 const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
@@ -379,6 +361,8 @@ router.post('/events', async (req, res) => {
     }
 });
 
+// Editare eveniment — verificăm ownership-ul înainte de update
+// Biletele se actualizează prin delete + re-insert (strategie simplă)
 router.put('/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -401,7 +385,7 @@ router.put('/events/:id', async (req, res) => {
             intervaleOrare: intervaleOrare ? JSON.stringify(intervaleOrare) : null,
         }).where(eq(evenimente.id, id)).run();
 
-        // Actualizeaza biletele in tipuri_bilete (sterge si re-insereaza)
+        // Ștergem biletele vechi și re-inserăm cele noi
         await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicEveniment, id)).run();
         if (!isGratuit && bilete && bilete.length > 0) {
             for (const b of bilete) {
@@ -423,6 +407,7 @@ router.put('/events/:id', async (req, res) => {
     }
 });
 
+// Ștergere eveniment — ștergem biletele asociate înainte pentru a evita erori FK
 router.delete('/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -430,7 +415,6 @@ router.delete('/events/:id', async (req, res) => {
         if (!ev || ev.codUnicLocatie !== req.muzeuId) {
             return res.status(403).json({ success: false, error: 'Inexistent sau acces interzis.' });
         }
-        // Sterge biletele evenimentului inainte de a sterge evenimentul
         await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicEveniment, id)).run();
         await db.delete(evenimente).where(eq(evenimente.id, id)).run();
         res.json({ success: true, message: 'Eveniment șters complet.' });
@@ -441,9 +425,10 @@ router.delete('/events/:id', async (req, res) => {
 });
 
 // ==========================================
-// 2. COMENZI BILETE (READ-ONLY)
+// COMENZI — READ-ONLY pentru muzeul curent
 // ==========================================
 
+// Returnează comenzile care conțin bilete la această locație (pentru monitorizare vânzări)
 router.get('/orders', async (req, res) => {
     try {
         const fullOrders = await db.select({
@@ -471,9 +456,10 @@ router.get('/orders', async (req, res) => {
 });
 
 // ==========================================
-// 3. REZERVARI EVENIMENTE (READ-ONLY)
+// REZERVĂRI — READ-ONLY pentru muzeul curent
 // ==========================================
 
+// Returnează rezervările la evenimentele acestui muzeu cu datele de contact ale utilizatorilor
 router.get('/reservations', async (req, res) => {
     try {
         const rezList = await db.select({
@@ -502,9 +488,10 @@ router.get('/reservations', async (req, res) => {
 });
 
 // ==========================================
-// 4. RECENZII (READ-ONLY)
+// RECENZII — READ-ONLY pentru muzeul curent
 // ==========================================
 
+// Returnează recenziile primite de această locație cu datele utilizatorilor recenzori
 router.get('/reviews', async (req, res) => {
     try {
         const revList = await db.select({

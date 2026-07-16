@@ -1,11 +1,7 @@
 import { ThumbsUp, Minus, ThumbsDown } from 'lucide-react';
 
-/**
- * Three-card sentiment breakdown row (positive / neutral / negative).
- *
- * Props:
- *  - data  ({ pozitive, neutre, negative, pctPozitive, pctNeutre, pctNegative })
- */
+// Afișează cele 3 categorii de sentiment (pozitiv/neutru/negativ) ca un rând de carduri
+// Folosit în raportul de marketing al muzeului
 export default function SentimentCards({ data }) {
     if (!data) return null;
 

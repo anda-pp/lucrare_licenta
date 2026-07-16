@@ -7,7 +7,10 @@ import './LoyaltyCard.css';
 
 const API = 'http://localhost:5000';
 
+// Ordinea de avansare a tier-urilor — folosim un array explicit pentru a putea calcula indexul și tier-ul următor
 const TIER_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+
+// Fiecare tier are un gradient și culori distincte pentru cardul virtual
 const TIER_COLORS = {
     BRONZE: {
         main: '#2e1065',
@@ -46,6 +49,7 @@ export default function LoyaltyCard() {
         if (!session) return;
         const load = async () => {
             try {
+                // Încărcăm cardul utilizatorului și toate tier-urile disponibile în paralel
                 const [cardRes, tiersRes] = await Promise.all([
                     axios.get(`${API}/api/users/my-card`, { withCredentials: true }),
                     axios.get(`${API}/api/users/card-tiers`, { withCredentials: true }),
@@ -64,12 +68,13 @@ export default function LoyaltyCard() {
     if (!session || loading) return <div className="lc-loading">Se încarcă...</div>;
 
     const currentIndex = card ? TIER_ORDER.indexOf(card.tipUnicCard) : -1;
-    // Sort tiers in our display order
+    // Sortăm tier-urile în ordinea definită de TIER_ORDER pentru afișare consistentă
     const sortedTiers = TIER_ORDER.map(t => tiers.find(x => x.tipUnicCard === t)).filter(Boolean);
 
     const nextTier = sortedTiers ? sortedTiers[currentIndex + 1] : null;
     const currentPoints = card?.puncteAcumulate || 0;
     const targetPoints = nextTier ? nextTier.puncteCard : null;
+    // Calculăm procentajul progresului spre tier-ul următor
     let progressPct = 100;
     if (targetPoints) {
         progressPct = Math.min(100, (currentPoints / targetPoints) * 100);
@@ -85,7 +90,7 @@ export default function LoyaltyCard() {
                 <p>Acumulează puncte la fiecare vizită și avansează spre beneficii exclusive.</p>
             </header>
 
-            {/* Premium Card Visual */}
+            {/* Cardul virtual cu design premium — culorile se schimbă în funcție de tier */}
             {card ? (
                 <div className="premium-card-wrapper">
                     <div className="premium-card" style={{
@@ -93,7 +98,6 @@ export default function LoyaltyCard() {
                         color: TIER_COLORS[card.tipUnicCard]?.text,
                         borderColor: TIER_COLORS[card.tipUnicCard]?.border
                     }}>
-                        {/* Glow effect */}
                         <div className="card-glow"></div>
 
                         <div className="card-top-row">
@@ -132,7 +136,7 @@ export default function LoyaltyCard() {
                             </div>
                         </div>
 
-                        {/* Integrated Progress Bar to Next Tier */}
+                        {/* Bara de progres integrată în card — afișează câte puncte mai sunt până la tier-ul următor */}
                         {targetPoints && (
                             <div className="card-integrated-progress">
                                 <div className="card-progress-bar-wrap">
@@ -153,7 +157,7 @@ export default function LoyaltyCard() {
                 </div>
             )}
 
-            {/* Progression path */}
+            {/* Harta de progresie — toate tier-urile cu beneficiile lor */}
             <section className="tiers-section">
                 <h2>Niveluri disponibile</h2>
                 <div className="tiers-cards">
@@ -184,7 +188,6 @@ export default function LoyaltyCard() {
                                     </p>
                                 )}
 
-                                {/* Benefits */}
                                 {tier.oferteSpeciale && (
                                     <div className="tier-benefit-row">
                                         <Gift size={14} />

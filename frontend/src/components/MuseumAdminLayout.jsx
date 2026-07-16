@@ -12,8 +12,11 @@ import {
     Sun,
     Moon
 } from 'lucide-react';
-import './AdminLayout.css'; // Reusing standard admin styles
+// Refolosim stilurile CSS din AdminLayout pentru un aspect consistent
+import './AdminLayout.css';
 
+// Layout-ul managerului de muzeu local (rol Admin)
+// Accesibil exclusiv utilizatorilor cu rolul 'Admin' — superadminii NU au acces la /admin
 export default function MuseumAdminLayout() {
     const { data: session, isPending } = useSession();
     const location = useLocation();
@@ -23,7 +26,7 @@ export default function MuseumAdminLayout() {
 
     if (isPending) return <div className="loading">Se încarcă...</div>;
 
-    // Only 'Admin' can access this layout
+    // Redirecționăm orice utilizator fără rolul Admin (inclusiv Superadmin, Personal)
     if (!session?.user || session.user.role !== 'Admin') {
         return <Navigate to="/login" replace />;
     }
@@ -71,7 +74,7 @@ export default function MuseumAdminLayout() {
                     </Link>
                     <Link to="/admin/reviews" className={`nav-item ${isActive('/admin/reviews')}`}>
                         <MessageSquare size={20} />
-                        <span className="nav-label">Recenzii & Opinii</span>
+                        <span className="nav-label">Recenzii &amp; Opinii</span>
                     </Link>
                 </nav>
 

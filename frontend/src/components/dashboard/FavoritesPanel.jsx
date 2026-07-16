@@ -2,12 +2,8 @@ import { Building2, MapPin, ChevronRight } from 'lucide-react';
 
 const API = 'http://localhost:5000';
 
-/**
- * FavoritesPanel — shows the list of museum/gallery favorites for the user.
- * Props:
- *   favorites   — array of favorite location objects
- *   onNavigate  — navigate function (from useNavigate)
- */
+// Panoul cu locațiile favorite ale utilizatorului din dashboard
+// Afișează primele 5 favorite cu thumbnail, tip și oraș — clickabile spre pagina locației
 export default function FavoritesPanel({ favorites, onNavigate }) {
     return (
         <div className="content-card">
@@ -25,6 +21,7 @@ export default function FavoritesPanel({ favorites, onNavigate }) {
                 </div>
             ) : (
                 <div className="favorites-list">
+                    {/* Limităm la primele 5 pentru a nu aglomera dashboard-ul */}
                     {favorites.slice(0, 5).map(fav => (
                         <div
                             key={fav.id || fav.codUnicLocatie}

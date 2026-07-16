@@ -34,6 +34,7 @@ export default function MyInterests() {
     };
 
     const handleRemoveInterest = async (e, id) => {
+        // Oprim propagarea click-ului pentru a nu naviga spre pagina evenimentului
         e.stopPropagation();
         try {
             const res = await axios.delete(`${API}/api/users/my-interests/${id}`, { withCredentials: true });
@@ -113,6 +114,7 @@ export default function MyInterests() {
                                         ) : (
                                             <div className="my-interest-placeholder">Fără imagine</div>
                                         )}
+                                        {/* Badge-ul "Noaptea Muzeelor" are stilizare specială dark */}
                                         <div className={`my-interest-type-badge ${ev.tipEveniment === 'Noaptea Muzeelor' ? 'nm' : 'normal'}`}>
                                             {ev.tipEveniment}
                                         </div>

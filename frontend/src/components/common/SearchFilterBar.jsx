@@ -1,15 +1,7 @@
 import { Search } from 'lucide-react';
 
-/**
- * Reusable search + filters bar.
- *
- * Props:
- *  - searchValue     (string)
- *  - onSearchChange  (value)
- *  - searchPlaceholder (string)
- *  - filters         (array)  – [{ icon: LucideComponent, value, onChange, options: [{value,label}], placeholder }]
- *  - children        (ReactNode) – extra elements rendered at the end
- */
+// Bara de căutare și filtrare refolosibilă din paginile de admin
+// Acceptă un array de filtre (dropdown-uri) care se randează dinamic lângă câmpul de search
 export default function SearchFilterBar({
     searchValue,
     onSearchChange,
@@ -30,6 +22,7 @@ export default function SearchFilterBar({
                 />
             </div>
 
+            {/* Randăm fiecare filtru ca un dropdown cu iconița sa */}
             {filters.map((f, i) => {
                 const Icon = f.icon;
                 return (

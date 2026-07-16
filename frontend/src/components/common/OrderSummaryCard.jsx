@@ -1,16 +1,7 @@
 import { Ticket, Calendar } from 'lucide-react';
 
-/**
- * Order summary card showing tickets, date, subtotal, promo discount and total.
- *
- * Props:
- *  - tickets       ({cantitate, tipBilet, pret}[])
- *  - dataVizita    (string|null)
- *  - subtotal      (number)
- *  - finalTotal    (number)
- *  - appliedPromo  (object|null)
- *  - children      (ReactNode) – extra content (e.g., PromoCodeInput)
- */
+// Card lateral din pagina de checkout care afișează sumar-ul comenzii
+// Include lista biletelor, data vizitei, codul promo aplicat și totalul final
 export default function OrderSummaryCard({
     tickets,
     dataVizita,
@@ -49,10 +40,9 @@ export default function OrderSummaryCard({
                 ))}
             </div>
 
-            {/* Promo code slot */}
+            {/* Slot pentru PromoCodeInput — trecut ca children din Checkout.jsx */}
             {children}
 
-            {/* Totals */}
             <div style={{
                 display: 'flex', flexDirection: 'column', gap: '0.75rem',
                 marginTop: '1.5rem', paddingTop: '1.5rem',
@@ -62,6 +52,7 @@ export default function OrderSummaryCard({
                     <span>Subtotal</span><span>{subtotal.toFixed(2)} Lei</span>
                 </div>
                 {appliedPromo && (
+                    // Afișăm reducerea calculată ca diferență dintre subtotal și total final
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success)', fontWeight: 600 }}>
                         <span>Reducere Promo</span><span>- {(subtotal - finalTotal).toFixed(2)} Lei</span>
                     </div>

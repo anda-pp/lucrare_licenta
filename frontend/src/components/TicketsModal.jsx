@@ -7,6 +7,7 @@ const API = 'http://localhost:5000';
 
 const TICKET_TYPES = ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'];
 
+// Modal pentru gestiunea tipurilor de bilete ale unei locații — se deschide din pagina admin Locations
 export default function TicketsModal({ location, onClose }) {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ export default function TicketsModal({ location, onClose }) {
                 tipBilet: newForm.tipBilet,
                 pret: parseFloat(newForm.pret),
             }, { withCredentials: true });
+            // Resetăm formularul la valorile implicite după adăugare reușită
             setNewForm({ tipBilet: 'Adult', pret: '' });
             setAdding(false);
             fetchTickets();
@@ -91,6 +93,7 @@ export default function TicketsModal({ location, onClose }) {
                                 <tbody>
                                     {tickets.map(t => (
                                         <tr key={t.codUnicTipBilet}>
+                                            {/* Rândul trece în mod editare inline — înlocuiește textul cu input-uri */}
                                             {editingId === t.codUnicTipBilet ? (
                                                 <>
                                                     <td>

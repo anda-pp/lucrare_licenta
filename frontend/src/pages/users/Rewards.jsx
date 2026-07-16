@@ -4,6 +4,7 @@ import { Gift, Star, Ticket, MapPin, Zap, BookOpen, CheckCircle, Tag, Info } fro
 import { useToast } from '../../components/common/Toast';
 import './Rewards.css';
 
+// Iconița fiecărui tip de recompensă — mapată dinamic pe baza câmpului `tip`
 const TIP_ICON = {
     bilet_gratuit: Ticket,
     reducere: Tag,
@@ -20,6 +21,7 @@ export default function Rewards() {
     const [card, setCard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [claimingId, setClaimingId] = useState(null);
+    // Tab-ul activ: 'catalog' pentru recompense disponibile, 'my' pentru cele revendicate
     const [tab, setTab] = useState('catalog');
     const toast = useToast();
 
@@ -27,6 +29,7 @@ export default function Rewards() {
         fetchData();
     }, []);
 
+    // Încărcăm catalogul de recompense și recompensele utilizatorului simultan
     const fetchData = async () => {
         try {
             const [catRes, myRes] = await Promise.all([
@@ -51,6 +54,7 @@ export default function Rewards() {
         try {
             const res = await axios.post(`http://localhost:5000/api/rewards/${id}/claim`, {}, { withCredentials: true });
             if (res.data.success) {
+                // Afișăm codul voucher generat direct în toast pentru vizibilitate maximă
                 toast.success(`Cod voucher: ${res.data.data.codVoucher}`, 'Recompensă revendicată!');
                 fetchData();
             }
@@ -65,7 +69,6 @@ export default function Rewards() {
 
     return (
         <div className="rewards-page">
-            {/* Header */}
             <div className="rewards-header">
                 <div>
                     <h1><Gift size={28} /> Schimb Puncte</h1>
@@ -82,6 +85,7 @@ export default function Rewards() {
                 )}
             </div>
 
+            {/* Banner informativ pentru utilizatorii fără card de fidelitate activ */}
             {!card && (
                 <div className="no-card-banner">
                     <Gift size={24} />
@@ -89,7 +93,6 @@ export default function Rewards() {
                 </div>
             )}
 
-            {/* Tabs */}
             <div className="rewards-tabs">
                 <button className={`rewards-tab ${tab === 'catalog' ? 'active' : ''}`} onClick={() => setTab('catalog')}>
                     <Gift size={16} /> Catalog Recompense
@@ -99,12 +102,12 @@ export default function Rewards() {
                 </button>
             </div>
 
-            {/* Catalog */}
             {tab === 'catalog' && (
                 <div className="rewards-grid">
                     {rewards.map(r => {
                         const IconComp = TIP_ICON[r.tip] || Gift;
                         const canClaim = puncte >= r.puncte_necesare;
+                        // Progresul spre recompensă — util pentru a motiva utilizatorul
                         const pct = Math.min(100, Math.round((puncte / r.puncte_necesare) * 100));
                         return (
                             <div key={r.id} className={`reward-card ${canClaim ? 'affordable' : ''}`}>
@@ -119,6 +122,7 @@ export default function Rewards() {
                                         <Star size={14} />
                                         <span>{r.puncte_necesare} puncte</span>
                                     </div>
+                                    {/* Bara de progres apare doar dacă utilizatorul nu a atins pragul */}
                                     {!canClaim && (
                                         <div className="reward-progress">
                                             <div className="progress-bar">
@@ -143,9 +147,9 @@ export default function Rewards() {
                 </div>
             )}
 
-            {/* My rewards */}
             {tab === 'my' && (
                 <div className="my-rewards-list">
+                    {/* Banner cu regulile de utilizare a voucher-elor */}
                     <div style={{
                         marginBottom: '1.5rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.1)',
                         border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: 'var(--radius-md)',

@@ -4,7 +4,7 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// All routes require authentication and admin role
+// Gestionarea recenziilor la nivel global — doar superadmin poate vizualiza și șterge
 router.use(requireAuth);
 router.use(requireSuperadmin);
 

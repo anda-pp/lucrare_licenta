@@ -2,16 +2,14 @@ import { db } from '../db/db.js';
 import { comenzi, user, recenzii, locatiiPublice, tipuriBilete, bileteCumparate } from '../db/schema.js';
 import { eq, sql, and } from 'drizzle-orm';
 
-/**
- * GET /api/staff/dashboard
- * Get dashboard stats for staff filtered by their assigned museum (req.muzeuId)
- */
+// Dashboard pentru staff — statistici filtrate strict pe muzeul la care este alocat userul curent
+// muzeuId este setat de middleware-ul getMuzeuId înainte de a ajunge aici
 export const getStaffDashboard = async (req, res) => {
     try {
         const { range = 'month' } = req.query;
-        const muzeuId = req.muzeuId; // Set by getMuzeuId middleware
+        const muzeuId = req.muzeuId;
 
-        // Calculate date filter
+        // Calculăm timestamp-ul de start al perioadei selectate
         const now = Date.now();
         let dateFromTimestamp;
 
@@ -29,12 +27,11 @@ export const getStaffDashboard = async (req, res) => {
                 dateFromTimestamp = now - 30 * 24 * 60 * 60 * 1000;
         }
 
-        // ISO date string for filtering comenzi.dataComanda (TEXT field: "YYYY-MM-DD HH:MM:SS")
+        // Convertim la format ISO string pentru compararea cu câmpul TEXT data_comanda din SQLite
         const dateFromISO = new Date(dateFromTimestamp).toISOString().replace('T', ' ').slice(0, 19);
 
-        // Count first-time buyers for this museum in the date range:
-        // Users who have at least one order from this museum in the range
-        // AND have NO orders from this museum before the range start.
+        // Clienți noi = utilizatori care au comandat la acest muzeu în perioada selectată
+        // DAR nu au avut comenzi la același muzeu înainte de această perioadă
         const usersResult = await db.select({
             count: sql`COUNT(DISTINCT sub.cod_unic_utilizator)`
         }).from(
@@ -56,8 +53,7 @@ export const getStaffDashboard = async (req, res) => {
             ) AS sub
         `);
 
-        // Count new orders for this museum in the date range
-        // Orders -> bileteCumparate -> tipuriBilete -> locatiiPublice
+        // Numărul de comenzi noi la acest muzeu în perioada selectată
         const ordersResult = await db
             .select({ count: sql`COUNT(DISTINCT ${comenzi.numarComanda})` })
             .from(comenzi)
@@ -68,7 +64,6 @@ export const getStaffDashboard = async (req, res) => {
                 sql`${comenzi.dataComanda} >= ${dateFromISO}`
             ));
 
-        // Count new reviews for this museum in the date range
         const reviewsResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(recenzii)
@@ -77,7 +72,7 @@ export const getStaffDashboard = async (req, res) => {
                 sql`${recenzii.dataRecenzie} >= ${dateFromISO}`
             ));
 
-        // Revenue from PAID orders — museum tickets only (no event association)
+        // Venituri din bilete de intrare la muzeu (fără eveniment asociat)
         const revenueMuseumResult = await db
             .select({ total: sql`COALESCE(SUM(${comenzi.totalPlata}), 0)` })
             .from(comenzi)
@@ -89,7 +84,7 @@ export const getStaffDashboard = async (req, res) => {
                 sql`${tipuriBilete.codUnicEveniment} IS NULL`
             ));
 
-        // Revenue from PAID orders — event tickets only (linked to an event)
+        // Venituri din bilete la evenimente (au eveniment asociat)
         const revenueEventsResult = await db
             .select({ total: sql`COALESCE(SUM(${comenzi.totalPlata}), 0)` })
             .from(comenzi)
@@ -101,14 +96,13 @@ export const getStaffDashboard = async (req, res) => {
                 sql`${tipuriBilete.codUnicEveniment} IS NOT NULL`
             ));
 
-        // Museum info
         const muzeuInfo = await db
             .select({ name: locatiiPublice.numeLoc, type: locatiiPublice.tipLocatie })
             .from(locatiiPublice)
             .where(eq(locatiiPublice.codUnicLocatie, muzeuId))
             .get();
 
-        // Top 5 ticket types by number of tickets sold for this museum
+        // Top 5 tipuri de bilete după cantitate vândută (comenzi plătite)
         const topTicketTypes = await db
             .select({
                 tipBilet: tipuriBilete.tipBilet,
@@ -127,7 +121,7 @@ export const getStaffDashboard = async (req, res) => {
             .orderBy(sql`cantitate DESC`)
             .limit(5);
 
-        // Latest reviews for this museum (top 5 most recent)
+        // Ultimele 5 recenzii primite la acest muzeu
         const recentReviews = await db
             .select({
                 numarRecenzie: recenzii.numarRecenzie,

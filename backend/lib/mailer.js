@@ -1,14 +1,12 @@
 import nodemailer from 'nodemailer';
 
-/**
- * Mailer module — Nodemailer with SMTP (Mailtrap for testing).
- *
- * Required .env variables:
- *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
- */
+// Modulul de email al aplicației — folosim Nodemailer cu SMTP
+// În development: Mailtrap (sandbox); în producție: se configurează din .env
+// Variabile necesare: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
 
 let transporter = null;
 
+// Inițializăm transporter-ul o singură dată (singleton) ca să nu creăm conexiuni multiple
 function getTransporter() {
     if (!transporter) {
         transporter = nodemailer.createTransport({
@@ -25,8 +23,7 @@ function getTransporter() {
 
 const FROM = () => process.env.SMTP_FROM || '"MuseumPass" <noreply@museumpass.ro>';
 
-// ─── HTML wrapper ────────────────────────────────────────────────────────────
-
+// Template HTML de bază — wrapper cu header purple și footer pentru toate emailurile
 function wrapHtml(title, bodyHtml) {
     return `<!DOCTYPE html>
 <html lang="ro">
@@ -54,8 +51,7 @@ function wrapHtml(title, bodyHtml) {
 </html>`;
 }
 
-// ─── Styled helpers ──────────────────────────────────────────────────────────
-
+// Helpers pentru elementele HTML din corpul emailului
 const heading = (text) => `<h2 style="margin:0 0 16px;color:#2e1065;font-size:20px;">${text}</h2>`;
 const paragraph = (text) => `<p style="margin:0 0 14px;color:#4c1d95;font-size:15px;line-height:1.6;">${text}</p>`;
 const highlight = (text) => `<div style="background:#f5f3ff;border-left:4px solid #9333ea;padding:14px 18px;border-radius:8px;margin:18px 0;">
@@ -66,11 +62,7 @@ const button = (url, label) => `<div style="text-align:center;margin:24px 0;">
 </div>`;
 const divider = () => `<hr style="border:none;border-top:1px solid #ede9fe;margin:20px 0;">`;
 
-// ─── Email templates ─────────────────────────────────────────────────────────
-
-/**
- * 1. Confirmare comandă (cu PDF atașat)
- */
+// Confirmare comandă — trimis după plata cu succes, cu PDF-ul biletelor atașat
 export async function sendOrderConfirmation(to, { orderId, total, tickets, locationName, dataVizita }, pdfBuffer) {
     const ticketLines = tickets.map(t => `<li>${t.cantitate}x ${t.tipBilet} — ${(t.pret * t.cantitate).toFixed(2)} Lei</li>`).join('');
     const dateStr = dataVizita
@@ -106,9 +98,7 @@ export async function sendOrderConfirmation(to, { orderId, total, tickets, locat
     });
 }
 
-/**
- * 2. Eveniment nou la o locație favorită
- */
+// Notificare eveniment nou — trimis utilizatorilor care au o locație la favorite când aceasta publică un eveniment
 export async function sendNewEventAtFavorite(to, { eventTitle, eventType, locationName, dataStart }) {
     const dateStr = new Date(dataStart).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -129,9 +119,7 @@ export async function sendNewEventAtFavorite(to, { eventTitle, eventType, locati
     });
 }
 
-/**
- * 3. Muzeu / locație nouă adăugată
- */
+// Notificare locație nouă — trimis utilizatorilor când un muzeu sau galerie nouă e adăugată în platformă
 export async function sendNewMuseum(to, { locationName, city, type }) {
     const html = wrapHtml('Locație Nouă', `
         ${heading('O nouă locație te așteaptă! 🏛️')}
@@ -149,9 +137,7 @@ export async function sendNewMuseum(to, { locationName, city, type }) {
     });
 }
 
-/**
- * 4. Recompensă nouă disponibilă (user are destule puncte)
- */
+// Notificare recompensă disponibilă — trimis când userul are suficiente puncte pentru o recompensă nouă adăugată
 export async function sendNewRewardAvailable(to, { rewardName, rewardDescription, pointsCost, userPoints }) {
     const html = wrapHtml('Recompensă Nouă', `
         ${heading('O nouă recompensă este disponibilă! 🎁')}
@@ -170,9 +156,7 @@ export async function sendNewRewardAvailable(to, { rewardName, rewardDescription
     });
 }
 
-/**
- * 5. Noaptea Muzeelor se apropie
- */
+// Reminder Noaptea Muzeelor — trimis utilizatorilor pentru a-i anunța de evenimentul special
 export async function sendNoapteaMuzeelorReminder(to, { eventTitle, locationName, dataStart }) {
     const dateStr = new Date(dataStart).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 

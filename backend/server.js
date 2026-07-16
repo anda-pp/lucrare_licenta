@@ -13,34 +13,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Permitem cereri de la frontend-ul nostru React, cu credențiale (cookies de sesiune)
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
 }));
 
-// Stripe webhook needs raw body BEFORE express.json()
+// Stripe webhook-ul are nevoie de body-ul brut (raw), înainte ca express.json() să-l parseze
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files statically
+// Servim fișierele uploadate (imagini locații etc.) ca resurse statice
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// BetterAuth routes - IMPORTANT: Must be before other routes
+// Rutele BetterAuth trebuie să vină înainte de orice altă rută
+// Convertim request-ul Express în Web Request standard pentru handler-ul BetterAuth
 app.all('/api/auth/*', async (req, res) => {
     try {
-        // Convert Express request to Web Request
         const url = new URL(req.url, `http://${req.headers.host}`);
 
-        // Prepare headers
         const headers = new Headers();
         Object.entries(req.headers).forEach(([key, value]) => {
             if (value) headers.set(key, Array.isArray(value) ? value[0] : value);
         });
 
-        // Prepare body
         let body = undefined;
         if (req.method !== 'GET' && req.method !== 'HEAD') {
             body = JSON.stringify(req.body);
@@ -54,7 +52,7 @@ app.all('/api/auth/*', async (req, res) => {
 
         const response = await auth.handler(webRequest);
 
-        // Convert Web Response to Express response
+        // Convertim răspunsul Web Response înapoi la Express response
         res.status(response.status);
         response.headers.forEach((value, key) => {
             res.setHeader(key, value);
@@ -68,7 +66,7 @@ app.all('/api/auth/*', async (req, res) => {
     }
 });
 
-// API Routes
+// Importăm și înregistrăm toate rutele aplicației
 import usersRoutes from './routes/users.routes.js';
 import superadminRoutes from './routes/superadmin.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
@@ -109,7 +107,7 @@ app.use('/api/users/superadmin', superadminRoutes);
 app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/stripe', stripeRoutes);
 
-// Test Routes
+// Rute de test — utile în development pentru a verifica că serverul răspunde
 app.get('/api', (req, res) => {
     res.json({ message: 'Bine ai venit la API-ul aplicației de licență!' });
 });
@@ -122,7 +120,7 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// Error handling middleware
+// Middleware global de tratare erori — prinde orice excepție nehandled
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Ceva nu a mers bine!' });

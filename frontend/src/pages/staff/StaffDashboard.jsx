@@ -16,8 +16,10 @@ import './StaffDashboard.css';
 export default function StaffDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    // Filtrul de perioadă — implicit pe lună, poate fi week / month / year
     const [dateRange, setDateRange] = useState('month');
 
+    // Reîncărcăm datele de fiecare dată când se schimbă filtrul de perioadă
     useEffect(() => {
         fetchDashboardData();
     }, [dateRange]);
@@ -36,6 +38,7 @@ export default function StaffDashboard() {
         }
     };
 
+    // Text descriptiv pentru subtitlu — se afișează în header lângă numele muzeului
     const getRangeLabel = () => {
         switch (dateRange) {
             case 'week': return 'în ultima săptămână';
@@ -60,6 +63,7 @@ export default function StaffDashboard() {
                             : `Statistici ${getRangeLabel()}`}
                     </p>
                 </div>
+                {/* Selector perioadă — valoarea se trimite ca query param la backend */}
                 <div className="date-filter">
                     <Calendar size={18} className="filter-icon" />
                     <select
@@ -74,6 +78,7 @@ export default function StaffDashboard() {
                 </div>
             </div>
 
+            {/* Carduri KPI principale — afișăm 4 metrici cheie ale perioadei */}
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-icon-wrapper purple">
@@ -108,6 +113,7 @@ export default function StaffDashboard() {
                     </div>
                 </div>
 
+                {/* Veniturile sunt evidențiate separat: bilete de intrare vs bilete la evenimente */}
                 <div className="stat-card highlight">
                     <div className="stat-icon-wrapper white">
                         <Banknote size={24} />
@@ -132,7 +138,7 @@ export default function StaffDashboard() {
             </div>
 
             <div className="rankings-section">
-                {/* Top tipuri bilete */}
+                {/* Clasamentul tipurilor de bilete vândute în perioada selectată */}
                 <div className="ranking-card">
                     <div className="ranking-header">
                         <div className="ranking-icon-wrapper gold">
@@ -168,7 +174,7 @@ export default function StaffDashboard() {
                     </div>
                 </div>
 
-                {/* Recenzii recente */}
+                {/* Ultimele 5 recenzii — staff-ul le poate monitoriza rapid fără să deschidă alt tab */}
                 <div className="ranking-card">
                     <div className="ranking-header">
                         <div className="ranking-icon-wrapper purple">

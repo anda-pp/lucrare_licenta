@@ -11,6 +11,8 @@ import './LocationDetail.css';
 
 const API = 'http://localhost:5000';
 
+// Pagina de detalii a unei locații — compusă din sub-componente specializate
+// Hero + InfoGrid + Tickets (dacă există) + Reviews
 export default function LocationDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -21,11 +23,14 @@ export default function LocationDetail() {
     const [notFound, setNotFound] = useState(false);
     const [isFav, setIsFav] = useState(false);
     const [favToggling, setFavToggling] = useState(false);
+    const [galleryImages, setGalleryImages] = useState([]);
 
     useEffect(() => {
         fetchLocation();
+        fetchGallery();
     }, [id]);
 
+    // Verificăm starea de favorit după ce avem atât sesiunea cât și datele locației
     useEffect(() => {
         if (session && location) checkFav();
     }, [session, location]);
@@ -44,6 +49,14 @@ export default function LocationDetail() {
             setLoading(false);
         }
     };
+
+    const fetchGallery = async () => {
+        try {
+            const res = await axios.get(`${API}/api/locations/${id}/images`);
+            if (res.data.success) setGalleryImages(res.data.images || []);
+        } catch (_) { }
+    };
+
 
     const checkFav = async () => {
         try {
@@ -89,18 +102,17 @@ export default function LocationDetail() {
         </div>
     );
 
+    // Calculăm media ratingurilor din recenzii — afișat în hero badge
     const avgRating = location.reviews?.length > 0
         ? (location.reviews.reduce((s, r) => s + r.rating, 0) / location.reviews.length).toFixed(1)
         : null;
 
     return (
         <div className="loc-detail-page">
-            {/* Back button */}
             <button className="back-btn" onClick={() => navigate('/user/locations')}>
                 <ArrowLeft size={16} /> Înapoi la Locații
             </button>
 
-            {/* Hero section */}
             <LocationHero
                 location={location}
                 isFav={isFav}
@@ -108,11 +120,11 @@ export default function LocationDetail() {
                 session={session}
                 onToggleFav={toggleFav}
                 avgRating={avgRating}
+                galleryImages={galleryImages}
             />
 
             <div className="loc-detail-body">
                 <div className="loc-info-section">
-                    {/* Description */}
                     {location.scurtaDescriere && (
                         <div className="loc-info-card full-width">
                             <h3>Despre</h3>
@@ -120,19 +132,18 @@ export default function LocationDetail() {
                         </div>
                     )}
 
-                    {/* Ticket prices */}
+                    {/* Componenta de bilete apare doar dacă locația are tipuri de bilete definite */}
                     {location.ticketTypes?.length > 0 && (
                         <LocationTickets tickets={location.ticketTypes} locationId={id} orar={location.orar} />
                     )}
                 </div>
 
                 <div className="loc-detail-right">
-                    {/* Details grid */}
                     <LocationInfoGrid location={location} />
                 </div>
             </div>
 
-            {/* Reviews (Full Width) */}
+            {/* Secțiunea de recenzii — lățime completă sub layout-ul principal */}
             <div className="loc-detail-reviews-container" style={{ marginTop: '2rem' }}>
                 <LocationReviews
                     reviews={location.reviews || []}

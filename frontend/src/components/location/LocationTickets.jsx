@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Ticket, Minus, Plus, Calendar, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+// Culori asociate fiecărui tip de bilet pentru puncte vizuale în listă
 const TICKET_COLORS = {
     Adult: '#6366f1',
     Elev: '#0ea5e9',
@@ -12,13 +13,15 @@ const TICKET_COLORS = {
 
 const today = new Date().toISOString().split('T')[0];
 
-// Mapare nume zi română → număr 1(Lun)..7(Dum), apoi spre JS getDay() (0=Dum, 1=Lun..6=Sâm)
+// Mapare nume zi română → număr 1(Lun)..7(Dum), apoi spre formatul getDay() din JS (0=Dum, 1=Lun..6=Sâm)
 const ZILE_RO = {
     'Luni': 1, 'Marți': 2, 'Miercuri': 3, 'Joi': 4,
     'Vineri': 5, 'Sâmbătă': 6, 'Duminică': 7,
 };
 const TO_JS_DAY = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0 };
 
+// Parsăm orarul locației (format: "Luni–Vineri: 09:00–17:00|Sâmbătă: Închis|Duminică: Închis")
+// și returnăm un Set cu zilele (JS getDay()) în care locația este închisă
 function parseClosedDays(orar) {
     if (!orar) return new Set();
     const closed = new Set();
@@ -28,7 +31,7 @@ function parseClosedDays(orar) {
         if (!seg.toLowerCase().includes('închis')) continue;
         const dayPart = seg.split(':')[0].trim();
 
-        // Interval: "Luni–Marți" sau "Duminică–Luni"
+        // Interval de zile: "Luni–Marți" sau "Duminică–Luni"
         const rangeMatch = dayPart.match(/(.+)[–\-](.+)/);
         if (rangeMatch) {
             const start = ZILE_RO[rangeMatch[1].trim()];
@@ -37,7 +40,7 @@ function parseClosedDays(orar) {
             if (end >= start) {
                 for (let d = start; d <= end; d++) closed.add(TO_JS_DAY[d]);
             } else {
-                // Wrap (ex: Duminică–Luni → 7, 1)
+                // Wrap de la Duminică înapoi la Luni (ex: Duminică–Luni → 7, 1)
                 for (let d = start; d <= 7; d++) closed.add(TO_JS_DAY[d]);
                 for (let d = 1; d <= end; d++) closed.add(TO_JS_DAY[d]);
             }
@@ -52,14 +55,18 @@ function parseClosedDays(orar) {
 
 const ZI_LABEL = ['Duminică', 'Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă'];
 
+// Componenta de selectare și cumpărare bilete pentru o locație
+// Calculăm subtotalul client-side pentru UX, dar prețul final e recalculat server-side la checkout
 export default function LocationTickets({ tickets, locationId, orar, minDate, maxDate }) {
     const navigate = useNavigate();
     const [selection, setSelection] = useState({});
     const [dataVizita, setDataVizita] = useState('');
 
     const effectiveMin = minDate || today;
+    // Parsăm zilele închise o singură dată pe baza orarului — memoizăm pentru performanță
     const closedDays = useMemo(() => parseClosedDays(orar), [orar]);
 
+    // Verificăm dacă data selectată cade într-o zi de închidere
     const isClosedDay = dataVizita
         ? closedDays.has(new Date(dataVizita + 'T12:00:00').getDay())
         : false;
@@ -76,10 +83,12 @@ export default function LocationTickets({ tickets, locationId, orar, minDate, ma
         return sum + (t.pret * (selection[t.codUnicTipBilet] || 0));
     }, 0);
 
+    // Checkout-ul e disponibil doar dacă există cel puțin un bilet, o dată selectată și nu e zi de închidere
     const canCheckout = subtotal > 0 && dataVizita && !isClosedDay;
 
     const handleCheckout = () => {
         if (!canCheckout) return;
+        // Trecem biletele selectate prin React Router state — Checkout.jsx le recalculează server-side
         const ticketsPayload = tickets.map(t => ({
             codUnicTipBilet: t.codUnicTipBilet,
             tipBilet: t.tipBilet,
@@ -92,6 +101,7 @@ export default function LocationTickets({ tickets, locationId, orar, minDate, ma
         });
     };
 
+    // Text dinamic pe butonul de checkout care ghidează utilizatorul pas cu pas
     const checkoutLabel = () => {
         if (subtotal === 0) return 'Selectează bilete pentru a continua';
         if (!dataVizita) return 'Alege data vizitei pentru a continua';
@@ -105,7 +115,7 @@ export default function LocationTickets({ tickets, locationId, orar, minDate, ma
         <div className="loc-tickets-card">
             <h3><Ticket size={18} /> Cumpără Bilete</h3>
 
-            {/* Data vizitei */}
+            {/* Selectorul de dată cu validare pentru zilele de închidere */}
             <div className="loc-date-row">
                 <label className="loc-date-label">
                     <Calendar size={15} />

@@ -7,6 +7,8 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 const router = express.Router();
 router.use(requireAuth);
 
+// Helper: normalizează datele din DB la timestamp Unix (secunde)
+// SQLite poate stoca datele ca număr, Date object sau string ISO
 const parseDateToEpoch = (dateVal) => {
     if (!dateVal) return null;
     if (typeof dateVal === 'number') return dateVal > 9999999999 ? Math.floor(dateVal / 1000) : dateVal;
@@ -15,15 +17,15 @@ const parseDateToEpoch = (dateVal) => {
 };
 
 // =============================================================================
-// REGISTRU DE CONDIȚII PENTRU INSIGNE  —  sursă unică de adevăr
+// REGISTRU DE CONDIȚII PENTRU INSIGNE — sursă unică de adevăr
 // -----------------------------------------------------------------------------
 // Fiecare condiție are:
 //   - label:       nume prietenos afișat în panoul de admin (dropdown)
 //   - description: explicație scurtă a ce numără condiția
 //   - evaluate:    (userId, target) => { score, achievedAt }
 //
-// Ca să adaugi un TIP NOU de condiție e suficient să adaugi o singură intrare
-// aici. Va apărea automat în dropdown-ul din admin (via GET /admin/conditions)
+// Ca să adaugi un tip nou de condiție e suficient să adaugi o intrare nouă aici.
+// Va apărea automat în dropdown-ul din admin (via GET /admin/conditions)
 // și va fi acceptată la crearea insignelor (validarea din POST /admin).
 // =============================================================================
 const BADGE_CONDITIONS = {
@@ -97,33 +99,30 @@ const BADGE_CONDITIONS = {
     },
 };
 
-// Lista cheilor valide — folosită la validarea condiției primite de la admin
 const VALID_CONDITIONS = Object.keys(BADGE_CONDITIONS);
 
-// Evaluează condiția unei insigne pentru un utilizator, pe baza cheii badge.conditie
+// Rulează condiția unei insigne pentru un utilizator dat
 async function evaluateBadge(badge, userId) {
     const cond = BADGE_CONDITIONS[badge.conditie];
     if (!cond) return { score: 0, achievedAt: null };
     return cond.evaluate(userId, badge.valoare_conditie);
 }
 
-// GET /api/badges/my — insignele utilizatorului + toate disponibile
+// Returnează toate insignele cu progresul curent al utilizatorului
+// Dacă o insignă nu e câștigată dar criteriul e îndeplinit, o acordăm automat la acest apel
 router.get('/my', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) return res.status(401).json({ success: false, message: 'Neautentificat' });
 
-        // All badges in catalog
         const allBadges = await db.all(sql`SELECT * FROM insigne ORDER BY valoare_conditie ASC`);
 
-        // Earned by this user
         const earned = await db.all(sql`
             SELECT iu.insigna_id, iu.data_obtinerii FROM insigne_utilizatori iu
             WHERE iu.user_id = ${userId}
         `);
         const earnedMap = new Map(earned.map(r => [r.insigna_id, r.data_obtinerii]));
 
-        // Current progress for each badge & Auto-Award logical check
         const result = [];
         const newlyEarned = [];
 
@@ -132,7 +131,7 @@ router.get('/my', async (req, res) => {
             let isEarned = earnedMap.has(badge.id);
             let badgeDate = isEarned ? earnedMap.get(badge.id) : null;
 
-            // Auto-award if not earned but criteria met
+            // Auto-acordare: dacă criteriul e îndeplinit și insigna nu e încă acordată
             if (!isEarned && score >= badge.valoare_conditie) {
                 const awardDate = achievedAt || Math.floor(Date.now() / 1000);
                 await db.run(sql`
@@ -159,7 +158,7 @@ router.get('/my', async (req, res) => {
     }
 });
 
-// POST /api/badges/check — rulează verificarea și acordă insigne noi
+// Verificare și acordare insigne noi — apelat după acțiuni cheie (comandă, recenzie etc.)
 router.post('/check', async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -169,6 +168,7 @@ router.post('/check', async (req, res) => {
         const newlyEarned = [];
 
         for (const badge of allBadges) {
+            // Sărim insignele deja câștigate
             const existing = await db.all(sql`
                 SELECT id FROM insigne_utilizatori WHERE user_id = ${userId} AND insigna_id = ${badge.id}
             `);
@@ -193,11 +193,10 @@ router.post('/check', async (req, res) => {
 });
 
 // ==========================================
-// ADMIN ROUTES (CRUD INSIGNE)
+// RUTE ADMIN — CRUD INSIGNE
 // ==========================================
 
-// GET /api/badges/admin/conditions - Lista condițiilor implementate în backend
-// (folosită de admin pentru a popula dropdown-ul „Condiție Tehnică")
+// Returnează lista condițiilor implementate în backend — folosită în dropdown-ul din admin
 router.get('/admin/conditions', requireSuperadmin, (req, res) => {
     const data = Object.entries(BADGE_CONDITIONS).map(([conditie, meta]) => ({
         conditie,
@@ -207,7 +206,7 @@ router.get('/admin/conditions', requireSuperadmin, (req, res) => {
     res.json({ success: true, data });
 });
 
-// GET /api/badges/admin - Obține catalogul complet pentru admin
+// Returnează catalogul complet de insigne pentru panoul de administrare
 router.get('/admin', requireSuperadmin, async (req, res) => {
     try {
         const badges = await db.all(sql`SELECT * FROM insigne ORDER BY valoare_conditie ASC`);
@@ -218,7 +217,7 @@ router.get('/admin', requireSuperadmin, async (req, res) => {
     }
 });
 
-// POST /api/badges/admin - Adăugare insignă nouă (doar vizual/catalog)
+// Creare insignă nouă — condiția trebuie să existe în BADGE_CONDITIONS, altfel o respingem
 router.post('/admin', requireSuperadmin, async (req, res) => {
     try {
         const { id, nume, descriere, iconita, conditie, valoareConditie, culoare, mesajMotivatie } = req.body;
@@ -227,7 +226,6 @@ router.post('/admin', requireSuperadmin, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Câmpurile obligatorii lipsesc.' });
         }
 
-        // Nu permite crearea unei insigne cu o condiție care nu are implementare în backend
         if (!VALID_CONDITIONS.includes(conditie)) {
             return res.status(400).json({
                 success: false,
@@ -247,7 +245,7 @@ router.post('/admin', requireSuperadmin, async (req, res) => {
     }
 });
 
-// PUT /api/badges/admin/:id - Editare insignă existentă
+// Editare insignă existentă — actualizăm toate câmpurile editabile
 router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, iconita, conditie, valoareConditie, culoare, mesajMotivatie } = req.body;
@@ -272,12 +270,11 @@ router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     }
 });
 
-// DELETE /api/badges/admin/:id - Ștergere insignă din catalog
+// Ștergere insignă — cascade în DB elimină și înregistrările din insigne_utilizatori
 router.delete('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const badgeId = req.params.id;
 
-        // Dacă ștergem insigna, se vor șterge și înregistrările utilizatorilor (datorită CASCADE logic în schema)
         await db.run(sql`
             DELETE FROM insigne WHERE id = ${badgeId}
         `);

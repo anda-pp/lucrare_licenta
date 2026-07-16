@@ -69,6 +69,7 @@ export default function RewardsAdmin() {
         }
     };
 
+    // „Ștergerea" e de fapt o dezactivare — recompensele revendicate rămân în istoricul userilor
     const handleDeactivate = async () => {
         if (!confirmTarget) return;
         try {
@@ -120,6 +121,7 @@ export default function RewardsAdmin() {
                                 <td><span className="badge-points">{r.puncte_necesare} pct</span></td>
                                 <td>
                                     <span className="badge-type">{r.tip}</span>
+                                    {/* Afișăm valoarea procentuală sau în lei în funcție de tip */}
                                     {r.valoare > 0 && (
                                         <div className="text-sm">
                                             ({r.tip === 'reducere' ? `${r.valoare}%` : `${r.valoare} Lei`})
@@ -138,6 +140,7 @@ export default function RewardsAdmin() {
                                         <button className="btn-icon edit" onClick={() => handleOpenModal(r)} title="Editează">
                                             <Edit2 size={16} />
                                         </button>
+                                        {/* Dezactivarea e permisă doar pentru recompensele active */}
                                         {r.activ === 1 && (
                                             <button className="btn-icon delete" onClick={() => setConfirmTarget(r.id)} title="Dezactivează">
                                                 <Trash2 size={16} />
@@ -184,6 +187,7 @@ export default function RewardsAdmin() {
                     </div>
                 </div>
                 <div className="form-group">
+                    {/* Label-ul se schimbă dinamic în funcție de tipul de beneficiu ales */}
                     <label>{formData.tip === 'reducere' ? 'Valoare Reducere (%)' : 'Valoare Nominală (Lei)'}</label>
                     <input
                         required type="number" step="0.01" min="0"
@@ -193,6 +197,7 @@ export default function RewardsAdmin() {
                         placeholder={formData.tip === 'reducere' ? 'ex: 10, 20, 50' : 'ex: 15, 30, 50'}
                     />
                 </div>
+                {/* Checkbox de activare/dezactivare — vizibil doar la editare */}
                 {editingId && (
                     <div className="form-checkbox">
                         <label>

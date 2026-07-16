@@ -4,10 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createArtistSchema, updateArtistSchema } from '../validators/schemas.js';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * GET /api/artists
- * Obține toți artiștii
- */
+// Returnează toți artiștii din platformă
 export const getAllArtists = async (req, res) => {
     try {
         const _artists = await db.select().from(artisti);
@@ -18,10 +15,7 @@ export const getAllArtists = async (req, res) => {
     }
 };
 
-/**
- * GET /api/artists/:id
- * Obține un artist după ID
- */
+// Returnează un artist specific după ID
 export const getArtistById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -42,10 +36,7 @@ export const getArtistById = async (req, res) => {
     }
 };
 
-/**
- * POST /api/artists
- * Crează un artist (Doar Admin/Staff)
- */
+// Creare artist nou — validare cu Zod înainte de inserție
 export const createArtist = async (req, res) => {
     try {
         const validation = createArtistSchema.safeParse(req.body);
@@ -75,10 +66,7 @@ export const createArtist = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/artists/:id
- * Actualizează un artist existent (Doar Admin/Staff)
- */
+// Editare artist existent — verificăm că există înainte de update
 export const updateArtist = async (req, res) => {
     try {
         const { id } = req.params;
@@ -92,7 +80,6 @@ export const updateArtist = async (req, res) => {
             });
         }
 
-        // Check if artist exists
         const [existing] = await db.select().from(artisti).where(eq(artisti.id, id)).limit(1);
         if (!existing) {
             return res.status(404).json({ success: false, error: 'Artistul nu a fost găsit' });
@@ -112,15 +99,11 @@ export const updateArtist = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/artists/:id
- * Șterge un artist (Doar Admin)
- */
+// Ștergere artist — verificăm că există înainte de delete
 export const deleteArtist = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if artist exists
         const [existing] = await db.select().from(artisti).where(eq(artisti.id, id)).limit(1);
         if (!existing) {
             return res.status(404).json({ success: false, error: 'Artistul nu a fost găsit' });

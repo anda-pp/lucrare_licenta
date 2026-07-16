@@ -7,15 +7,13 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// GET /api/trails — Obține toate traseele configurate, împreună cu locațiile aferente
+// Returnează toate traseele din baza de date, ordonate după data creării,
+// împreună cu locațiile aferente fiecărui traseu (join pe traseeLocatii + locatiiPublice)
 router.get('/', async (req, res) => {
     try {
-        // Obținem toate traseele active 
-        // (Pentru admin le dăm pe toate, pentru useri doar cele active, dar simplificăm logica trimițându-le pe toate acum
-        // iar pe frontend filtrăm dacă e nevoie, sau verificăm rolul).
         const toateTraseele = db.select().from(trasee).orderBy(asc(trasee.dataCreare)).all();
 
-        // Obținem rândurile de legătură
+        // Preluăm toate legăturile traseu-locație, sortate după ordinea din traseu
         const legaturi = await db.select({
             traseuId: traseeLocatii.traseuId,
             ordine: traseeLocatii.ordine,
@@ -33,7 +31,7 @@ router.get('/', async (req, res) => {
             .orderBy(asc(traseeLocatii.ordine))
             .all();
 
-        // Group locations by traseuId
+        // Grupăm locațiile pe traseuId ca să le putem atașa rapid fiecărui traseu
         const locatiiPeTraseu = {};
         legaturi.forEach(legatura => {
             if (!locatiiPeTraseu[legatura.traseuId]) locatiiPeTraseu[legatura.traseuId] = [];
@@ -43,14 +41,13 @@ router.get('/', async (req, res) => {
             });
         });
 
-        // Calculăm manual rating-ul agregat pe locații (similar cu vechea rută) 
-        // Aici pentru performanță lăsăm doar datele statice, un sistem mai complex ar face un GROUP BY SQL
+        // Construim răspunsul final: fiecare traseu cu lista lui de locații în ordine
         const result = toateTraseele.map(t => {
             return {
                 id: t.id,
                 titlu: t.titlu,
                 descriere: t.descriere,
-                durataEstimata: t.durataEstimata, // Minute
+                durataEstimata: t.durataEstimata, // în minute
                 oras: t.oras,
                 imagineUrl: t.imagineUrl,
                 activ: t.activ,
@@ -66,14 +63,15 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Admin-only rutes: POST, PUT, DELETE
+// Creare traseu nou — accesibil doar superadminilor
 router.post('/admin', requireSuperadmin, async (req, res) => {
     try {
         const { titlu, descriere, durataEstimata, oras, imagineUrl, activ, locatiiValide } = req.body;
 
+        // Generăm un ID unic pentru traseu cu prefix descriptiv
         const newTrailId = `trail_${uuidv4()}`;
 
-        // 1. Inseram traseul root
+        // Inserăm traseul principal în tabela trasee
         db.insert(trasee).values({
             id: newTrailId,
             titlu: titlu || 'Traseu Nou',
@@ -84,7 +82,7 @@ router.post('/admin', requireSuperadmin, async (req, res) => {
             activ: activ !== undefined ? activ : true
         }).run();
 
-        // 2. Inseram linkurile daca exista
+        // Dacă s-au trimis locații, le inserăm în tabela de legătură cu ordinea păstrată
         if (locatiiValide && Array.isArray(locatiiValide) && locatiiValide.length > 0) {
             const locatiiInsert = locatiiValide.map((cod, index) => ({
                 id: uuidv4(),
@@ -102,18 +100,20 @@ router.post('/admin', requireSuperadmin, async (req, res) => {
     }
 });
 
+// Editare traseu existent — accesibil doar superadminilor
 router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const trailId = req.params.id;
         const { titlu, descriere, durataEstimata, oras, imagineUrl, activ, locatiiValide } = req.body;
 
-        // 1. Update metadata
+        // Actualizăm metadatele traseului
         db.update(trasee)
             .set({ titlu, descriere, durataEstimata, oras, imagineUrl, activ })
             .where(eq(trasee.id, trailId))
             .run();
 
-        // 2. Rescriere locatii (DROP si INSERT e mai sigur pt ordering la array-uri simple)
+        // Ștergem toate locațiile vechi și le reinserăm în ordinea nouă
+        // e mai simplu decât un diff și garantează ordinea corectă
         db.delete(traseeLocatii).where(eq(traseeLocatii.traseuId, trailId)).run();
 
         if (locatiiValide && Array.isArray(locatiiValide) && locatiiValide.length > 0) {
@@ -133,10 +133,11 @@ router.put('/admin/:id', requireSuperadmin, async (req, res) => {
     }
 });
 
+// Ștergere traseu — cascade în DB va șterge automat și legăturile din traseeLocatii
 router.delete('/admin/:id', requireSuperadmin, async (req, res) => {
     try {
         const trailId = req.params.id;
-        db.delete(trasee).where(eq(trasee.id, trailId)).run(); // cascade will delete links
+        db.delete(trasee).where(eq(trasee.id, trailId)).run();
         res.json({ success: true, message: 'Traseu sters' });
     } catch (err) {
         console.error(err);

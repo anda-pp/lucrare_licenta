@@ -3,29 +3,28 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { db } from '../db/db.js';
-import { imaginiLocatii } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { imaginiLocatii, locatiiPublice } from '../db/schema.js';
+import { eq, asc } from 'drizzle-orm';
 
-// Create uploads directory if it doesn't exist
+// Creăm directorul de upload dacă nu există
 const uploadDir = './uploads/locations';
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Multer storage configuration
+// Configurăm Multer să salveze fișierele pe disk cu nume unic UUID
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename
         const uniqueSuffix = crypto.randomUUID();
         const ext = path.extname(file.originalname);
         cb(null, `${uniqueSuffix}${ext}`);
     },
 });
 
-// File filter - only images (validate both MIME type and extension)
+// Acceptăm doar imagini — validăm atât MIME type cât și extensia fișierului
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
@@ -40,20 +39,18 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Multer upload configuration
+// Instanța Multer exportată — maxim 5MB per fișier, maxim 10 fișiere per request
 export const upload = multer({
     storage,
     fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB max
-        files: 10, // Max 10 files at once
+        fileSize: 5 * 1024 * 1024,
+        files: 10,
     },
 });
 
-/**
- * POST /api/uploads/location/:locationId
- * Upload one or more images for a location
- */
+// Upload imagini pentru o locație — le salvăm pe disk și înregistrăm în DB cu ordinea de afișare
+// Dacă locația nu are deja un cover (imagineUrl = null), prima imagine uploadată devine automat cover
 export const uploadLocationImages = async (req, res) => {
     try {
         const { locationId } = req.params;
@@ -66,7 +63,7 @@ export const uploadLocationImages = async (req, res) => {
             });
         }
 
-        // Get current max order for this location
+        // Determinăm ordinea de start a noilor imagini (continuăm după ultimul index existent)
         const existingImages = await db
             .select()
             .from(imaginiLocatii)
@@ -76,7 +73,6 @@ export const uploadLocationImages = async (req, res) => {
             ? Math.max(...existingImages.map(img => img.ordinAfisare || 0))
             : 0;
 
-        // Save each file info to database
         const savedImages = [];
         for (const file of files) {
             maxOrder++;
@@ -95,6 +91,15 @@ export const uploadLocationImages = async (req, res) => {
             savedImages.push(imageData);
         }
 
+        // La orice upload, prima imagine din batch devine automat cover-ul locației (imagineUrl)
+        if (savedImages.length > 0) {
+            await db
+                .update(locatiiPublice)
+                .set({ imagineUrl: savedImages[0].caleFisier })
+                .where(eq(locatiiPublice.codUnicLocatie, locationId));
+            console.log(`🖼️  Cover actualizat automat pentru locația ${locationId}: ${savedImages[0].caleFisier}`);
+        }
+
         console.log(`✅ Uploaded ${files.length} images for location ${locationId}`);
 
         res.json({
@@ -111,10 +116,7 @@ export const uploadLocationImages = async (req, res) => {
     }
 };
 
-/**
- * GET /api/uploads/location/:locationId
- * Get all images for a location
- */
+// Returnează toate imaginile unei locații, sortate după ordinea de afișare
 export const getLocationImages = async (req, res) => {
     try {
         const { locationId } = req.params;
@@ -138,15 +140,12 @@ export const getLocationImages = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/uploads/image/:imageId
- * Delete a specific image
- */
+// Ștergere imagine — eliminăm fișierul de pe disk și înregistrarea din DB
+// Dacă imaginea ștearsă era cover-ul locației (imagineUrl), actualizăm cover-ul cu următoarea imagine
 export const deleteImage = async (req, res) => {
     try {
         const { imageId } = req.params;
 
-        // Get image info
         const images = await db
             .select()
             .from(imaginiLocatii)
@@ -160,17 +159,41 @@ export const deleteImage = async (req, res) => {
         }
 
         const image = images[0];
+        const locationId = image.codUnicLocatie;
 
-        // Delete file from disk
+        // Ștergem fișierul fizic de pe disk dacă există
         const filePath = `.${image.caleFisier}`;
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
 
-        // Delete from database
         await db
             .delete(imaginiLocatii)
             .where(eq(imaginiLocatii.codUnicImagine, imageId));
+
+        // Verificăm dacă imaginea ștearsă era cover-ul locației
+        const location = await db
+            .select({ imagineUrl: locatiiPublice.imagineUrl })
+            .from(locatiiPublice)
+            .where(eq(locatiiPublice.codUnicLocatie, locationId))
+            .limit(1);
+
+        if (location.length > 0 && location[0].imagineUrl === image.caleFisier) {
+            // Căutăm prima imagine rămasă în galerie (cu cel mai mic ordinAfisare)
+            const remaining = await db
+                .select({ caleFisier: imaginiLocatii.caleFisier })
+                .from(imaginiLocatii)
+                .where(eq(imaginiLocatii.codUnicLocatie, locationId))
+                .orderBy(asc(imaginiLocatii.ordinAfisare))
+                .limit(1);
+
+            const newCover = remaining.length > 0 ? remaining[0].caleFisier : null;
+            await db
+                .update(locatiiPublice)
+                .set({ imagineUrl: newCover })
+                .where(eq(locatiiPublice.codUnicLocatie, locationId));
+            console.log(`🖼️  Cover actualizat pentru locația ${locationId}: ${newCover || 'null'}`);
+        }
 
         console.log(`🗑️ Deleted image ${imageId}`);
 
@@ -184,5 +207,35 @@ export const deleteImage = async (req, res) => {
             success: false,
             error: 'Eroare la ștergerea imaginii',
         });
+    }
+};
+
+// Setează manual o imagine ca cover principal al locației (actualizează imagineUrl în locatiiPublice)
+export const setCoverImage = async (req, res) => {
+    try {
+        const { imageId } = req.params;
+
+        const images = await db
+            .select()
+            .from(imaginiLocatii)
+            .where(eq(imaginiLocatii.codUnicImagine, imageId));
+
+        if (images.length === 0) {
+            return res.status(404).json({ success: false, error: 'Imaginea nu a fost găsită' });
+        }
+
+        const image = images[0];
+
+        await db
+            .update(locatiiPublice)
+            .set({ imagineUrl: image.caleFisier })
+            .where(eq(locatiiPublice.codUnicLocatie, image.codUnicLocatie));
+
+        console.log(`🖼️  Cover setat manual pentru locația ${image.codUnicLocatie}: ${image.caleFisier}`);
+
+        res.json({ success: true, message: 'Cover setat cu succes' });
+    } catch (error) {
+        console.error('Set cover error:', error);
+        res.status(500).json({ success: false, error: 'Eroare la setarea cover-ului' });
     }
 };

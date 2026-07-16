@@ -1,14 +1,6 @@
 import { Inbox } from 'lucide-react';
 
-/**
- * Empty state placeholder for lists / grids with no data.
- *
- * Props:
- *  - icon        (LucideComponent) – default Inbox
- *  - title       (string)          – main message
- *  - description (string)          – secondary text (optional)
- *  - action      (ReactNode)       – optional CTA button
- */
+// Placeholder pentru liste sau grile fără date — afișează un icon, mesaj și opțional un CTA
 export default function EmptyState({
     icon: Icon = Inbox,
     title = 'Niciun rezultat găsit.',

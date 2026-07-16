@@ -8,7 +8,8 @@ export default function Home() {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
 
-    // Redirect users to their respective dashboards
+    // Redirecționăm automat utilizatorul spre panoul propriu în funcție de rol
+    // Ruta "/" este practic un dispatcher — nu rămâne niciodată pe această pagină
     useEffect(() => {
         if (!isPending) {
             if (session?.user) {
@@ -21,11 +22,10 @@ export default function Home() {
                 } else if (session.user.role === 'Utilizator') {
                     navigate('/user');
                 } else {
-                    // Fallback
                     navigate('/user');
                 }
             } else {
-                // If not logged in, take them straight to the Login/Welcome page
+                // Utilizatorul neautentificat merge direct la Login
                 navigate('/login');
             }
         }
@@ -48,11 +48,13 @@ export default function Home() {
         <div className="home-container">
             <div className="home-content">
                 {session ? (
+                    // Afișăm spinner cât timp se execută redirect-ul
                     <div className="user-dashboard">
                         <div className="loading-spinner"></div>
                         <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)' }}>Te redirecționăm către panoul tău...</p>
                     </div>
                 ) : (
+                    // Landing page minimal pentru utilizatorii neautentificați
                     <div className="guest-info">
                         <div className="logo-icon">
                             <Landmark size={64} strokeWidth={1} />

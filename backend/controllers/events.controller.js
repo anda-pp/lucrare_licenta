@@ -5,10 +5,8 @@ import { createEventSchema, updateEventSchema } from '../validators/schemas.js';
 import { v4 as uuidv4 } from 'uuid';
 import { sendNewEventAtFavorite } from '../lib/mailer.js';
 
-/**
- * GET /api/events
- * Obține toate evenimentele, inclusiv detaliile locației dacă există
- */
+// Returnează toate evenimentele cu detaliile locației asociate
+// intervaleOrare este stocat ca JSON string în DB — îl parsăm înainte de a trimite răspunsul
 export const getAllEvents = async (req, res) => {
     try {
         const events = await db
@@ -42,10 +40,8 @@ export const getAllEvents = async (req, res) => {
     }
 };
 
-/**
- * GET /api/events/:id
- * Obține un eveniment specific după ID
- */
+// Returnează un eveniment specific cu tipurile de bilete aferente
+// Dacă evenimentul e gratuit nu returnăm niciun bilet (nu are sens)
 export const getEventById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -73,7 +69,6 @@ export const getEventById = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         }
 
-        // Fetch ticket types for the event (daca nu e gratuit)
         const tickets = event.isGratuit
             ? []
             : await db
@@ -90,10 +85,9 @@ export const getEventById = async (req, res) => {
     }
 };
 
-/**
- * POST /api/events
- * Crează un eveniment (Doar Admin/Staff)
- */
+// Creare eveniment nou cu validare Zod
+// După salvare în DB, trimitem email asincron (fire-and-forget) utilizatorilor care
+// au locația asociată la favorite — fără să blocăm răspunsul HTTP
 export const createEvent = async (req, res) => {
     try {
         const validation = createEventSchema.safeParse(req.body);
@@ -119,7 +113,6 @@ export const createEvent = async (req, res) => {
             message: 'Eveniment creat cu succes'
         });
 
-        // Send email to users who have this location as favorite (fire-and-forget)
         if (validation.data.codUnicLocatie) {
             notifyFavoriteUsersAboutEvent(validation.data.codUnicLocatie, {
                 eventTitle: validation.data.titlu,
@@ -133,10 +126,7 @@ export const createEvent = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/events/:id
- * Actualizează un eveniment existent (Doar Admin/Staff)
- */
+// Editare eveniment existent — verificăm că există, actualizăm câmpurile validate
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -150,7 +140,6 @@ export const updateEvent = async (req, res) => {
             });
         }
 
-        // Check if event exists
         const [existing] = await db.select().from(evenimente).where(eq(evenimente.id, id)).limit(1);
         if (!existing) {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
@@ -173,21 +162,16 @@ export const updateEvent = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/events/:id
- * Șterge un eveniment (Doar Admin)
- */
+// Ștergere eveniment — ștergem mai întâi biletele legate de eveniment pentru a evita erori FK
 export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if event exists
         const [existing] = await db.select().from(evenimente).where(eq(evenimente.id, id)).limit(1);
         if (!existing) {
             return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         }
 
-        // Sterge biletele evenimentului inainte
         await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicEveniment, id));
         await db.delete(evenimente).where(eq(evenimente.id, id));
 
@@ -201,7 +185,7 @@ export const deleteEvent = async (req, res) => {
     }
 };
 
-// ─── Helper: notify users who favorited a location about a new event ─────────
+// Helper intern: trimite email utilizatorilor care au locația la favorite despre un eveniment nou
 async function notifyFavoriteUsersAboutEvent(locationId, { eventTitle, eventType, dataStart }) {
     const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
         .from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, locationId)).limit(1);

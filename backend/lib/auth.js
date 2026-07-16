@@ -19,8 +19,8 @@ export const auth = betterAuth({
         minPasswordLength: 6,
     },
     session: {
-        expiresIn: 60 * 60 * 24 * 7, // 7 days
-        updateAge: 60 * 60 * 24, // 1 day
+        expiresIn: 60 * 60 * 24 * 7, // sesiunea expiră după 7 zile
+        updateAge: 60 * 60 * 24,      // reîmprospătăm sesiunea dacă a trecut 1 zi
     },
     user: {
         additionalFields: {
@@ -28,17 +28,18 @@ export const auth = betterAuth({
                 type: "string",
                 required: false,
                 defaultValue: "Utilizator",
-                input: false,
+                input: false, // rolul nu poate fi setat de utilizator la înregistrare
             },
         },
     },
     databaseHooks: {
         user: {
             create: {
+                // La crearea unui cont nou de tip Utilizator, îi atribuim automat cardul Bronze
+                // Conturile de staff/admin sunt create manual de superadmin, deci nu primesc card
                 after: async (user) => {
-                    // Only assign Bronze card to users with Utilizator role
                     if (user.role !== 'Utilizator') {
-                        console.log(`\u23ED\uFE0F Skipping card for non-Utilizator user ${user.email} (role: ${user.role})`);
+                        console.log(`⏭️ Skipping card for non-Utilizator user ${user.email} (role: ${user.role})`);
                         return;
                     }
 
@@ -48,7 +49,7 @@ export const auth = betterAuth({
                             codUnicUtilizator: user.id,
                             tipUnicCard: 'BRONZE',
                         });
-                        console.log(`\u2705 Bronze card assigned to user ${user.email}`);
+                        console.log(`✅ Bronze card assigned to user ${user.email}`);
                     } catch (error) {
                         console.error('Error assigning Bronze card:', error);
                     }

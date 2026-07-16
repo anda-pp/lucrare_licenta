@@ -15,12 +15,14 @@ import './admin-shared.css';
 const API = 'http://localhost:5000';
 const EVENT_TYPES = ['General', 'Expozitie', 'Noaptea Muzeelor', 'Workshop'];
 
+// Formularul gol — folosit la resetare pentru adăugare de eveniment nou
 const EMPTY_FORM = {
     titlu: '', descriere: '', dataStart: '', dataSfarsit: '',
     tipEveniment: 'General', codUnicLocatie: '', imagineUrl: '',
     isGratuit: false, intervaleOrare: [],
 };
 
+// Convertim timestamp ISO la formatul cerut de input type="datetime-local"
 function toInputDate(ts) {
     if (!ts) return '';
     return new Date(ts).toISOString().slice(0, 16);
@@ -83,6 +85,7 @@ export default function Events() {
         setSaving(true);
         setFormError('');
 
+        // Intervalele orare sunt obligatorii — fără ele nu putem face rezervări
         if (!form.intervaleOrare || form.intervaleOrare.length === 0) {
             setFormError('Te rugăm să adaugi cel puțin un interval orar!');
             setSaving(false);
@@ -184,6 +187,7 @@ export default function Events() {
                                 <span>{formatDate(ev.dataStart)}</span>
                                 {ev.dataSfarsit && <> — <span>{formatDate(ev.dataSfarsit)}</span></>}
                             </div>
+                            {/* Descrierea e trunchiată la 100 de caractere în card */}
                             {ev.descriere && <p className="ev-desc">{ev.descriere.slice(0, 100)}{ev.descriere.length > 100 ? '...' : ''}</p>}
                         </div>
                         <div className="event-card-footer">
@@ -206,7 +210,6 @@ export default function Events() {
                 <EmptyState icon={AlertCircle} title="Niciun eveniment găsit." />
             )}
 
-            {/* Form Modal */}
             <FormModal
                 show={showModal}
                 title={editingEvent ? 'Editează Eveniment' : 'Adaugă Eveniment'}
@@ -254,6 +257,7 @@ export default function Events() {
                         value={form.descriere} onChange={e => setForm({ ...form, descriere: e.target.value })} />
                 </div>
 
+                {/* Componenta pentru intervalele orare — afișare dinamică cu adăugare/ștergere */}
                 <TimeIntervalsInput
                     intervals={form.intervaleOrare || []}
                     onChange={intervaleOrare => setForm(prev => ({ ...prev, intervaleOrare }))}
@@ -275,7 +279,7 @@ export default function Events() {
                 </div>
             </FormModal>
 
-            {/* Confirm Delete */}
+            {/* Dialog de confirmare ștergere — separat pentru a evita ștergerea accidentală */}
             <ConfirmDialog
                 show={!!confirmId}
                 title="Șterge Eveniment"

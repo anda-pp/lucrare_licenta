@@ -53,6 +53,7 @@ export default function Events() {
         if (ev) {
             setIsEditing(true);
             setEditingId(ev.id);
+            // intervaleOrare e stocat ca JSON string — îl parsăm, cu fallback la array gol
             let intervale = [];
             try { intervale = ev.intervaleOrare ? JSON.parse(ev.intervaleOrare) : []; } catch { intervale = []; }
             setFormData({
@@ -103,6 +104,7 @@ export default function Events() {
             const payload = {
                 ...formData,
                 isGratuit: formData.isGratuit ? 1 : 0,
+                // Evenimentele gratuite au intervale orare; cele cu bilet au prețuri definite
                 intervaleOrare: formData.isGratuit ? formData.intervaleOrare : [],
                 bilete: formData.isGratuit ? [] : bilete.map(b => ({ tip: b.tip, pret: parseFloat(b.pret) })),
             };

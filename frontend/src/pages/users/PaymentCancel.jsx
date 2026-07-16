@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 
+// Pagina afișată când utilizatorul anulează plata în Stripe Checkout sau apare o eroare de procesare
 export default function PaymentCancel() {
     const navigate = useNavigate();
 

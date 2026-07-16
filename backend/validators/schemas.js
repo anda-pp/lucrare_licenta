@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Location validation schema
+// Schema pentru crearea unei locații noi (muzeu sau galerie)
 export const createLocationSchema = z.object({
     tipLocatie: z.enum(['Muzeu', 'Galerie'], {
         errorMap: () => ({ message: 'Tipul trebuie să fie Muzeu sau Galerie' }),
@@ -17,16 +17,17 @@ export const createLocationSchema = z.object({
     imagineUrl: z.string().optional(),
 });
 
+// La update toate câmpurile sunt opționale
 export const updateLocationSchema = createLocationSchema.partial();
 
-// Review validation schema
+// Schema pentru o recenzie — rating obligatoriu între 1 și 5
 export const createReviewSchema = z.object({
     codUnicLocatie: z.string().min(1, 'Locația este obligatorie'),
     descriereRecenzie: z.string().optional(),
     rating: z.number().int().min(1).max(5, 'Rating-ul trebuie să fie între 1 și 5'),
 });
 
-// Order validation schema
+// Schema pentru plasarea unei comenzi — cel puțin un bilet
 export const createOrderSchema = z.object({
     tickets: z.array(z.object({
         codUnicTipBilet: z.string(),
@@ -34,13 +35,13 @@ export const createOrderSchema = z.object({
     })).min(1, 'Trebuie să selectezi cel puțin un bilet'),
 });
 
-// Loyalty card validation schema
+// Schema pentru crearea unui tip de card de fidelitate
 export const createLoyaltyCardSchema = z.object({
     numeCard: z.string().min(2, 'Numele cardului trebuie să aibă minim 2 caractere'),
     puncteCard: z.number().int().min(0).default(0),
 });
 
-// Event validation schema
+// Schema pentru crearea unui eveniment — tipEveniment are o listă fixă de valori acceptate
 export const createEventSchema = z.object({
     codUnicLocatie: z.string().optional().nullable(),
     titlu: z.string().min(2, 'Titlul trebuie să aibă minim 2 caractere'),
@@ -55,7 +56,7 @@ export const createEventSchema = z.object({
 
 export const updateEventSchema = createEventSchema.partial();
 
-// Artist validation schema
+// Schema pentru un artist — linkOpere poate fi URL sau string gol
 export const createArtistSchema = z.object({
     nume: z.string().min(2, 'Numele artistului trebuie să aibă minim 2 caractere'),
     biografie: z.string().optional().nullable(),
@@ -66,7 +67,7 @@ export const createArtistSchema = z.object({
 
 export const updateArtistSchema = createArtistSchema.partial();
 
-// Ticket type validation schema (museum-admin)
+// Schema pentru tipuri de bilete gestionate de museum-admin (bilete de intrare)
 export const createTicketTypeSchema = z.object({
     tipBilet: z.enum(['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'], {
         errorMap: () => ({ message: 'Tip bilet invalid.' }),
@@ -76,13 +77,13 @@ export const createTicketTypeSchema = z.object({
 
 export const updateTicketTypeSchema = createTicketTypeSchema.partial();
 
-// Review update schema
+// Schema pentru editarea unei recenzii existente
 export const updateReviewSchema = z.object({
     rating: z.number().int().min(1, 'Rating minim 1').max(5, 'Rating maxim 5'),
     descriereRecenzie: z.string().max(2000, 'Recenzia este prea lungă.').optional(),
 });
 
-// Checkout schema
+// Schema pentru checkout cu Stripe — include codul promoțional și data vizitei opționale
 export const checkoutSchema = z.object({
     locationId: z.string().min(1, 'locationId lipsă'),
     tickets: z.array(z.object({

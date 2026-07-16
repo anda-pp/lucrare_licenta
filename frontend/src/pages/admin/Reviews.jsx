@@ -29,6 +29,7 @@ export default function Reviews() {
         if (!confirm('Sigur vrei să ștergi această recenzie?')) return;
         try {
             await axios.delete(`http://localhost:5000/api/reviews/${id}`, { withCredentials: true });
+            // Ștergem local fără re-fetch pentru a evita reîncărcarea întregii liste
             setReviews(prev => prev.filter(r => r.numarRecenzie !== id));
         } catch (err) {
             alert('Eroare la ștergere: ' + (err.response?.data?.error || err.message));
@@ -40,6 +41,7 @@ export default function Reviews() {
         return new Date(dateStr).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
+    // Redăm stele SVG colorate în funcție de rating
     const renderStars = (rating) =>
         Array.from({ length: 5 }, (_, i) => (
             <Star
@@ -51,6 +53,7 @@ export default function Reviews() {
             />
         ));
 
+    // Filtrare client-side după rating — simplu, fără request suplimentar
     const filteredReviews = filterRating
         ? reviews.filter(r => r.rating === parseInt(filterRating))
         : reviews;
@@ -100,7 +103,7 @@ export default function Reviews() {
                 <div className="admin-reviews-list">
                     {filteredReviews.map(review => (
                         <div key={review.numarRecenzie} className="admin-review-card">
-                            {/* Header: Location pill + date + delete */}
+                            {/* Header: locație + dată + buton ștergere */}
                             <div className="review-card-header">
                                 <div className="review-location-pill">
                                     <MapPin size={13} />
@@ -119,17 +122,15 @@ export default function Reviews() {
                                 </div>
                             </div>
 
-                            {/* Stars */}
                             <div className="review-card-stars">
                                 {renderStars(review.rating)}
                             </div>
 
-                            {/* Text */}
                             {review.descriereRecenzie && (
                                 <p className="review-card-text">"{review.descriereRecenzie}"</p>
                             )}
 
-                            {/* User info */}
+                            {/* Informații despre autorul recenziei */}
                             <div className="review-card-user">
                                 <User size={13} />
                                 <span className="review-user-name">{review.userName}</span>

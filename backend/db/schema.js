@@ -2,10 +2,10 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // ============================================
-// BetterAuth Tables (Required for authentication)
+// Tabelele BetterAuth — necesare pentru autentificare
 // ============================================
 
-// BetterAuth User table
+// Tabela principală de utilizatori — extinsă cu câmpuri custom (role, muzeuId, telefon)
 export const user = sqliteTable('user', {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
@@ -15,11 +15,11 @@ export const user = sqliteTable('user', {
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
     role: text('role').default('Utilizator'), // Superadmin, Admin, Personal, Utilizator
-    muzeuId: text('muzeu_id'), // FK -> locatii_publice.cod_unic_locatie (constraint in DB)
+    muzeuId: text('muzeu_id'), // FK -> locatii_publice.cod_unic_locatie — muzeul la care este alocat stafful/adminul
     telefon: text('telefon'),
 });
 
-// BetterAuth Session table
+// Sesiunile active ale utilizatorilor (gestionate de BetterAuth)
 export const session = sqliteTable('session', {
     id: text('id').primaryKey(),
     expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
@@ -31,7 +31,7 @@ export const session = sqliteTable('session', {
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// BetterAuth Account table
+// Conturi externe (OAuth, credențiale) legate de un utilizator
 export const account = sqliteTable('account', {
     id: text('id').primaryKey(),
     accountId: text('account_id').notNull(),
@@ -46,7 +46,7 @@ export const account = sqliteTable('account', {
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// BetterAuth Verification table
+// Token-uri de verificare email (folosite de BetterAuth)
 export const verification = sqliteTable('verification', {
     id: text('id').primaryKey(),
     identifier: text('identifier').notNull(),
@@ -57,26 +57,25 @@ export const verification = sqliteTable('verification', {
 });
 
 // ============================================
-// Application Tables
+// Tabelele aplicației
 // ============================================
 
-
-// Tabela Judete
+// Județele din România — folosite pentru filtrarea locațiilor
 export const judete = sqliteTable('judete', {
     codJudet: text('cod_judet').primaryKey(),
     numeJudet: text('nume_judet').notNull().unique(),
 });
 
-// Tabela Card Fidelitate (tipuri de carduri)
+// Tipurile de card de fidelitate (Bronze, Silver, Gold etc.)
 export const cardFidelitate = sqliteTable('card_fidelitate', {
     tipUnicCard: text('tip_unic_card').primaryKey(),
     numeCard: text('nume_card').notNull().unique(),
-    puncteCard: integer('puncte_card').default(0),
+    puncteCard: integer('puncte_card').default(0), // pragul de puncte necesar pentru acest nivel
     oferteSpeciale: text('oferte_speciale'),
     oferteBunVenit: text('oferte_bun_venit'),
 });
 
-// Tabela Carduri Clienti (carduri asociate utilizatorilor)
+// Cardurile de fidelitate deținute efectiv de utilizatori
 export const carduriClienti = sqliteTable('carduri_clienti', {
     nrUnicCard: text('nr_unic_card').primaryKey(),
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
@@ -84,7 +83,7 @@ export const carduriClienti = sqliteTable('carduri_clienti', {
     puncteAcumulate: integer('puncte_acumulate').default(0),
 });
 
-// Tabela Locatii Publice (Muzee si Galerii)
+// Locațiile publice din platformă: muzee și galerii
 export const locatiiPublice = sqliteTable('locatii_publice', {
     codUnicLocatie: text('cod_unic_locatie').primaryKey(),
     tipLocatie: text('tip_locatie', { enum: ['Muzeu', 'Galerie'] }).notNull(),
@@ -97,29 +96,30 @@ export const locatiiPublice = sqliteTable('locatii_publice', {
     siteOficial: text('site_oficial'),
     locatieHarta: text('locatie_harta').notNull(),
     statusLocatie: text('status_locatie', { enum: ['Activ', 'Inactiv', 'Cerere'] }).notNull(),
-    imagineUrl: text('imagine_url'), // Pentru upload imagine locatie
+    imagineUrl: text('imagine_url'),
 });
 
-// Tabela Tipuri Bilete
+// Tipurile de bilete disponibile pentru o locație sau un eveniment
+// Dacă codUnicEveniment este NULL, biletul este de intrare la muzeu; altfel e bilet la eveniment
 export const tipuriBilete = sqliteTable('tipuri_bilete', {
     codUnicTipBilet: text('cod_unic_tip_bilet').primaryKey(),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
-    codUnicEveniment: text('cod_unic_eveniment').references(() => evenimente.id), // FK catre evenimente.id (adaugat prin migrare)
+    codUnicEveniment: text('cod_unic_eveniment').references(() => evenimente.id),
     tipBilet: text('tip_bilet', { enum: ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'] }).notNull(),
     pret: real('pret').notNull(),
 });
 
-// Tabela Recenzii
+// Recenziile lăsate de utilizatori pentru locații
 export const recenzii = sqliteTable('recenzii', {
     numarRecenzie: text('numar_recenzie').primaryKey(),
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
     descriereRecenzie: text('descriere_recenzie'),
-    rating: integer('rating').notNull(), // 1-5
+    rating: integer('rating').notNull(), // valoare între 1 și 5
     dataRecenzie: text('data_recenzie').default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Tabela Comenzi
+// Comenzile plasate de utilizatori
 export const comenzi = sqliteTable('comenzi', {
     numarComanda: integer('numar_comanda').primaryKey({ autoIncrement: true }),
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id),
@@ -129,7 +129,7 @@ export const comenzi = sqliteTable('comenzi', {
     statusComanda: text('status_comanda', { enum: ['Activă', 'Anulată'] }).default('Activă'),
 });
 
-// Tabela Bilete Cumparate
+// Biletele individuale cumpărate, legate de o comandă
 export const bileteCumparate = sqliteTable('bilete_cumparate', {
     nrBiletCumparat: text('nr_bilet_cumparat').primaryKey(),
     codUnicTipBilet: text('cod_unic_tip_bilet').references(() => tipuriBilete.codUnicTipBilet),
@@ -138,7 +138,7 @@ export const bileteCumparate = sqliteTable('bilete_cumparate', {
     dataVizita: text('data_vizita'),
 });
 
-// Tabela Facturi
+// Facturile generate automat la plată
 export const facturi = sqliteTable('facturi', {
     numarFactura: integer('numar_factura').primaryKey({ autoIncrement: true }),
     numarComanda: integer('numar_comanda').references(() => comenzi.numarComanda),
@@ -148,7 +148,7 @@ export const facturi = sqliteTable('facturi', {
     totalFactura: real('total_factura').notNull(),
 });
 
-// Tabela Imagini Locatii (pentru upload multiple imagini per muzeu)
+// Galeria de imagini a unei locații — permite upload multiplu per muzeu
 export const imaginiLocatii = sqliteTable('imagini_locatii', {
     codUnicImagine: text('cod_unic_imagine').primaryKey(),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
@@ -160,7 +160,7 @@ export const imaginiLocatii = sqliteTable('imagini_locatii', {
     ordinAfisare: integer('ordin_afisare').default(0),
 });
 
-// Tabela Evenimente
+// Evenimente organizate de muzee: expoziții, workshop-uri, Noaptea Muzeelor etc.
 export const evenimente = sqliteTable('evenimente', {
     id: text('id').primaryKey(),
     codUnicLocatie: text('cod_unic_locatie').references(() => locatiiPublice.codUnicLocatie),
@@ -171,20 +171,20 @@ export const evenimente = sqliteTable('evenimente', {
     tipEveniment: text('tip_eveniment').default('General'), // 'Expozitie', 'Noaptea Muzeelor', 'Workshop'
     imagineUrl: text('imagine_url'),
     isGratuit: integer('is_gratuit', { mode: 'boolean' }).default(0),
-    intervaleOrare: text('intervale_orare'), // Stocheaza un array JSON de stringuri: '["10:00-12:00"]'
+    intervaleOrare: text('intervale_orare'), // array JSON de intervale orare: '["10:00-12:00", "14:00-16:00"]'
 });
 
-// Tabela Artisti
+// Artiștii prezentați în platformă — biografie, interviu, link opere
 export const artisti = sqliteTable('artisti', {
     id: text('id').primaryKey(),
     nume: text('nume').notNull(),
     biografie: text('biografie'),
-    interviu: text('interviu'), // Poate fi text lung sau link YouTube
-    linkOpere: text('link_opere'), // Unde pot fi găsite operele
+    interviu: text('interviu'), // text liber sau link YouTube
+    linkOpere: text('link_opere'),
     imagineUrl: text('imagine_url'),
 });
 
-// Tabela Interese Evenimente (Facebook-style "Interested")
+// Marcajul „Mă interesează" al utilizatorilor pe evenimente (similar cu Facebook Interested)
 export const intereseEvenimente = sqliteTable('interese_evenimente', {
     id: text('id').primaryKey(),
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id, { onDelete: 'cascade' }),
@@ -192,7 +192,7 @@ export const intereseEvenimente = sqliteTable('interese_evenimente', {
     dataInteresului: integer('data_interesului', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// Tabela Favorite Locatii (legată de user BetterAuth)
+// Locațiile marcate ca favorite de utilizatori
 export const favoriteLocatii = sqliteTable('favorite_locatii', {
     id: text('id').primaryKey(),
     codUnicUtilizator: text('cod_unic_utilizator').references(() => user.id, { onDelete: 'cascade' }),
@@ -200,35 +200,35 @@ export const favoriteLocatii = sqliteTable('favorite_locatii', {
     dataAdaugarii: integer('data_adaugarii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// Tabela Rezervari Evenimente Gratuite
+// Rezervările la evenimente gratuite cu intervale orare (ex: ture ghidate)
 export const rezervariEvenimente = sqliteTable('rezervari_evenimente', {
     id: text('id').primaryKey(),
     eventId: text('event_id').notNull().references(() => evenimente.id, { onDelete: 'cascade' }),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     numeRezervant: text('nume_rezervant').notNull(),
     nrPersoane: integer('nr_persoane').notNull().default(1),
-    ziuaAleasa: text('ziua_aleasa'), // ISO date string
+    ziuaAleasa: text('ziua_aleasa'), // string dată ISO
     intervalOrar: text('interval_orar'), // ex: '18:00-21:00'
     dataRezervare: integer('data_rezervare', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
 // ============================================
-// Gamification Tables
+// Tabelele de Gamification
 // ============================================
 
-// Catalog de insigne disponibile
+// Catalogul de insigne disponibile în platformă
 export const insigne = sqliteTable('insigne', {
     id: text('id').primaryKey(),
-    nume: text('nume').notNull(),            // "Critic de Artă"
+    nume: text('nume').notNull(),            // ex: "Critic de Artă"
     descriere: text('descriere'),
-    iconita: text('iconita').notNull(),      // ex: 'Star', 'Trophy', 'Heart'
-    conditie: text('conditie').notNull(),    // 'reviews_5', 'museums_3', etc.
+    iconita: text('iconita').notNull(),      // nume icon Lucide: 'Star', 'Trophy', 'Heart'
+    conditie: text('conditie').notNull(),    // cod condiție: 'reviews_5', 'museums_3'
     valoareConditie: integer('valoare_conditie').notNull(),
-    culoare: text('culoare').default('#9333ea'), // hex pentru gradient badge
-    mesajMotivatie: text('mesaj_motivatie'), // "Lasă încă X recenzii pentru a obține insigna"
+    culoare: text('culoare').default('#9333ea'), // hex folosit pentru gradientul insignei
+    mesajMotivatie: text('mesaj_motivatie'), // ex: "Lasă încă 3 recenzii pentru a obține insigna"
 });
 
-// Insigne câștigate de utilizatori
+// Insignele câștigate de fiecare utilizator
 export const insigneUtilizatori = sqliteTable('insigne_utilizatori', {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
@@ -236,35 +236,35 @@ export const insigneUtilizatori = sqliteTable('insigne_utilizatori', {
     dataObtinerii: integer('data_obtinerii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 });
 
-// Catalog de recompense disponibile
+// Catalogul de recompense disponibile (vouchere, bilete gratuite, reduceri)
 export const recompense = sqliteTable('recompense', {
     id: text('id').primaryKey(),
-    nume: text('nume').notNull(),                   // "Bilet gratuit Adult"
+    nume: text('nume').notNull(),                   // ex: "Bilet gratuit Adult"
     descriere: text('descriere'),
     puncteNecesare: integer('puncte_necesare').notNull(),
     tip: text('tip').default('voucher'),             // 'bilet_gratuit', 'reducere', 'voucher'
-    valoare: real('valoare'),                        // ex: 15 (lei), 10 (%), 0 (bilet gratuit)
+    valoare: real('valoare'),                        // ex: 15 lei, 10%, sau 0 pentru bilet gratuit
     activ: integer('activ', { mode: 'boolean' }).default(true),
 });
 
-// Recompense revendicate de utilizatori
+// Recompensele revendicate de utilizatori — fiecare are un cod voucher unic
 export const recompenzeRevendicate = sqliteTable('recompense_revendicate', {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     recompensaId: text('recompensa_id').notNull().references(() => recompense.id, { onDelete: 'cascade' }),
     dataRevendicarii: integer('data_revendicarii', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
     status: text('status').default('activ'),         // 'activ', 'folosit', 'expirat'
-    codVoucher: text('cod_voucher').notNull().unique(), // UUID generat la claim
+    codVoucher: text('cod_voucher').notNull().unique(), // UUID generat la momentul revendicării
     puncteCheltuite: integer('puncte_cheltuite').notNull(),
 });
 
 // ============================================
-// Custom Cultural Trails (Gamification V2)
+// Trasee Culturale (Gamification V2)
 // ============================================
 
-// Tabela Principală a Traseului
+// Traseele culturale definite de superadmin — grupuri ordonate de locații vizitabile
 export const trasee = sqliteTable('trasee', {
-    id: text('id').primaryKey(), // UUID
+    id: text('id').primaryKey(),
     titlu: text('titlu').notNull(),
     descriere: text('descriere'),
     durataEstimata: integer('durata_estimata'), // în minute
@@ -274,11 +274,10 @@ export const trasee = sqliteTable('trasee', {
     dataCreare: integer('data_creare', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
 });
 
-// Tabela de Legătură: Ce locații intră într-un traseu și în ce ordine
+// Relația many-to-many între trasee și locații, cu ordinea de vizitare
 export const traseeLocatii = sqliteTable('trasee_locatii', {
-    id: text('id').primaryKey(), // UUID
+    id: text('id').primaryKey(),
     traseuId: text('traseu_id').notNull().references(() => trasee.id, { onDelete: 'cascade' }),
     codUnicLocatie: text('cod_unic_locatie').notNull().references(() => locatiiPublice.codUnicLocatie, { onDelete: 'cascade' }),
-    ordine: integer('ordine').notNull().default(0) // 1, 2, 3...
+    ordine: integer('ordine').notNull().default(0) // 1, 2, 3... ordinea în traseu
 });
-

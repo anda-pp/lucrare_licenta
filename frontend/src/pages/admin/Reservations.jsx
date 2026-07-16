@@ -25,6 +25,7 @@ export default function Reservations() {
         }
     };
 
+    // Căutare simplă client-side — filtrăm după nume utilizator, email sau titlul evenimentului
     const filtered = reservations.filter(r => {
         const term = searchTerm.toLowerCase();
         return !term ||
@@ -33,6 +34,7 @@ export default function Reservations() {
             r.userEmail?.toLowerCase().includes(term);
     });
 
+    // Export CSV al rezervărilor filtrate — util pentru raportare offline
     const exportCSV = () => {
         const header = ['Eveniment', 'Tip', 'Utilizator', 'Email', 'Persoane', 'Zi Aleasă', 'Interval', 'Data Rezervare'];
         const rows = filtered.map(r => [
@@ -55,9 +57,9 @@ export default function Reservations() {
         URL.revokeObjectURL(url);
     };
 
+    // SQLite poate stoca timestamp ca secunde UNIX — normalizăm înainte de formatare
     const formatDate = (ts) => {
         if (!ts) return '—';
-        // ts might be unix seconds (from SQLite) or miliseconds
         const ms = ts > 1e10 ? ts : ts * 1000;
         return new Date(ms).toLocaleString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
@@ -67,7 +69,7 @@ export default function Reservations() {
             <div className="page-header">
                 <h1>Rezervări Evenimente</h1>
                 <button className="btn-primary icon-btn" onClick={exportCSV}>
-                    <Plus size={16} /> Export CSV
+                    <Download size={16} /> Export CSV
                 </button>
             </div>
 

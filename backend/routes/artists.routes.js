@@ -10,11 +10,11 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// Public routes
+// Listarea și vizualizarea artiștilor sunt publice — orice vizitator le poate accesa
 router.get('/', getAllArtists);
 router.get('/:id', getArtistById);
 
-// Protected routes (Admin only for now)
+// Crearea, editarea și ștergerea sunt rezervate superadminilor
 router.post('/', requireAuth, requireSuperadmin, createArtist);
 router.put('/:id', requireAuth, requireSuperadmin, updateArtist);
 router.delete('/:id', requireAuth, requireSuperadmin, deleteArtist);

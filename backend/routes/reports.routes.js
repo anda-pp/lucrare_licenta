@@ -4,7 +4,7 @@ import { requireAuth, requireStaff } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Reports require authentication and staff role
+// Rapoartele generale sunt accesibile personalului, adminilor și superadminilor
 router.use(requireAuth);
 router.use(requireStaff);
 

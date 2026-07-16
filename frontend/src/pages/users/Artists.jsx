@@ -61,12 +61,14 @@ export default function Artists() {
 
                             <div className="artist-info">
                                 <h2>{artist.nume}</h2>
+                                {/* Afișăm primele 100 de caractere din biografie ca preview */}
                                 <p className="artist-bio-brief">
                                     {artist.biografie ? artist.biografie.substring(0, 100) + '...' : 'Biografie nedisponibilă momentan.'}
                                 </p>
 
                                 <div className="artist-actions">
-                                    <span className="read-more">Poveștea artistului <ChevronRight size={16} /></span>
+                                    <span className="read-more">Povestea artistului <ChevronRight size={16} /></span>
+                                    {/* Butonul de portofoliu deschide link-ul extern fără a naviga în aplicație */}
                                     {artist.linkOpere && (
                                         <button
                                             className="portfolio-btn"

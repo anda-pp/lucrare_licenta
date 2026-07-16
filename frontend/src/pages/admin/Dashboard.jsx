@@ -9,11 +9,11 @@ export default function Dashboard() {
         users: 0,
         orders: 0,
         reviews: 0,
-        events: 0, // Added based on new UI
-        reservations: 0, // Added based on new UI
-        revenue: 0, // Added based on new UI
-        recentOrders: [], // Added based on new UI
-        recentReviews: [], // Added based on new UI
+        events: 0,
+        reservations: 0,
+        revenue: 0,
+        recentOrders: [],
+        recentReviews: [],
     });
     const [loading, setLoading] = useState(true);
 
@@ -39,6 +39,7 @@ export default function Dashboard() {
             <h1 className="page-title">Dashboard</h1>
             <p className="subtitle">Bine ai venit în panoul de administrare!</p>
 
+            {/* Cardurile KPI — construite dintr-un array pentru a evita repetarea JSX */}
             <div className="stats-grid">
                 {[
                     { icon: <Building2 size={28} />, label: 'Locații', value: stats.locations, sub: 'Muzee & Galerii', color: '#6366f1' },
@@ -62,6 +63,7 @@ export default function Dashboard() {
                 ))}
             </div>
 
+            {/* Tabelele de activitate recentă — comenzi și recenzii din ultimele zile */}
             <div className="activity-grid">
                 <div className="activity-card">
                     <div className="activity-header">
@@ -109,6 +111,7 @@ export default function Dashboard() {
                                         <td>{r.userName || '—'}</td>
                                         <td>{r.numeLoc || '—'}</td>
                                         <td>
+                                            {/* Stele Unicode pentru rating — mai ușor decât o componentă separată */}
                                             <span className="rating-stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                                         </td>
                                         <td className="muted">{r.dataRecenzie ? new Date(r.dataRecenzie).toLocaleDateString('ro-RO') : '—'}</td>

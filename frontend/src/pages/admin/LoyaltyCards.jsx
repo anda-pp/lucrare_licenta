@@ -7,7 +7,7 @@ import './admin-shared.css';
 
 const API = 'http://localhost:5000';
 
-/* Per-tier color palette — matches user-side */
+// Paleta de culori per tier — sincronizată cu design-ul paginii de card a utilizatorului
 const TIER_COLORS = {
     BRONZE: { accent: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.35)' },
     SILVER: { accent: '#94a3b8', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.35)' },
@@ -86,23 +86,20 @@ export default function LoyaltyCards() {
                             className="lc-tier-card"
                             style={{ borderColor: colors.border }}
                         >
-                            {/* Icon box */}
                             <div className="lc-icon-box" style={{ background: colors.bg, color: colors.accent }}>
                                 <CreditCard size={26} />
                             </div>
 
-                            {/* Tier name */}
                             <h3 className="lc-tier-name" style={{ color: colors.accent }}>
                                 {(card.tipUnicCard || card.numeCard).toUpperCase()}
                             </h3>
 
-                            {/* Points threshold */}
+                            {/* Pragul de puncte necesar pentru a atinge acest tier */}
                             <div className="lc-threshold">
                                 <Star size={13} />
                                 de la {card.puncteCard} puncte
                             </div>
 
-                            {/* Special offers */}
                             {card.oferteSpeciale && (
                                 <div className="lc-benefit-row special">
                                     <Gift size={13} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -110,7 +107,6 @@ export default function LoyaltyCards() {
                                 </div>
                             )}
 
-                            {/* Welcome offers */}
                             {card.oferteBunVenit && (
                                 <div className="lc-benefit-row welcome">
                                     <ChevronRight size={13} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -118,7 +114,6 @@ export default function LoyaltyCards() {
                                 </div>
                             )}
 
-                            {/* Actions */}
                             <div className="lc-actions">
                                 <button className="lc-btn-edit icon-btn" onClick={() => handleEdit(card)}>
                                     <Edit size={15} /> Editează

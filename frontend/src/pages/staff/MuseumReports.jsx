@@ -19,18 +19,21 @@ import './MuseumReports.css';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Palette culori pentru graficele Pie — două variante, una pentru dark mode și una pentru light
 const PURPLE_PALETTE_DARK  = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
 const PURPLE_PALETTE_LIGHT = ['#3b0764', '#4c1d95', '#6d28d9', '#7c3aed', '#8b5cf6'];
+// Culori semantice pentru statusurile comenzilor
 const STATUS_COLORS = { 'Plătit': '#10b981', 'Eșuat': '#ef4444', 'În așteptare': '#f59e0b' };
 
 const LUNI_RO = ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun', 'Iul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Formatăm luna din format "2024-03" la "Mar '24" pentru axele graficelor
 const formatLuna = (value) => {
     if (!value) return '';
     const [year, month] = value.split('-');
     return `${LUNI_RO[parseInt(month, 10) - 1]} '${year.slice(2)}`;
 };
 
-// ── Stat Card ─────────────────────────────────────────────────────────────────
+// Card KPI reutilizabil — culoarea accentului se injectează ca CSS custom property
 function KpiCard({ icon, label, value, sub, color }) {
     return (
         <div className="mr-kpi-card" style={{ '--kpi-color': color }}>
@@ -46,7 +49,7 @@ function KpiCard({ icon, label, value, sub, color }) {
     );
 }
 
-// ── Custom Tooltips ──────────────────────────────────────────────────────────
+// Tooltip personalizat pentru graficele Bar și Line din Recharts
 function CustomTooltip({ active, payload, label, unit = '', formatLabel }) {
     if (!active || !payload?.length) return null;
     return (
@@ -61,6 +64,7 @@ function CustomTooltip({ active, payload, label, unit = '', formatLabel }) {
     );
 }
 
+// Tooltip pentru graficele Pie — afișează doar primul entry din payload
 function PieTooltip({ active, payload, unit = '' }) {
     if (!active || !payload?.length) return null;
     const { name, value, payload: entry } = payload[0];
@@ -74,6 +78,7 @@ function PieTooltip({ active, payload, unit = '' }) {
     );
 }
 
+// Tooltip dedicat graficului de venituri — formatăm luna și afișăm Lei sau număr în funcție de dataKey
 function RevenueTooltip({ active, payload, label }) {
     if (!active || !payload?.length) return null;
     return (
@@ -88,12 +93,13 @@ function RevenueTooltip({ active, payload, label }) {
     );
 }
 
-// ── MARKETING REPORT ──────────────────────────────────────────────────────────
+// Raport Marketing — recenzii, sentiment, tipuri vizitatori și rezervări pe evenimente
 function MarketingReport() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const { theme } = useTheme();
+    // Cursorul graficului se adaptează la tema curentă pentru contrast optim
     const cursorFill = theme === 'dark' ? 'rgba(196, 181, 253, 0.07)' : 'rgba(88, 28, 135, 0.1)';
     const piePalette = theme === 'dark' ? PURPLE_PALETTE_DARK : PURPLE_PALETTE_LIGHT;
 
@@ -117,6 +123,7 @@ function MarketingReport() {
                 <KpiCard icon={<Users size={22} />} label="Total Vizitatori" value={data.topEvenimente.reduce((s, e) => s + e.persoane, 0)} sub="din rezervări" color="#10b981" />
             </div>
 
+            {/* Analiza sentimentului recenziilor — pozitiv / neutru / negativ */}
             <SentimentCards data={data.sentimentBreakdown} />
 
             <div className="mr-charts-grid">
@@ -127,6 +134,7 @@ function MarketingReport() {
                         <YAxis tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} allowDecimals={false} />
                         <Tooltip content={<CustomTooltip unit=" recenzii" />} cursor={{ fill: cursorFill }} />
                         <Bar dataKey="count" name="Recenzii" radius={[4, 4, 0, 0]}>
+                            {/* Culori progresive: roșu (1 stea) → verde (5 stele) */}
                             {data.ratingDistributie.map((_, i) => (
                                 <Cell key={i} fill={['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981'][i]} />
                             ))}
@@ -166,12 +174,13 @@ function MarketingReport() {
                 </ChartCard>
             </div>
 
+            {/* Lista recenziilor negative — ajută staff-ul să identifice rapid problemele */}
             <NegativeReviewsList reviews={data.recenziiNegative} />
         </div>
     );
 }
 
-// ── DIRECTOR REPORT ───────────────────────────────────────────────────────────
+// Raport Management (Director) — financiar: venituri lunare, status comenzi, top evenimente după venituri
 function DirectorReport() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -190,6 +199,7 @@ function DirectorReport() {
     if (error) return <div className="mr-error"><AlertCircle size={20} /> {error}</div>;
     if (!data) return null;
 
+    // Transformăm datele pentru graficul Pie de status comenzi
     const pieStatusData = data.statusComenzi.map(s => ({ name: s.status, value: s.count }));
 
     return (
@@ -202,6 +212,7 @@ function DirectorReport() {
             </div>
 
             <div className="mr-charts-grid">
+                {/* Grafic dublu axă: venituri (stânga, Lei) și număr comenzi (dreapta) pe 12 luni */}
                 <ChartCard title="Venituri & Comenzi Lunare (12 luni)" icon={<TrendingUp size={18} />} isEmpty={!data.venituriLunare.length} emptyMsg="Nu există date financiare." height={280} className="mr-chart-card--wide">
                     <BarChart data={data.venituriLunare} margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -236,6 +247,7 @@ function DirectorReport() {
                     </BarChart>
                 </ChartCard>
 
+                {/* Distribuție vizitatori după tipul cardului de fidelitate — comenzi + utilizatori unici */}
                 <ChartCard title="Vizitatori după Tip Card" icon={<CardIcon size={18} />} isEmpty={!data.loyaltyDistributie.length} emptyMsg="Nu există date despre carduri." height={240}>
                     <BarChart data={data.loyaltyDistributie} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -255,7 +267,7 @@ function DirectorReport() {
     );
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+// Pagina principală — gestionează tab-urile între Raport Marketing și Raport Management
 export default function MuseumReports() {
     const [activeTab, setActiveTab] = useState('marketing');
 

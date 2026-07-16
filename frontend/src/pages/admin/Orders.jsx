@@ -30,6 +30,7 @@ export default function Orders() {
         }
     };
 
+    // Toggle între Activă ↔ Anulată — singura acțiune disponibilă din panou admin
     const handleToggleStatus = async (orderId, currentStatus) => {
         const newStatus = currentStatus === 'Activă' ? 'Anulată' : 'Activă';
 
@@ -64,6 +65,7 @@ export default function Orders() {
         return true;
     });
 
+    // Clase CSS distincte pentru fiecare stare de plată
     const getPaymentStatusClass = (status) => {
         switch (status) {
             case 'Plătit': return 'status-paid';
@@ -194,4 +196,3 @@ export default function Orders() {
         </div>
     );
 }
-

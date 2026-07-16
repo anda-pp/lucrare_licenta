@@ -10,6 +10,7 @@ export default function Users() {
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
+    // Filtrarea după tipul de card de fidelitate
     const [filterCard, setFilterCard] = useState('');
 
     useEffect(() => {
@@ -35,6 +36,7 @@ export default function Users() {
 
     const fetchCards = async () => {
         try {
+            // Cardurile de fidelitate sunt necesare pentru popularea filtrului
             const response = await axios.get('http://localhost:5000/api/loyalty-cards');
             setAllCards(response.data.data);
         } catch (err) {
@@ -55,6 +57,7 @@ export default function Users() {
         }
     };
 
+    // Normalizăm timestamp-ul — backend-ul poate returna fie secunde UNIX, fie milisecunde
     const formatDate = (timestamp) => {
         if (!timestamp) return 'N/A';
 
@@ -75,13 +78,12 @@ export default function Users() {
         return date.toLocaleDateString('ro-RO');
     };
 
-    // Filter users
     const filteredUsers = users.filter(user => {
         if (filterCard && user.cardName !== filterCard) return false;
         return true;
     });
 
-    // Sort users (only by name or date)
+    // Sortare client-side după nume sau dată de înregistrare
     const sortedUsers = [...filteredUsers].sort((a, b) => {
         let aVal, bVal;
 
@@ -105,6 +107,7 @@ export default function Users() {
         }
     });
 
+    // Alternăm direcția de sortare la click pe același câmp
     const handleSort = (field) => {
         if (sortBy === field) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -192,6 +195,7 @@ export default function Users() {
                                             {user.image ? (
                                                 <img src={user.image} alt={user.name} className="user-avatar" />
                                             ) : (
+                                                // Fallback: inițiala numelui ca avatar text
                                                 <div className="user-avatar-placeholder">
                                                     <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>
                                                         {(user.name || '?')[0].toUpperCase()}
@@ -228,7 +232,6 @@ export default function Users() {
                         ))}
                     </tbody>
                 </table>
-
 
                 {sortedUsers.length === 0 && !loading && (
                     <div className="empty-state">

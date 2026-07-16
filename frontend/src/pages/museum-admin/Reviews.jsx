@@ -28,11 +28,13 @@ export default function Reviews() {
         fetchReviews();
     }, []);
 
+    // Filtrăm simultan după text (nume/comentariu) și după rating
     const filteredReviews = reviews.filter(r => {
         const matchesSearch = (r.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                               (r.comentariu || '').toLowerCase().includes(searchTerm.toLowerCase());
         
         let matchesRating = true;
+        // Filtrul '1,2' acoperă recenziile negative — util pentru monitorizare rapidă
         if (filterRating === '1,2') {
             matchesRating = r.rating === 1 || r.rating === 2;
         } else if (filterRating) {

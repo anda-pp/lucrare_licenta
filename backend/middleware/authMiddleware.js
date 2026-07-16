@@ -1,9 +1,6 @@
 import { auth } from '../lib/auth.js';
 
-/**
- * Middleware to require authentication
- * Verifies that the user is logged in
- */
+// Verifică dacă userul are o sesiune activă; dacă nu, returnează 401
 export const requireAuth = async (req, res, next) => {
     try {
         const session = await auth.api.getSession({
@@ -17,7 +14,7 @@ export const requireAuth = async (req, res, next) => {
             });
         }
 
-        // Attach user and session to request
+        // Atașăm userul și sesiunea pe req ca să fie disponibile în controllere
         req.user = session.user;
         req.session = session.session;
 
@@ -31,14 +28,11 @@ export const requireAuth = async (req, res, next) => {
     }
 };
 
-/**
- * Middleware to require specific roles
- * @param {string[]} roles - Array of allowed roles
- */
+// Factory care generează un middleware de verificare rol
+// Se folosește astfel: requireRole(['Admin', 'Superadmin'])
 export const requireRole = (roles) => {
     return async (req, res, next) => {
         try {
-            // First check if user is authenticated
             const session = await auth.api.getSession({
                 headers: req.headers,
             });
@@ -50,7 +44,6 @@ export const requireRole = (roles) => {
                 });
             }
 
-            // Check if user has required role
             const userRole = session.user.role;
 
             if (!roles.includes(userRole)) {
@@ -60,7 +53,6 @@ export const requireRole = (roles) => {
                 });
             }
 
-            // Attach user and session to request
             req.user = session.user;
             req.session = session.session;
 
@@ -75,25 +67,13 @@ export const requireRole = (roles) => {
     };
 };
 
-/**
- * Middleware to check if user is superadmin
- */
+// Scurtături pentru rolurile folosite frecvent în rute
 export const requireSuperadmin = requireRole(['Superadmin']);
-
-/**
- * Middleware to check if user is admin or superadmin
- */
 export const requireAdmin = requireRole(['Admin', 'Superadmin']);
-
-/**
- * Middleware to check if user is staff, admin, or superadmin
- */
 export const requireStaff = requireRole(['Personal', 'Admin', 'Superadmin']);
 
-/**
- * Middleware to check if user owns the resource or is admin
- * Expects req.params.userId or req.body.userId
- */
+// Permite accesul doar dacă userul este proprietarul resursei sau admin
+// Caută userId în params.userId, body.userId sau params.id
 export const requireOwnerOrAdmin = async (req, res, next) => {
     try {
         const session = await auth.api.getSession({
@@ -131,9 +111,8 @@ export const requireOwnerOrAdmin = async (req, res, next) => {
     }
 };
 
-/**
- * Optional auth middleware - attaches user if authenticated but doesn't require it
- */
+// Middleware opțional — nu blochează accesul, dar atașează userul pe req dacă este autentificat
+// Util pe rute publice unde comportamentul diferă în funcție de autentificare
 export const optionalAuth = async (req, res, next) => {
     try {
         const session = await auth.api.getSession({
@@ -147,7 +126,7 @@ export const optionalAuth = async (req, res, next) => {
 
         next();
     } catch (error) {
-        // Silently fail - user is not authenticated
+        // Dacă sesiunea nu poate fi verificată, continuăm fără user pe req
         next();
     }
 };

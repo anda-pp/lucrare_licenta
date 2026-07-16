@@ -10,11 +10,12 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// Public routes
+// Listarea și detaliile evenimentelor sunt publice
 router.get('/', getAllEvents);
 router.get('/:id', getEventById);
 
-// Protected routes (Admin only for now, could be Staff too based on business rules)
+// Operațiile de scriere (creare, editare, ștergere) sunt rezervate superadminilor
+// Evenimentele proprii de muzeu se gestionează prin museum-admin.routes.js
 router.post('/', requireAuth, requireSuperadmin, createEvent);
 router.put('/:id', requireAuth, requireSuperadmin, updateEvent);
 router.delete('/:id', requireAuth, requireSuperadmin, deleteEvent);

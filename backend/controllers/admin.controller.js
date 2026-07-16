@@ -2,10 +2,7 @@ import { db } from '../db/db.js';
 import { user, recenzii, comenzi, carduriClienti, cardFidelitate, locatiiPublice, rezervariEvenimente, evenimente } from '../db/schema.js';
 import { eq, sql, desc } from 'drizzle-orm';
 
-/**
- * GET /api/admin/users
- * Get all users with stats (excludes Admin users)
- */
+// Returnează toți utilizatorii cu rol Utilizator, cu statistici agregate (comenzi, recenzii, tip card)
 export const getAllUsers = async (req, res) => {
     try {
         const users = await db
@@ -45,15 +42,11 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
-/**
- * GET /api/admin/users/:id
- * Get user details with orders and reviews
- */
+// Returnează detaliile unui utilizator specific împreună cu comenzile și recenziile lui
 export const getUserById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Get user
         const userData = await db
             .select()
             .from(user)
@@ -67,13 +60,11 @@ export const getUserById = async (req, res) => {
             });
         }
 
-        // Get user's orders
         const userOrders = await db
             .select()
             .from(comenzi)
             .where(eq(comenzi.codUnicUtilizator, id));
 
-        // Get user's reviews
         const userReviews = await db
             .select()
             .from(recenzii)
@@ -96,15 +87,11 @@ export const getUserById = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/admin/users/:id
- * Delete user (Admin only)
- */
+// Șterge un utilizator — cascade în DB elimină și sesiunile, comenzile etc.
 export const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if user exists
         const existing = await db
             .select()
             .from(user)
@@ -118,7 +105,6 @@ export const deleteUser = async (req, res) => {
             });
         }
 
-        // Delete user (cascade will handle related records)
         await db.delete(user).where(eq(user.id, id));
 
         res.json({
@@ -134,50 +120,41 @@ export const deleteUser = async (req, res) => {
     }
 };
 
-/**
- * GET /api/admin/dashboard
- * Get dashboard statistics
- */
+// Statistici pentru dashboard-ul superadmin: locații, utilizatori, comenzi, venituri, recenzii, rezervări
 export const getDashboardStats = async (req, res) => {
     try {
-        // Count locations
         const locationsResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(locatiiPublice);
 
-        // Count users (only Utilizator role)
         const usersResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(user)
             .where(eq(user.role, 'Utilizator'));
 
-        // Count orders
         const ordersResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(comenzi);
 
-        // Count reviews
         const reviewsResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(recenzii);
 
-        // Count reservations
         const reservationsResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(rezervariEvenimente);
 
-        // Count events
         const eventsResult = await db
             .select({ count: sql`COUNT(*)` })
             .from(evenimente);
 
-        // Total revenue (paid orders only)
+        // Venituri totale — doar din comenzile cu status Plătit
         const revenueResult = await db
             .select({ total: sql`COALESCE(SUM(total_plata), 0)` })
             .from(comenzi)
             .where(eq(comenzi.statusPlata, 'Plătit'));
 
-        // Recent orders (last 5)
+        // Ultimele 5 comenzi pentru feed-ul de activitate
         const recentOrders = await db
             .select({
                 numarComanda: comenzi.numarComanda,
@@ -191,7 +168,7 @@ export const getDashboardStats = async (req, res) => {
             .orderBy(desc(comenzi.numarComanda))
             .limit(5);
 
-        // Recent reviews (last 5)
+        // Ultimele 5 recenzii pentru feed-ul de activitate
         const recentReviews = await db
             .select({
                 numarRecenzie: recenzii.numarRecenzie,
@@ -229,10 +206,7 @@ export const getDashboardStats = async (req, res) => {
     }
 };
 
-/**
- * GET /api/admin/reservations
- * Get all event reservations with user and event details
- */
+// Toate rezervările la evenimente din platformă, cu detalii despre user și eveniment
 export const getAllReservations = async (req, res) => {
     try {
         const reservations = await db

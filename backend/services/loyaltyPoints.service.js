@@ -2,14 +2,10 @@ import { db } from '../db/db.js';
 import { carduriClienti, cardFidelitate } from '../db/schema.js';
 import { eq, sql, desc } from 'drizzle-orm';
 
-/**
- * Update user loyalty points and upgrade card if threshold reached
- * @param {string} userId - User ID
- * @param {number} orderTotal - Order total in lei (1 lei = 1 point)
- */
+// Adaugă puncte de fidelitate după o plată și upgradează cardul dacă s-a atins pragul
+// Regula: 1 leu cheltuit = 1 punct. Upgradul se face automat la cel mai înalt nivel eligibil.
 export async function updateUserLoyaltyPoints(userId, orderTotal) {
     try {
-        // Get user's card
         const userCard = await db
             .select()
             .from(carduriClienti)
@@ -22,16 +18,16 @@ export async function updateUserLoyaltyPoints(userId, orderTotal) {
         }
 
         const card = userCard[0];
-        const pointsToAdd = Math.floor(orderTotal); // 1 lei = 1 point
+        const pointsToAdd = Math.floor(orderTotal); // rotunjim în jos
         const newPoints = (card.puncteAcumulate || 0) + pointsToAdd;
 
-        // Get all card types ordered by points (descending to find highest eligible)
+        // Luăm toate tipurile de card în ordine descrescătoare a punctelor
+        // ca să găsim cel mai înalt nivel la care se califică userul
         const cardTypes = await db
             .select()
             .from(cardFidelitate)
             .orderBy(desc(cardFidelitate.puncteCard));
 
-        // Find the highest card type the user qualifies for
         let newCardType = card.tipUnicCard;
         for (const cardType of cardTypes) {
             if (newPoints >= cardType.puncteCard) {
@@ -40,7 +36,7 @@ export async function updateUserLoyaltyPoints(userId, orderTotal) {
             }
         }
 
-        // Update user's card with new points and potentially new card type
+        // Actualizăm punctele și tipul cardului dacă s-a schimbat
         await db
             .update(carduriClienti)
             .set({
@@ -70,10 +66,8 @@ export async function updateUserLoyaltyPoints(userId, orderTotal) {
     }
 }
 
-/**
- * Get user's current loyalty status
- * @param {string} userId - User ID
- */
+// Returnează statusul complet al cardului de fidelitate al unui utilizator,
+// inclusiv câte puncte mai are nevoie pentru nivelul următor
 export async function getUserLoyaltyStatus(userId) {
     try {
         const result = await db
@@ -93,7 +87,7 @@ export async function getUserLoyaltyStatus(userId) {
             return null;
         }
 
-        // Get next card type
+        // Găsim nivelul următor — primul card cu prag mai mare decât punctele curente
         const nextCard = await db
             .select()
             .from(cardFidelitate)

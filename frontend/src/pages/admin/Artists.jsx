@@ -78,6 +78,7 @@ export default function Artists() {
         }
     };
 
+    // Filtrăm client-side — lista de artiști e de obicei scurtă, nu necesită server-side search
     const filtered = artists.filter(a =>
         !searchTerm || a.nume?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -116,6 +117,7 @@ export default function Artists() {
                         <div className="artist-info">
                             <h3>{artist.nume}</h3>
                             {artist.biografie && (
+                                // Trunchere la 120 de caractere pentru a nu aglomera cardul
                                 <p className="artist-bio">{artist.biografie.slice(0, 120)}{artist.biografie.length > 120 ? '...' : ''}</p>
                             )}
                             <div className="artist-links">
@@ -146,6 +148,7 @@ export default function Artists() {
                 </div>
             )}
 
+            {/* Modalul inline de adăugare/editare artist */}
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="event-modal" onClick={e => e.stopPropagation()}>

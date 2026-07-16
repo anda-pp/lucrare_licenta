@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import './AdminLayout.css';
 
+// Layout-ul panoului de superadmin — accesibil doar utilizatorilor cu rolul Superadmin
+// Redirecționează automat la login dacă sesiunea nu e validă sau la home dacă rolul e incorect
 export default function AdminLayout() {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
@@ -54,6 +56,7 @@ export default function AdminLayout() {
         return null;
     }
 
+    // Helper pentru marcarea link-ului activ din sidebar
     const isActive = (path) => location.pathname === path;
 
     return (
@@ -125,7 +128,7 @@ export default function AdminLayout() {
                     <div className="nav-divider" />
                     <Link to="/superadmin/staff-accounts" className={`nav-item ${isActive('/superadmin/staff-accounts') ? 'active' : ''}`}>
                         <Users size={20} />
-                        <span className="nav-label">Staff & Admini Muzee</span>
+                        <span className="nav-label">Staff &amp; Admini Muzee</span>
                     </Link>
                 </nav>
 

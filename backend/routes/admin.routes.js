@@ -10,20 +10,19 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// All admin routes require authentication and admin role
+// Toate rutele de admin necesită autentificare și rolul Superadmin
 router.use(requireAuth);
 router.use(requireSuperadmin);
 
-// Dashboard
+// Statistici pentru dashboard-ul superadmin-ului
 router.get('/dashboard', getDashboardStats);
 
-// Users management
+// Gestionarea utilizatorilor — listare, vizualizare, ștergere
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);
 router.delete('/users/:id', deleteUser);
 
-// Reservations management
+// Rezervările tuturor evenimentelor din platformă (vizualizare globală)
 router.get('/reservations', getAllReservations);
 
 export default router;
-

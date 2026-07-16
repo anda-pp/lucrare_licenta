@@ -18,7 +18,7 @@ export default function Locations() {
     const [galleryLocation, setGalleryLocation] = useState(null);
     const [ticketsLocation, setTicketsLocation] = useState(null);
 
-    // Debounce search - wait 300ms after typing stops before fetching
+    // Debounce la căutare — așteptăm 300ms după ultima tastare înainte de fetch
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchLocations();
@@ -26,7 +26,7 @@ export default function Locations() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Fetch on type/status filter change immediately
+    // Filtrele de tip/status se aplică imediat, fără debounce
     useEffect(() => {
         fetchLocations();
     }, [filter]);
@@ -77,6 +77,7 @@ export default function Locations() {
             }
             fetchLocations();
         } catch (err) {
+            // Re-aruncăm eroarea pentru ca modalul să poată afișa mesajul de validare
             throw err;
         }
     };
@@ -94,6 +95,7 @@ export default function Locations() {
         }
     };
 
+    // Mesaj de stare goală contextualizat — reflectă filtrele active
     const getEmptyMessage = () => {
         if (filter.type && filter.status && searchTerm) {
             return `Nu s-au găsit ${filter.type === 'Muzeu' ? 'muzee' : 'galerii'} cu status "${filter.status}" pentru "${searchTerm}"`;
@@ -190,7 +192,7 @@ export default function Locations() {
                         </div>
 
                         <div className="card-body">
-                            {/* Address row: icon+text left, status badge right */}
+                            {/* Rândul de adresă: locație + badge status pe același rând */}
                             <div className="location-address-row">
                                 <p className="location-address">
                                     <MapPin size={16} />
@@ -201,7 +203,6 @@ export default function Locations() {
                                 </span>
                             </div>
 
-                            {/* Stats: only Recenzii + Rating */}
                             <div className="location-stats">
                                 <div className="stat">
                                     <span className="stat-label">Recenzii:</span>
@@ -257,7 +258,6 @@ export default function Locations() {
                 </div>
             )}
 
-
             {showModal && (
                 <LocationModal
                     location={editingLocation}
@@ -270,6 +270,12 @@ export default function Locations() {
                 <ImageGalleryModal
                     location={galleryLocation}
                     onClose={() => setGalleryLocation(null)}
+                    onCoverChanged={async () => {
+                        await fetchLocations();
+                        // Actualizăm și galleryLocation cu noul imagineUrl din lista reîncărcată
+                        const res = await axios.get(`http://localhost:5000/api/locations/${galleryLocation.codUnicLocatie}`, { withCredentials: true });
+                        if (res.data.success) setGalleryLocation(res.data.data);
+                    }}
                 />
             )}
             {ticketsLocation && (

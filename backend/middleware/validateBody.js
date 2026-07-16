@@ -1,7 +1,5 @@
-/**
- * Zod request body validation middleware.
- * Usage: router.post('/route', validateBody(mySchema), handler)
- */
+// Middleware de validare body cu Zod — folosit ca: router.post('/ruta', validateBody(schema), handler)
+// Dacă validarea eșuează, returnează 400 cu lista de erori; altfel înlocuiește req.body cu datele validate/coercite
 export function validateBody(schema) {
     return (req, res, next) => {
         const result = schema.safeParse(req.body);
@@ -9,7 +7,7 @@ export function validateBody(schema) {
             const errors = result.error.errors.map(e => e.message).join('; ');
             return res.status(400).json({ success: false, error: errors });
         }
-        req.body = result.data; // replace with coerced/validated data
+        req.body = result.data;
         next();
     };
 }

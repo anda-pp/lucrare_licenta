@@ -1,12 +1,7 @@
 import { Heart, Calendar, MapPin, ChevronRight } from 'lucide-react';
 
-/**
- * InterestsPanel — shows the list of events the user marked as interested.
- * Props:
- *   interests   — array of interest objects
- *   formatDate  — date formatter function
- *   onNavigate  — navigate function (from useNavigate)
- */
+// Panoul cu evenimentele marcate ca "interesante" de utilizator — afișat în dashboard
+// Evenimentele de tip "Noaptea Muzeelor" au un stil vizual distinct (dark)
 export default function InterestsPanel({ interests, formatDate, onNavigate }) {
     return (
         <div className="content-card">
@@ -24,6 +19,7 @@ export default function InterestsPanel({ interests, formatDate, onNavigate }) {
                 </div>
             ) : (
                 <div className="interests-list">
+                    {/* Afișăm primele 5 interese pentru a nu aglomera dashboard-ul */}
                     {interests.slice(0, 5).map(ev => (
                         <div
                             key={ev.interestId}

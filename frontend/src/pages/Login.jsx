@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import './AuthPages.css';
 
+// Schema de validare cu Zod — erori inline afișate direct sub câmp
 const loginSchema = z.object({
     email: z.string().email('Email invalid'),
     password: z.string().min(6, 'Parola trebuie să aibă minim 6 caractere'),
@@ -38,11 +39,10 @@ export default function Login() {
             if (result.error) {
                 setError(result.error.message || 'Email sau parolă incorectă');
             } else {
-                // Get session to check user role
+                // Obținem sesiunea după autentificare pentru a citi rolul și a redirecționa corect
                 const session = await authClient.getSession();
                 const userRole = session?.data?.user?.role;
 
-                // Redirect based on role
                 if (userRole === 'Superadmin') {
                     navigate('/superadmin');
                 } else if (userRole === 'Admin') {
@@ -119,4 +119,3 @@ export default function Login() {
         </div>
     );
 }
-

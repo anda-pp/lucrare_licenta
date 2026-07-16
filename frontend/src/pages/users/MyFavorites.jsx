@@ -18,7 +18,7 @@ export default function MyFavorites() {
     useEffect(() => {
         if (session) {
             fetchFavorites();
-            // sync if user navigates back via browser
+            // Re-sincronizăm dacă utilizatorul navighează înapoi din tab-ul de locație
             const onFocus = () => fetchFavorites();
             window.addEventListener('focus', onFocus);
             return () => window.removeEventListener('focus', onFocus);
@@ -41,7 +41,7 @@ export default function MyFavorites() {
     const toggleFav = async (locId) => {
         setToggling(locId);
         try {
-            // We are on the favorites page, so toggle always means remove
+            // Pe această pagină toggle înseamnă întotdeauna eliminare din favorite
             await axios.delete(`${API}/api/users/my-favorites/${locId}`, { withCredentials: true });
             setFavorites(prev => prev.filter(f => f.codUnicLocatie !== locId));
         } catch (err) {
@@ -108,6 +108,7 @@ export default function MyFavorites() {
                                 <span className={`my-fav-type-badge ${fav.tipLocatie === 'Muzeu' ? 'museum' : 'gallery'}`}>
                                     {fav.tipLocatie}
                                 </span>
+                                {/* Butonul de eliminare oprește propagarea click-ului pentru a nu naviga pe pagina locației */}
                                 <button
                                     className="my-fav-remove-btn"
                                     onClick={(e) => { e.stopPropagation(); toggleFav(fav.codUnicLocatie); }}

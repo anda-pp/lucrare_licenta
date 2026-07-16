@@ -4,15 +4,14 @@ import { requireAuth, requireStaff } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All director reports require authentication and staff/admin role
+// Rapoartele de director sunt accesibile personalului, adminilor și superadminilor
 router.use(requireAuth);
 router.use(requireStaff);
 
-// Loyalty Program Efficiency Report
+// Raport eficiența programului de fidelitate
 router.get('/loyalty', getLoyaltyReport);
 
-// Location Performance Report
+// Raport performanță locație — venituri, comenzi, rezervări
 router.get('/location-performance', getLocationPerformance);
 
 export default router;
-

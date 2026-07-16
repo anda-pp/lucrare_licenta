@@ -1,17 +1,6 @@
 import { ResponsiveContainer } from 'recharts';
 
-/**
- * Wrapper card for a Recharts chart with title, optional icon, and empty/loading states.
- *
- * Props:
- *  - title     (string)      – card heading
- *  - icon      (ReactNode)   – optional icon next to the title
- *  - isEmpty   (bool)        – shows empty message instead of chart
- *  - emptyMsg  (string)      – empty state text (default "Nu există date")
- *  - height    (number)      – ResponsiveContainer height in px (default 260)
- *  - children  (ReactNode)   – the Recharts chart component(s)
- *  - className (string)      – extra class names on the outer div
- */
+// Wrapper card pentru graficele Recharts — afișează titlu, iconița și gestionează starea de date goale
 export default function ChartCard({
     title,
     icon,

@@ -9,7 +9,7 @@ import { sendNewRewardAvailable } from '../lib/mailer.js';
 const router = express.Router();
 router.use(requireAuth);
 
-// GET /api/rewards — catalog recompense + punctele curente ale userului
+// Returnează catalogul de recompense disponibile împreună cu punctele curente ale utilizatorului
 router.get('/', async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
             ORDER BY activ DESC, puncte_necesare ASC
         `);
 
-        // User's current points from loyalty card
+        // Punctele curente ale utilizatorului + tipul cardului de fidelitate
         const cardData = await db.get(sql`
             SELECT cc.puncte_acumulate, cf.tip_unic_card, cf.nume_card
             FROM carduri_clienti cc
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /api/rewards/my — recompensele revendicate de user
+// Returnează toate recompensele revendicate de utilizatorul curent, cu detalii despre recompensă
 router.get('/my', async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -58,18 +58,21 @@ router.get('/my', async (req, res) => {
     }
 });
 
-// POST /api/rewards/:id/claim — revendică o recompensă
+// Revendicarea unei recompense:
+// - verificăm că recompensa e activă
+// - verificăm că nu a fost revendicată în ultimele 30 de zile (cooldown anti-abuz)
+// - verificăm că utilizatorul are suficiente puncte
+// - deducem punctele din cardul de fidelitate
+// - generăm un cod voucher unic și îl salvăm în DB
 router.post('/:id/claim', async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId) return res.status(401).json({ success: false, message: 'Neautentificat' });
         const recompensaId = req.params.id;
 
-        // Get reward
         const reward = await db.get(sql`SELECT * FROM recompense WHERE id = ${recompensaId} AND activ = 1`);
         if (!reward) return res.status(404).json({ success: false, message: 'Recompensa nu există' });
 
-        // Get user card
         const card = await db.get(sql`
             SELECT cc.nr_unic_card, cc.puncte_acumulate
             FROM carduri_clienti cc
@@ -77,7 +80,7 @@ router.post('/:id/claim', async (req, res) => {
         `);
         if (!card) return res.status(400).json({ success: false, message: 'Nu ai un card de fidelitate activ' });
 
-        // Check if the user claimed this EXACT reward in the last 30 days
+        // Cooldown de 30 de zile — prevenim revendicarea repetată a aceleiași recompense
         const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
 
         const lastClaim = await db.get(sql`
@@ -99,18 +102,18 @@ router.post('/:id/claim', async (req, res) => {
         if (card.puncte_acumulate < reward.puncte_necesare) {
             return res.status(400).json({
                 success: false,
-                message: `Nu ai suficiente puncte.Ai ${card.puncte_acumulate}, dar sunt necesare ${reward.puncte_necesare}.`
+                message: `Nu ai suficiente puncte. Ai ${card.puncte_acumulate}, dar sunt necesare ${reward.puncte_necesare}.`
             });
         }
 
-        // Deduct points
+        // Deducem punctele din cardul utilizatorului
         await db.run(sql`
             UPDATE carduri_clienti
             SET puncte_acumulate = puncte_acumulate - ${reward.puncte_necesare}
             WHERE nr_unic_card = ${card.nr_unic_card}
-                `);
+        `);
 
-        // Generate voucher code (e.g. ARTS-X9F2)
+        // Generăm codul voucher cu prefix din tipul recompensei (ex: BIL-X9F2, VOU-K3M7)
         const prefix = reward.tip?.toUpperCase().slice(0, 3) || 'PRM';
         const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
         const codVoucher = `${prefix} - ${randomPart}`;
@@ -118,7 +121,7 @@ router.post('/:id/claim', async (req, res) => {
         await db.run(sql`
             INSERT INTO recompense_revendicate(id, user_id, recompensa_id, data_revendicarii, status, cod_voucher, puncte_cheltuite)
             VALUES(${uuidv4()}, ${userId}, ${recompensaId}, ${Math.floor(Date.now() / 1000)}, 'activ', ${codVoucher}, ${reward.puncte_necesare})
-                    `);
+        `);
 
         res.json({ success: true, data: { codVoucher, reward }, message: 'Recompensă revendicată cu succes!' });
     } catch (err) {
@@ -128,10 +131,10 @@ router.post('/:id/claim', async (req, res) => {
 });
 
 // ==========================================
-// ADMIN ROUTES (CRUD RECOMPENSE)
+// RUTE ADMIN — CRUD RECOMPENSE
 // ==========================================
 
-// POST /api/rewards — Creare recompensă nouă (Doar Admin)
+// Creare recompensă nouă — după creare notificăm utilizatorii care au suficiente puncte (fire-and-forget)
 router.post('/', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, puncteNecesare, tip } = req.body;
@@ -145,11 +148,11 @@ router.post('/', requireSuperadmin, async (req, res) => {
         await db.run(sql`
             INSERT INTO recompense(id, nume, descriere, puncte_necesare, tip, valoare, activ)
             VALUES(${newId}, ${nume}, ${descriere}, ${puncteNecesare}, ${tip}, ${valoare}, 1)
-                    `);
+        `);
 
         res.status(201).json({ success: true, message: 'Recompensă creată cu succes', data: { id: newId } });
 
-        // Notify users who have enough points (fire-and-forget)
+        // Notificăm utilizatorii eligibili — cei cu suficiente puncte pentru noua recompensă
         (async () => {
             try {
                 const eligibleUsers = await db.select({ email: user.email, puncte: carduriClienti.puncteAcumulate })
@@ -173,7 +176,7 @@ router.post('/', requireSuperadmin, async (req, res) => {
     }
 });
 
-// PUT /api/rewards/:id — Editare recompensă (Doar Admin)
+// Editare recompensă existentă — actualizăm toate câmpurile, inclusiv statusul activ/inactiv
 router.put('/:id', requireSuperadmin, async (req, res) => {
     try {
         const { nume, descriere, puncteNecesare, tip, activ } = req.body;
@@ -189,7 +192,7 @@ router.put('/:id', requireSuperadmin, async (req, res) => {
                 valoare = ${valoare},
                 activ = ${activ ? 1 : 0}
             WHERE id = ${rewardId}
-                `);
+        `);
 
         res.json({ success: true, message: 'Recompensă actualizată cu succes' });
     } catch (err) {
@@ -198,13 +201,12 @@ router.put('/:id', requireSuperadmin, async (req, res) => {
     }
 });
 
-// DELETE /api/rewards/:id — Ștergere/Dezactivare recompensă (Doar Admin)
+// Soft delete — marcăm recompensa ca inactivă în loc să o ștergem fizic
+// Păstrăm astfel istoricul revendicărilor din recompense_revendicate intactat
 router.delete('/:id', requireSuperadmin, async (req, res) => {
     try {
         const rewardId = req.params.id;
 
-        // În loc să ștergem fizic (ceea ce ar putea rupe istoricul recompense_revendicate),
-        // o marcăm ca inactivă (soft delete).
         await db.update(recompense)
             .set({ activ: false })
             .where(eq(recompense.id, rewardId));
@@ -216,7 +218,7 @@ router.delete('/:id', requireSuperadmin, async (req, res) => {
     }
 });
 
-// GET /api/rewards/admin/claims — Istoric recompense revendicate (Doar Admin)
+// Istoricul tuturor revendicărilor din platformă — pentru raportare și audit
 router.get('/admin/claims', requireSuperadmin, async (req, res) => {
     try {
         const claims = await db.select({

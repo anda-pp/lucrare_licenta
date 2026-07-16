@@ -5,6 +5,8 @@ import { LayoutDashboard, BarChart2, LogOut, UserCheck, Sun, Moon } from 'lucide
 import { useTheme } from '../context/ThemeContext';
 import './StaffLayout.css';
 
+// Layout-ul panoului de personal (rol Personal/staff)
+// Accesibil exclusiv utilizatorilor cu rolul 'Personal' — altfel redirecționăm la home
 export default function StaffLayout() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -23,7 +25,7 @@ export default function StaffLayout() {
                 navigate('/login');
                 return;
             }
-            // Only allow Personal role
+            // Blocăm accesul oricui nu are rolul Personal
             if (sessionData.data.user.role !== 'Personal') {
                 navigate('/');
                 return;
@@ -92,4 +94,3 @@ export default function StaffLayout() {
         </div>
     );
 }
-

@@ -1,12 +1,8 @@
 import { AlertTriangle, ThumbsUp, Star, Calendar, User } from 'lucide-react';
 import StarRating from './StarRating';
 
-/**
- * Section displaying recent negative reviews (rating <= 2).
- *
- * Props:
- *  - reviews  (array) – [{ numarRecenzie, rating, data, descriere, userName }]
- */
+// Lista recenziilor negative recente (rating ≤ 2) — pentru monitorizare și follow-up rapid
+// Dacă nu există recenzii negative, afișăm un mesaj pozitiv cu thumbs up
 export default function NegativeReviewsList({ reviews = [] }) {
     return (
         <div className="mr-negative-section">
@@ -25,6 +21,7 @@ export default function NegativeReviewsList({ reviews = [] }) {
                     {reviews.map(r => (
                         <div key={r.numarRecenzie} className="mr-negative-card">
                             <div className="mr-neg-header">
+                                {/* Stelele negative în roșu pentru a sublinia ratingul slab */}
                                 <StarRating value={r.rating} size={13} filledColor="#ef4444" emptyColor="var(--color-border)" />
                                 <span className="mr-neg-date">
                                     <Calendar size={13} />

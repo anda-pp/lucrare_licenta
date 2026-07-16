@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock } from 'lucide-react';
 import './AuthPages.css';
 
+// Validare cu Zod — includem și refine pentru verificarea că parolele coincid
 const registerSchema = z.object({
     email: z.string().email('Email invalid'),
     password: z.string().min(6, 'Parola trebuie să aibă minim 6 caractere'),
@@ -44,7 +45,7 @@ export default function Register() {
             if (result.error) {
                 setError(result.error.message || 'Înregistrarea a eșuat');
             } else {
-                // Redirect to home or dashboard
+                // După înregistrare, BetterAuth creează sesiunea automat → Home redirecționează spre /user
                 navigate('/');
             }
         } catch (err) {
@@ -147,4 +148,3 @@ export default function Register() {
         </div>
     );
 }
-

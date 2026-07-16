@@ -28,6 +28,7 @@ export default function VouchersAdmin() {
         }
     };
 
+    // Filtrare client-side — căutăm în codul voucher, email sau numele clientului
     const filteredClaims = claims.filter(c => {
         const matchesSearch = c.cod_voucher.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,9 +38,9 @@ export default function VouchersAdmin() {
         return matchesSearch && matchesStatus;
     });
 
+    // Normalizăm timestamp-ul — SQLite poate returna secunde UNIX sau string ISO
     const formatDate = (unixOrString) => {
         if (!unixOrString) return '-';
-        // Dacă e timestamp în secunde
         if (typeof unixOrString === 'number' && unixOrString < 10000000000) {
             return new Date(unixOrString * 1000).toLocaleString('ro-RO');
         }
@@ -118,6 +119,7 @@ export default function VouchersAdmin() {
                                     </td>
                                     <td>{claim.nume || 'Necunoscut'}</td>
                                     <td>
+                                        {/* Badge colorat diferit pentru reduceri procentuale vs. valori fixe */}
                                         <span className={`badge ${claim.tip === 'Procentaj' || claim.tip === 'reducere_%' ? 'badge-blue' : 'badge-green'}`}>
                                             {claim.tip === 'Gratuitate' ? 'Abonament' : claim.valoare + (claim.tip?.includes('%') ? '%' : ' Lei')}
                                         </span>

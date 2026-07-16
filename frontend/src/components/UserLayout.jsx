@@ -5,6 +5,9 @@ import { User, LayoutDashboard, Ticket, Star, LogOut, Calendar, Moon, Sun, Palet
 import { useTheme } from '../context/ThemeContext';
 import './UserLayout.css';
 
+// Layout-ul cu sidebar pentru utilizatorul obișnuit (rol Utilizator)
+// Verificăm manual sesiunea cu authClient.getSession() în loc de useSession()
+// deoarece avem nevoie de redirect granular per rol
 export default function UserLayout() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -23,8 +26,7 @@ export default function UserLayout() {
                 navigate('/login');
                 return;
             }
-            // Allow only regular users to this specific layout, 
-            // though you might want to let admins see it too to test
+            // Redirecționăm alte roluri la panoul lor propriu
             if (sessionData.data.user.role !== 'Utilizator') {
                 if (sessionData.data.user.role === 'Admin') navigate('/admin');
                 else if (sessionData.data.user.role === 'Personal') navigate('/staff');
@@ -66,7 +68,7 @@ export default function UserLayout() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {/* Public Pages Links */}
+                    {/* Secțiunea de explorare — pagini publice cu conținut cultural */}
                     <div className="nav-divider"></div>
 
                     <Link to="/user/locations" className={`nav-item ${location.pathname === '/user/locations' ? 'active' : ''}`}>
@@ -88,6 +90,7 @@ export default function UserLayout() {
 
                     <div className="nav-divider" />
 
+                    {/* Secțiunea de gamificare */}
                     <Link to="/user/badges" className={`nav-item ${location.pathname === '/user/badges' ? 'active' : ''}`}>
                         <Trophy size={20} />
                         <span className="nav-label">Insignele Mele</span>

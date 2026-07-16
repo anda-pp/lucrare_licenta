@@ -59,6 +59,7 @@ import './App.css';
 
 function App() {
     return (
+        // ToastProvider învelește întreaga aplicație pentru notificări globale
         <ToastProvider>
         <BrowserRouter>
             <Routes>
@@ -66,7 +67,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
 
-                {/* User routes */}
+                {/* Rutele utilizatorului obișnuit — protejate prin UserLayout */}
                 <Route path="/user" element={<UserLayout />}>
                     <Route index element={<UserDashboard />} />
                     <Route path="orders" element={<MyOrders />} />
@@ -78,7 +79,7 @@ function App() {
                     <Route path="locations/:id" element={<LocationDetail />} />
                     <Route path="my-favorites" element={<MyFavorites />} />
                     <Route path="interests" element={<MyInterests />} />
-                    {/* Public pages shown with sidebar */}
+                    {/* Paginile publice accesibile și cu sidebar-ul utilizatorului */}
                     <Route path="events" element={<Events />} />
                     <Route path="events/:id" element={<EventDetail />} />
                     <Route path="reserve/:eventId" element={<EventReservation />} />
@@ -92,7 +93,7 @@ function App() {
                     <Route path="payment/cancel" element={<PaymentCancel />} />
                 </Route>
 
-                {/* Superadmin routes */}
+                {/* Rutele superadminului — gestionare globală a platformei */}
                 <Route path="/superadmin" element={<AdminLayout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="locations" element={<Locations />} />
@@ -110,7 +111,7 @@ function App() {
                     <Route path="staff-accounts" element={<StaffAccountsAdmin />} />
                 </Route>
 
-                {/* Museum Admin routes (Manager Local) */}
+                {/* Rutele admin-ului de muzeu — gestionare locală a unei locații */}
                 <Route path="/admin" element={<MuseumAdminLayout />}>
                     <Route index element={<MuseumDashboard />} />
                     <Route path="my-museum" element={<MyMuseum />} />
@@ -120,13 +121,13 @@ function App() {
                     <Route path="reviews" element={<MuseumReviews />} />
                 </Route>
 
-                {/* Staff routes */}
+                {/* Rutele staff-ului — acces la dashboard și rapoarte muzeale */}
                 <Route path="/staff" element={<StaffLayout />}>
                     <Route index element={<StaffDashboard />} />
                     <Route path="museum-reports" element={<MuseumReports />} />
                 </Route>
 
-                {/* 404 Catch-all route */}
+                {/* Catch-all: orice rută necunoscută trimite la pagina 404 */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
@@ -135,5 +136,3 @@ function App() {
 }
 
 export default App;
-
-

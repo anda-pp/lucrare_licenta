@@ -2,13 +2,11 @@ import { db } from '../db/db.js';
 import { recenzii, locatiiPublice, user, comenzi, tipuriBilete, bileteCumparate } from '../db/schema.js';
 import { eq, sql, lte, desc, and } from 'drizzle-orm';
 
-/**
- * GET /api/reports/marketing/sentiment
- * Sentiment analysis report: average rating per location + negative reviews
- */
+// Raport de sentiment al recenziilor:
+// rating mediu per locație, distribuția pozitive/neutre/negative și lista recenziilor negative
 export const getSentimentAnalysis = async (req, res) => {
     try {
-        // Average rating per location
+        // Calculăm sentimentul per locație: pozitiv (≥4), neutru (=3), negativ (≤2)
         const locationRatings = await db
             .select({
                 codUnicLocatie: locatiiPublice.codUnicLocatie,
@@ -25,7 +23,7 @@ export const getSentimentAnalysis = async (req, res) => {
             .groupBy(locatiiPublice.codUnicLocatie)
             .orderBy(sql`avgRating DESC`);
 
-        // Get all negative reviews (rating <= 2) with user and location info
+        // Lista recenziilor negative (rating ≤ 2) pentru investigare și răspuns
         const negativeReviews = await db
             .select({
                 numarRecenzie: recenzii.numarRecenzie,
@@ -43,7 +41,7 @@ export const getSentimentAnalysis = async (req, res) => {
             .where(lte(recenzii.rating, 2))
             .orderBy(desc(recenzii.dataRecenzie));
 
-        // Overall sentiment stats
+        // Statistici globale de sentiment pentru toate recenziile din platformă
         const overallStats = await db
             .select({
                 totalReviews: sql`COUNT(*)`.as('totalReviews'),
@@ -71,13 +69,12 @@ export const getSentimentAnalysis = async (req, res) => {
     }
 };
 
-/**
- * GET /api/reports/marketing/correlation
- * Correlation report: relationship between ratings and sales revenue
- */
+// Raport de corelație rating-venituri:
+// calculăm coeficientul Pearson între rating-ul mediu și veniturile per locație
+// și identificăm locațiile la risc (rating scăzut + venituri sub medie)
 export const getRatingRevenueCorrelation = async (req, res) => {
     try {
-        // Get rating and revenue per location
+        // Rating mediu și numărul de recenzii per locație
         const locationData = await db
             .select({
                 codUnicLocatie: locatiiPublice.codUnicLocatie,
@@ -89,7 +86,7 @@ export const getRatingRevenueCorrelation = async (req, res) => {
             .leftJoin(recenzii, eq(locatiiPublice.codUnicLocatie, recenzii.codUnicLocatie))
             .groupBy(locatiiPublice.codUnicLocatie);
 
-        // Get revenue per location from paid orders
+        // Venituri totale și numărul de comenzi per locație (comenzi plătite)
         const revenueData = await db
             .select({
                 codUnicLocatie: locatiiPublice.codUnicLocatie,
@@ -105,7 +102,6 @@ export const getRatingRevenueCorrelation = async (req, res) => {
             ))
             .groupBy(locatiiPublice.codUnicLocatie);
 
-        // Combine data
         const combinedData = locationData.map(loc => {
             const revenue = revenueData.find(r => r.codUnicLocatie === loc.codUnicLocatie);
             return {
@@ -118,7 +114,7 @@ export const getRatingRevenueCorrelation = async (req, res) => {
             };
         });
 
-        // Calculate Pearson correlation coefficient
+        // Calculăm coeficientul de corelație Pearson manual în JS
         const n = combinedData.filter(d => d.totalReviews > 0 && d.totalRevenue > 0).length;
         let correlation = 0;
         let interpretation = 'Insuficiente date';
@@ -147,7 +143,7 @@ export const getRatingRevenueCorrelation = async (req, res) => {
                 correlation = numerator / Math.sqrt(denomRating * denomRevenue);
             }
 
-            // Interpret correlation
+            // Interpretăm coeficientul Pearson în limbaj natural
             if (correlation >= 0.7) {
                 interpretation = 'Corelație pozitivă puternică - Rating-ul mare crește semnificativ vânzările';
             } else if (correlation >= 0.4) {
@@ -163,13 +159,14 @@ export const getRatingRevenueCorrelation = async (req, res) => {
             }
         }
 
-        // Identify locations at risk (low rating + declining or low revenue)
         const avgRevenue = combinedData.reduce((a, b) => a + b.totalRevenue, 0) / combinedData.length;
+
+        // Locații la risc: rating sub 3.5 și venituri sub medie
         const atRiskLocations = combinedData
             .filter(d => d.avgRating < 3.5 && d.totalRevenue < avgRevenue && d.totalReviews > 0)
             .sort((a, b) => a.avgRating - b.avgRating);
 
-        // High performers (high rating + high revenue)
+        // Performeri de top: rating ≥ 4 și venituri peste medie
         const highPerformers = combinedData
             .filter(d => d.avgRating >= 4 && d.totalRevenue >= avgRevenue)
             .sort((a, b) => b.totalRevenue - a.totalRevenue);

@@ -3,16 +3,19 @@ import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
+// Mapăm tipul de toast la iconița corespunzătoare
 const ICONS = {
     success: <CheckCircle size={20} />,
     error: <XCircle size={20} />,
     info: <Info size={20} />,
 };
 
+// Un toast individual cu auto-dismiss și animație de ieșire
 function ToastItem({ toast, onDismiss }) {
     const [exiting, setExiting] = useState(false);
 
     useEffect(() => {
+        // Setăm clasa de ieșire cu 300ms înainte de eliminarea din DOM pentru animație
         const timer = setTimeout(() => {
             setExiting(true);
             setTimeout(() => onDismiss(toast.id), 300);
@@ -48,6 +51,7 @@ export function ToastProvider({ children }) {
         setToasts(prev => [...prev, { id, type, title, message, duration }]);
     }, []);
 
+    // Expunem metodele de toast prin context: toast.success(), toast.error(), toast.info()
     const toast = useMemo(() => ({
         success: (message, title) => addToast({ type: 'success', message, title, duration: 4500 }),
         error: (message, title) => addToast({ type: 'error', message, title, duration: 5500 }),
@@ -68,6 +72,7 @@ export function ToastProvider({ children }) {
     );
 }
 
+// Hook utilizat în orice componentă pentru a declanșa notificări
 export function useToast() {
     const ctx = useContext(ToastContext);
     if (!ctx) throw new Error('useToast must be used within <ToastProvider>');

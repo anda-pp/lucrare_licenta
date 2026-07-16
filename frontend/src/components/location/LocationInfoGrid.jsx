@@ -1,8 +1,7 @@
 import { Clock, Globe, MapPin, Phone } from 'lucide-react';
 
-/**
- * LocationInfoGrid — 2-column info section with description, schedule, website, address
- */
+// Gridul cu informațiile detaliate ale locației: program, adresă, site și link Google Maps
+// Randăm condițional fiecare rând — nu afișăm câmpuri goale
 export default function LocationInfoGrid({ location }) {
     return (
         <div className="loc-info-details">
@@ -34,6 +33,7 @@ export default function LocationInfoGrid({ location }) {
                     <div className="loc-info-icon"><Globe size={18} /></div>
                     <div>
                         <span className="loc-info-label">Website</span>
+                        {/* Adăugăm https:// dacă url-ul nu conține deja un protocol */}
                         <a
                             href={location.siteOficial.startsWith('http') ? location.siteOficial : `https://${location.siteOficial}`}
                             target="_blank"

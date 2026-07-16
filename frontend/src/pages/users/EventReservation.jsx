@@ -8,6 +8,7 @@ import './EventReservation.css';
 
 const API = 'http://localhost:5000';
 
+// Generăm toate zilele calendaristice din intervalul evenimentului pentru selector de zi
 function generateDays(dataStart, dataSfarsit) {
     if (!dataSfarsit) return [new Date(dataStart)];
     const days = [];
@@ -41,6 +42,7 @@ export default function EventReservation() {
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // ID-ul rezervării returnate de server — declanșează ecranul de succes
     const [reservationId, setReservationId] = useState(null);
 
     const [nrPersoane, setNrPersoane] = useState(1);
@@ -52,12 +54,13 @@ export default function EventReservation() {
             .then(res => {
                 if (res.data.success) {
                     const ev = res.data.data;
+                    // Redirecționăm dacă evenimentul nu este gratuit — pagina e dedicată rezervărilor fără plată
                     if (!ev.isGratuit) {
                         navigate(-1);
                         return;
                     }
                     setEvent(ev);
-                    // Pre-select first day and time interval
+                    // Pre-selectăm prima zi și primul interval orar disponibil
                     const days = generateDays(ev.dataStart, ev.dataSfarsit);
                     setZiuaAleasa(days[0].toISOString().split('T')[0]);
 
@@ -93,6 +96,7 @@ export default function EventReservation() {
     const days = generateDays(event.dataStart, event.dataSfarsit);
     const isMultiDay = days.length > 1;
 
+    // Ecranul de succes — afișat după ce rezervarea a fost creată cu succes
     if (reservationId) {
         return (
             <div className="er-page er-success-container">
@@ -125,7 +129,7 @@ export default function EventReservation() {
             </button>
 
             <div className="er-layout">
-                {/* Left: Event Summary */}
+                {/* Coloana stângă: sumar eveniment și badge de trust */}
                 <div className="er-summary-col">
                     <div className="er-summary-card">
                         <div className="er-gratuit-badge">
@@ -157,11 +161,12 @@ export default function EventReservation() {
                     </div>
                 </div>
 
-                {/* Right: Reservation Form */}
+                {/* Coloana dreaptă: formularul de rezervare */}
                 <div className="er-form-col">
                     <div className="er-form-card">
                         <h3>Detalii Rezervare</h3>
                         <form className="er-form" onSubmit={handleSubmit}>
+                            {/* Selectorul de zi apare doar pentru evenimentele multi-zi */}
                             {isMultiDay && (
                                 <div className="er-input-group">
                                     <label><Calendar size={14} /> Alege Ziua</label>

@@ -4,8 +4,10 @@ import axios from 'axios';
 import { useToast } from '../common/Toast';
 
 const API = 'http://localhost:5000';
+// Afișăm câte 3 recenzii per pagină în carouseul de recenzii
 const PAGE_SIZE = 3;
 
+// Calculăm diferența de timp față de acum în mod human-readable (în română)
 function timeAgo(dateString) {
     if (!dateString) return '';
     const now = new Date();
@@ -20,12 +22,14 @@ function timeAgo(dateString) {
     return `acum ${Math.floor(diffDays / 365)} ani`;
 }
 
+// Stele statice read-only pentru afișarea ratingului unei recenzii
 function renderStars(rating) {
     return Array.from({ length: 5 }, (_, i) => (
         <Star key={i} size={14} fill={i < rating ? '#f59e0b' : 'none'} stroke={i < rating ? '#f59e0b' : '#475569'} />
     ));
 }
 
+// Stele interactive cu hover pentru formularul de scriere recenzie
 function InteractiveStars({ value, onChange }) {
     const [hover, setHover] = useState(0);
     return (
@@ -45,20 +49,12 @@ function InteractiveStars({ value, onChange }) {
     );
 }
 
-/**
- * LocationReviews — paginated review carousel + review form.
- *
- * Props:
- *  - reviews, avgRating  (existing)
- *  - session             (auth session, null if not logged in)
- *  - locationId          (string)
- *  - onReviewAdded       (callback to refresh location data)
- */
+// Secțiunea de recenzii a paginii de detalii locație
+// Include carouselul de recenzii paginat și formularul de adăugare recenzie (vizibil doar dacă nu ai recenzionat deja)
 export default function LocationReviews({ reviews, avgRating, session, locationId, onReviewAdded }) {
     const [page, setPage] = useState(0);
     const toast = useToast();
 
-    // Review form state
     const [rating, setRating] = useState(0);
     const [text, setText] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -66,6 +62,7 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
     const totalPages = Math.ceil(reviews.length / PAGE_SIZE);
     const visibleReviews = reviews.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
+    // Verificăm dacă utilizatorul curent a lăsat deja o recenzie la această locație
     const alreadyReviewed = session && reviews.some(
         r => r.codUnicUtilizator === session.user?.id
     );
@@ -87,6 +84,7 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
                 toast.success('Recenzia ta a fost adăugată!');
                 setRating(0);
                 setText('');
+                // Refresh datele locației pentru a include noua recenzie în medie
                 if (onReviewAdded) onReviewAdded();
             }
         } catch (err) {
@@ -109,7 +107,7 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
                 )}
             </div>
 
-            {/* Review Form */}
+            {/* Formularul de recenzie — apare doar pentru utilizatorii autentificați care nu au recenzionat deja */}
             {session && !alreadyReviewed && (
                 <form onSubmit={handleSubmitReview} className="loc-review-form">
                     <h4 style={{ margin: '0 0 0.75rem', color: 'var(--color-text-main)', fontSize: '0.95rem' }}>
@@ -185,6 +183,7 @@ export default function LocationReviews({ reviews, avgRating, session, locationI
                         ))}
                     </div>
 
+                    {/* Navigare între paginile de recenzii */}
                     {totalPages > 1 && (
                         <div className="loc-reviews-pagination">
                             <button className="loc-reviews-nav-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>

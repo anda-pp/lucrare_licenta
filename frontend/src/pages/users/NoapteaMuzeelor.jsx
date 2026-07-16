@@ -3,12 +3,13 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin, Calendar, Moon } from 'lucide-react';
 import './NoapteaMuzeelor.css';
-import './Events.css'; // Refolosim unele stiluri de la evenimente generale
+import './Events.css'; // Refolosim unele stiluri de la pagina de evenimente generale
 
 export default function NoapteaMuzeelor() {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Cronometrul real-time spre următorul eveniment
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [targetDate, setTargetDate] = useState(null);
 
@@ -16,6 +17,7 @@ export default function NoapteaMuzeelor() {
         fetchNightEvents();
     }, []);
 
+    // Actualizăm cronometrul la fiecare secundă cât timp există un eveniment viitor
     useEffect(() => {
         if (!targetDate) return;
 
@@ -46,11 +48,11 @@ export default function NoapteaMuzeelor() {
                 withCredentials: true,
             });
             if (response.data.success) {
-                // Filtrăm doar evenimentele "Noaptea Muzeelor"
+                // Filtrăm din toate evenimentele doar cele de tipul "Noaptea Muzeelor"
                 const nightEvents = response.data.data.filter(e => e.tipEveniment === 'Noaptea Muzeelor');
                 setEvents(nightEvents);
 
-                // Setăm cronometrul pentru primul eveniment viitor
+                // Setăm cronometrul pentru primul eveniment viitor, nu pentru cel mai apropiat trecut
                 if (nightEvents.length > 0) {
                     const sorted = nightEvents.sort((a, b) => new Date(a.dataStart) - new Date(b.dataStart));
                     const nextEvent = sorted.find(e => new Date(e.dataStart) > new Date());
@@ -91,6 +93,7 @@ export default function NoapteaMuzeelor() {
                     <h1>Noaptea Muzeelor</h1>
                     <p>O noapte magică în care cultura prinde viață sub clar de lună.</p>
 
+                    {/* Cronometrul live — vizibil doar dacă mai este timp până la eveniment */}
                     {targetDate && new Date() < targetDate && (
                         <div className="countdown-container">
                             <div className="countdown-box">

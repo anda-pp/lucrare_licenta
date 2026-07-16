@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import { Clock, X } from 'lucide-react';
 
-/**
- * Time intervals add / remove UI for event forms.
- *
- * Props:
- *  - intervals   (string[])           – current list, e.g. ["10:00 - 12:00"]
- *  - onChange     (newIntervals)       – called with updated array
- *  - onError      (msg)               – optional, for inline error feedback
- *  - label        (string)            – section title (default "Intervale Orare")
- *  - required     (bool)              – show "obligatoriu" hint
- */
+// Input pentru definirea intervalelor orare dintr-un formular de eveniment
+// Utilizatorul selectează ora de start și de final, iar intervalul se adaugă ca tag removable
 export default function TimeIntervalsInput({
     intervals = [],
     onChange,
@@ -23,6 +15,7 @@ export default function TimeIntervalsInput({
 
     const handleAdd = () => {
         if (!startTime || !endTime) return;
+        // Validăm că ora de start e înainte de ora de final
         if (startTime >= endTime) {
             onError?.('Ora de început trebuie să fie mai mică decât ora de sfârșit.');
             return;
@@ -67,6 +60,7 @@ export default function TimeIntervalsInput({
                 </button>
             </div>
 
+            {/* Intervalele adăugate apar ca tag-uri removable în rând */}
             {intervals.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem' }}>
                     {intervals.map((intv, idx) => (

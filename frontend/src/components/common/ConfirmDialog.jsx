@@ -1,17 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 
-/**
- * Confirmation dialog replacing window.confirm().
- *
- * Props:
- *  - show       (bool)
- *  - title      (string)   – heading (default "Confirmare")
- *  - message    (string)   – body text
- *  - onConfirm  ()         – called on "Da"
- *  - onCancel   ()         – called on "Anulează" / overlay click
- *  - confirmLabel (string) – custom confirm text (default "Da, șterge")
- *  - danger     (bool)     – red accent (default true)
- */
+// Dialog de confirmare refolosibil — înlocuiește window.confirm() cu un modal stilizat
+// Suportă variante danger (roșu) și normale (primary)
 export default function ConfirmDialog({
     show,
     title = 'Confirmare',

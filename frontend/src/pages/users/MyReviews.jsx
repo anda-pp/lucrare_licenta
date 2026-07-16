@@ -16,7 +16,7 @@ export default function MyReviews() {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Edit states
+    // Starea de editare inline — o singură recenzie poate fi editată la un moment dat
     const [confirmTarget, setConfirmTarget] = useState(null);
     const [editingId, setEditingId] = useState(null);
     const [editRating, setEditRating] = useState(0);
@@ -54,6 +54,7 @@ export default function MyReviews() {
         }
     };
 
+    // Populăm câmpurile de editare cu valorile existente ale recenziei selectate
     const startEdit = (review) => {
         setEditingId(review.numarRecenzie);
         setEditRating(review.rating);
@@ -78,6 +79,7 @@ export default function MyReviews() {
                 { withCredentials: true }
             );
             if (res.data.success) {
+                // Actualizăm local fără re-fetch pentru a evita flicker-ul
                 setReviews(prev => prev.map(r => r.numarRecenzie === id
                     ? { ...r, rating: editRating, descriereRecenzie: editDesc }
                     : r
@@ -101,6 +103,7 @@ export default function MyReviews() {
         });
     };
 
+    // Stele read-only pentru afișarea recenziei în modul normal
     const renderStaticStars = (rating) => {
         return Array.from({ length: 5 }, (_, i) => (
             <Star
@@ -112,6 +115,7 @@ export default function MyReviews() {
         ));
     };
 
+    // Stele clickabile pentru modul de editare
     const renderInteractiveStars = () => {
         return (
             <div className="interactive-stars">
@@ -164,6 +168,7 @@ export default function MyReviews() {
                                     </div>
                                     <div className="review-meta">
                                         <span className="review-date">{formatDate(rev.dataRecenzie)}</span>
+                                        {/* Butoanele de editare/ștergere sunt ascunse cât timp recenzia e în modul editare */}
                                         {!isEditing && (
                                             <div className="review-actions">
                                                 <button className="icon-btn edit-btn" onClick={() => startEdit(rev)} title="Editează">

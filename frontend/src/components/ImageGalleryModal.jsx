@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Camera, X, Loader, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Camera, X, Loader, Upload, Image as ImageIcon, Trash2, Star } from 'lucide-react';
 import './ImageGalleryModal.css';
 
-export default function ImageGalleryModal({ location, onClose }) {
+export default function ImageGalleryModal({ location, onClose, onCoverChanged }) {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -71,9 +71,25 @@ export default function ImageGalleryModal({ location, onClose }) {
                 { withCredentials: true }
             );
             fetchImages();
+            if (onCoverChanged) onCoverChanged();
         } catch (err) {
             console.error('Delete error:', err);
             setError('Eroare la ștergerea imaginii');
+        }
+    };
+
+    const handleSetCover = async (imageId) => {
+        try {
+            await axios.put(
+                `http://localhost:5000/api/uploads/image/${imageId}/cover`,
+                {},
+                { withCredentials: true }
+            );
+            fetchImages();
+            if (onCoverChanged) onCoverChanged();
+        } catch (err) {
+            console.error('Set cover error:', err);
+            setError('Eroare la setarea cover-ului');
         }
     };
 
@@ -143,30 +159,49 @@ export default function ImageGalleryModal({ location, onClose }) {
                         </div>
                     ) : (
                         <div className="images-grid">
-                            {images.map((image) => (
-                                <div key={image.codUnicImagine} className="image-card">
-                                    <img
-                                        src={`http://localhost:5000${image.caleFisier}`}
-                                        alt={image.numeOriginal}
-                                        className="image-preview"
-                                    />
-                                    <div className="image-info">
-                                        <span className="image-name" title={image.numeOriginal}>
-                                            {image.numeOriginal}
-                                        </span>
-                                        <span className="image-size">
-                                            {formatFileSize(image.marimeFisier)}
-                                        </span>
+                            {images.map((image) => {
+                                const isCover = image.caleFisier === location.imagineUrl;
+                                return (
+                                    <div key={image.codUnicImagine} className={`image-card ${isCover ? 'cover-image' : ''}`}>
+                                        <img
+                                            src={`http://localhost:5000${image.caleFisier}`}
+                                            alt={image.numeOriginal}
+                                            className="image-preview"
+                                        />
+                                        {isCover && (
+                                            <span className="cover-badge">
+                                                <Star size={12} fill="currentColor" /> Cover
+                                            </span>
+                                        )}
+                                        <div className="image-info">
+                                            <span className="image-name" title={image.numeOriginal}>
+                                                {image.numeOriginal}
+                                            </span>
+                                            <span className="image-size">
+                                                {formatFileSize(image.marimeFisier)}
+                                            </span>
+                                        </div>
+                                        <div className="image-actions">
+                                            {!isCover && (
+                                                <button
+                                                    className="set-cover-btn"
+                                                    onClick={() => handleSetCover(image.codUnicImagine)}
+                                                    title="Setează ca imagine principală (cover)"
+                                                >
+                                                    <Star size={14} /> Cover
+                                                </button>
+                                            )}
+                                            <button
+                                                className="delete-image-btn"
+                                                onClick={() => handleDelete(image.codUnicImagine)}
+                                                title="Șterge imaginea"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <button
-                                        className="delete-image-btn"
-                                        onClick={() => handleDelete(image.codUnicImagine)}
-                                        title="Șterge imaginea"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

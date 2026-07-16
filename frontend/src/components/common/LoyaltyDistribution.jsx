@@ -1,11 +1,7 @@
 import { CreditCard } from 'lucide-react';
 
-/**
- * Loyalty card breakdown grid (used in Director report).
- *
- * Props:
- *  - cards  (array) – [{ numeCard, comenzi, utilizatori, venituri, pct }]
- */
+// Distribuția comenzilor pe tipul de card de fidelitate — afișat în raportul directorului
+// Fiecare card are o bară de progres cu procentajul față de totalul comenzilor
 export default function LoyaltyDistribution({ cards = [] }) {
     if (cards.length === 0) return null;
 

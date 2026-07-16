@@ -26,6 +26,7 @@ export default function StaffAccountsAdmin() {
 
     useEffect(() => { fetchData(); }, []);
 
+    // Încărcăm staff-ul și locațiile active în paralel — locațiile sunt necesare pentru atribuire
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -35,6 +36,7 @@ export default function StaffAccountsAdmin() {
             ]);
             if (staffRes.data.success) setStaff(staffRes.data.staff);
             if (locationsRes.data.success) {
+                // Afișăm în dropdown doar locațiile active — cele inActive nu pot fi atribuite
                 setLocations(locationsRes.data.data.filter(l => l.statusLocatie === 'Activ'));
             }
         } catch (error) {
@@ -92,12 +94,14 @@ export default function StaffAccountsAdmin() {
         }
     };
 
+    // Căutare client-side pe nume, prenume și email
     const filteredStaff = staff.filter(s =>
         s.numeUtil.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.prenumeUtil.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.emailUtil.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Rezolvăm numele locației din ID — „Universal" dacă nu e alocat niciunui muzeu
     const getLocationName = (id) => {
         if (!id) return '- Universal (Neatribuit) -';
         const loc = locations.find(l => l.codUnicLocatie === id);
@@ -219,6 +223,7 @@ export default function StaffAccountsAdmin() {
 
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="form-group">
+                        {/* La editare, parola e opțională — dacă e lăsată goală, rămâne cea veche */}
                         <label>Parolă {editingId && <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'gray' }}>(opțional)</span>}</label>
                         <input type="password" value={formData.password} onChange={e => set('password', e.target.value)} required={!editingId} placeholder={editingId ? "Lasă gol pentru a o păstra..." : "Parolă temporară..."} />
                     </div>

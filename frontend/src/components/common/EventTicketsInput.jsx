@@ -1,20 +1,16 @@
 import { Ticket, Trash2 } from 'lucide-react';
 
+// Tipurile de bilet disponibile pentru evenimentele cu plată
 const DEFAULT_TYPES = ['Adult', 'Elev', 'Student', 'Pensionar', 'Altele'];
 
-/**
- * Ticket types manager for event forms (paid events).
- *
- * Props:
- *  - tickets      ({tip, pret}[])  – current list
- *  - onChange      (newTickets)     – called with updated array
- *  - ticketTypes   (string[])      – available type labels (default DEFAULT_TYPES)
- */
+// Manager de tipuri de bilete pentru formularul de creare/editare eveniment cu plată
+// Fiecare bilet are un tip (dropdown) și un preț (input numeric)
 export default function EventTicketsInput({
     tickets = [],
     onChange,
     ticketTypes = DEFAULT_TYPES,
 }) {
+    // Actualizăm câmpul `field` al biletului de pe poziția `idx` fără a muta restul
     const updateAt = (idx, field, value) => {
         const updated = [...tickets];
         updated[idx] = { ...updated[idx], [field]: value };
@@ -62,6 +58,7 @@ export default function EventTicketsInput({
                                     onChange={e => updateAt(idx, 'pret', e.target.value)}
                                     style={{ width: '100%', paddingRight: '2.5rem' }}
                                 />
+                                {/* Eticheta LEI inline în câmpul de preț */}
                                 <span style={{
                                     position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)',
                                     fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 600,

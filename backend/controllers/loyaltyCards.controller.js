@@ -3,10 +3,7 @@ import { cardFidelitate } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 
-/**
- * GET /api/loyalty-cards
- * Get all loyalty cards
- */
+// Returnează toate tipurile de carduri de fidelitate disponibile în platformă
 export const getAllLoyaltyCards = async (req, res) => {
     try {
         const cards = await db.select().from(cardFidelitate);
@@ -25,10 +22,7 @@ export const getAllLoyaltyCards = async (req, res) => {
     }
 };
 
-/**
- * GET /api/loyalty-cards/:id
- * Get single loyalty card
- */
+// Returnează un tip de card de fidelitate după ID (tipUnicCard)
 export const getLoyaltyCardById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -59,10 +53,8 @@ export const getLoyaltyCardById = async (req, res) => {
     }
 };
 
-/**
- * POST /api/loyalty-cards
- * Create new loyalty card (Admin only)
- */
+// Creare tip nou de card de fidelitate
+// ID-ul (tipUnicCard) se generează automat din numele cardului (uppercase + underscore)
 export const createLoyaltyCard = async (req, res) => {
     try {
         const { numeCard, puncteCard, oferteSpeciale, oferteBunVenit } = req.body;
@@ -74,10 +66,8 @@ export const createLoyaltyCard = async (req, res) => {
             });
         }
 
-        // Generate unique ID from name
         const tipUnicCard = numeCard.toUpperCase().replace(/\s+/g, '_');
 
-        // Insert card
         await db.insert(cardFidelitate).values({
             tipUnicCard,
             numeCard,
@@ -92,6 +82,7 @@ export const createLoyaltyCard = async (req, res) => {
             data: { tipUnicCard },
         });
     } catch (error) {
+        // Dacă numele cardului există deja, SQLite aruncă UNIQUE constraint error
         if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
             return res.status(400).json({
                 success: false,
@@ -107,16 +98,12 @@ export const createLoyaltyCard = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/loyalty-cards/:id
- * Update loyalty card (Admin only)
- */
+// Editare tip de card — actualizăm câmpurile furnizate, păstrăm valorile existente pentru cele lipsă
 export const updateLoyaltyCard = async (req, res) => {
     try {
         const { id } = req.params;
         const { numeCard, puncteCard, oferteSpeciale, oferteBunVenit } = req.body;
 
-        // Check if card exists
         const existing = await db
             .select()
             .from(cardFidelitate)
@@ -130,7 +117,6 @@ export const updateLoyaltyCard = async (req, res) => {
             });
         }
 
-        // Update card
         await db
             .update(cardFidelitate)
             .set({
@@ -154,15 +140,11 @@ export const updateLoyaltyCard = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/loyalty-cards/:id
- * Delete loyalty card (Admin only)
- */
+// Ștergere tip de card de fidelitate
 export const deleteLoyaltyCard = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if card exists
         const existing = await db
             .select()
             .from(cardFidelitate)
@@ -176,7 +158,6 @@ export const deleteLoyaltyCard = async (req, res) => {
             });
         }
 
-        // Delete card
         await db.delete(cardFidelitate).where(eq(cardFidelitate.tipUnicCard, id));
 
         res.json({

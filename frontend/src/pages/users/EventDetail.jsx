@@ -36,6 +36,7 @@ export default function EventDetail() {
         fetchEvent();
     }, [id]);
 
+    // Formatare flexibilă a datei: 'full' pentru afișare completă, 'time' pentru ora
     const formatDate = (dateString, format = 'full') => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -54,6 +55,7 @@ export default function EventDetail() {
     if (error) return <div className="event-error">{error}</div>;
     if (!event) return null;
 
+    // Evenimentele "Noaptea Muzeelor" au o clasă CSS specială pentru temă dark
     const isNight = event.tipEveniment === 'Noaptea Muzeelor';
     const mainClass = `event-detail-page ${isNight ? 'is-night' : ''}`;
 
@@ -93,7 +95,7 @@ export default function EventDetail() {
                         </div>
                     </section>
 
-                    {/* Secțiunea Bilete / Rezervare */}
+                    {/* Secțiunea de bilete / rezervare — diferită pentru evenimentele gratuite vs. plătite */}
                     <section className="event-tickets-section" style={{ marginTop: '2rem' }}>
                         {event.isGratuit ? (
                             <div className="detail-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2.5rem' }}>

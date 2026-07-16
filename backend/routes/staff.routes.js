@@ -10,7 +10,8 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireStaff);
 
-// ── Middleware: preia muzeuId din DB pentru userul curent ──────────────────────
+// Middleware care extrage muzeuId din profilul staff-ului curent
+// Fiecare cont de Personal/Admin este alocat unui singur muzeu — blocăm accesul dacă nu e setat
 const getMuzeuId = async (req, res, next) => {
     try {
         const u = await db.select({ muzeuId: user.muzeuId })
@@ -27,12 +28,13 @@ const getMuzeuId = async (req, res, next) => {
 
 router.get('/dashboard', getMuzeuId, getStaffDashboard);
 
-// ── GET /api/staff/museum-reports/marketing ────────────────────────────────────
+// Raport de marketing al muzeului — date pentru echipa de marketing/PR a unei locații
+// Cuprinde: distribuția ratingurilor, evoluție lunară, top evenimente, tipuri vizitatori, sentiment
 router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
     try {
         const mId = req.muzeuId;
 
-        // 1. Distribuție rating (1-5 stele)
+        // Distribuția ratingurilor 1-5 — completăm cu 0 pentru valorile lipsă
         const ratingDist = await db.select({
             rating: recenzii.rating,
             count: sql`COUNT(*)`.as('count'),
@@ -42,20 +44,18 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
             .orderBy(recenzii.rating)
             .all();
 
-        // Completăm cu toate valorile 1-5 chiar dacă nu există date
         const ratingMap = Object.fromEntries(ratingDist.map(r => [r.rating, Number(r.count)]));
         const ratingDistributie = [1, 2, 3, 4, 5].map(r => ({
             stele: `${r} ★`,
             count: ratingMap[r] || 0,
         }));
 
-        // 2. Rating mediu + total recenzii
         const ratingStats = await db.select({
             total: sql`COUNT(*)`.as('total'),
             medie: sql`ROUND(AVG(${recenzii.rating}), 2)`.as('medie'),
         }).from(recenzii).where(eq(recenzii.codUnicLocatie, mId)).get();
 
-        // 3. Evoluție lunară recenzii (ultimele 6 luni)
+        // Evoluția lunară a recenziilor (ultimele 6 luni)
         const evolutieRecenzii = await db.select({
             luna: sql`strftime('%Y-%m', ${recenzii.dataRecenzie})`.as('luna'),
             count: sql`COUNT(*)`.as('count'),
@@ -68,7 +68,7 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
             .orderBy(sql`strftime('%Y-%m', ${recenzii.dataRecenzie})`)
             .all();
 
-        // 4. Top 5 evenimente după rezervări
+        // Top 5 evenimente după numărul de rezervări
         const topEvenimente = await db.select({
             titlu: evenimente.titlu,
             tipEveniment: evenimente.tipEveniment,
@@ -82,7 +82,7 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
             .limit(5)
             .all();
 
-        // 5. Distribuție tipuri vizitatori (din bilete cumpărate)
+        // Distribuția tipurilor de vizitatori din biletele de intrare (excluzând biletele de eveniment)
         const tipuriVizitatori = await db.select({
             tip: tipuriBilete.tipBilet,
             count: sql`SUM(${bileteCumparate.cantitate})`.as('count'),
@@ -95,7 +95,7 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
             .groupBy(tipuriBilete.tipBilet)
             .all();
 
-        // 6. Sentiment breakdown (pozitive / neutre / negative)
+        // Sentimentul recenziilor: pozitive (≥4), neutre (=3), negative (≤2)
         const sentimentRaw = await db.select({
             pozitive: sql`COUNT(CASE WHEN ${recenzii.rating} >= 4 THEN 1 END)`.as('pozitive'),
             neutre: sql`COUNT(CASE WHEN ${recenzii.rating} = 3 THEN 1 END)`.as('neutre'),
@@ -113,7 +113,7 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
             pctNegative: sentTotal > 0 ? Math.round((Number(sentimentRaw.negative) / sentTotal) * 100) : 0,
         };
 
-        // 7. Recenzii negative recente (rating <= 2)
+        // Ultimele 10 recenzii negative (rating ≤ 2) pentru follow-up
         const recenziiNegative = await db.select({
             numarRecenzie: recenzii.numarRecenzie,
             rating: recenzii.rating,
@@ -159,12 +159,13 @@ router.get('/museum-reports/marketing', getMuzeuId, async (req, res) => {
     }
 });
 
-// ── GET /api/staff/museum-reports/director ─────────────────────────────────────
+// Raport de management al muzeului — date financiare pentru directorul/administratorul locației
+// Cuprinde: venituri lunare, KPI-uri, top evenimente după venituri, distribuția cardurilor de fidelitate
 router.get('/museum-reports/director', getMuzeuId, async (req, res) => {
     try {
         const mId = req.muzeuId;
 
-        // 1. Venituri + comenzi pe luni (ultimele 12 luni)
+        // Venituri și comenzi lunare (ultimele 12 luni) — pentru graficul de evoluție financiară
         const venituriLunare = await db.select({
             luna: sql`strftime('%Y-%m', ${comenzi.dataComanda})`.as('luna'),
             venituri: sql`ROUND(SUM(${comenzi.totalPlata}), 2)`.as('venituri'),
@@ -181,7 +182,7 @@ router.get('/museum-reports/director', getMuzeuId, async (req, res) => {
             .orderBy(sql`strftime('%Y-%m', ${comenzi.dataComanda})`)
             .all();
 
-        // 2. KPI-uri totale
+        // KPI-uri totale: venituri, comenzi, bilete vândute, rating mediu
         const kpi = await db.select({
             totalVenituri: sql`ROUND(SUM(${comenzi.totalPlata}), 2)`.as('totalVenituri'),
             totalComenzi: sql`COUNT(DISTINCT ${comenzi.numarComanda})`.as('totalComenzi'),
@@ -195,13 +196,12 @@ router.get('/museum-reports/director', getMuzeuId, async (req, res) => {
             ))
             .get();
 
-        // 3. Rating mediu
         const ratingMediu = await db.select({
             medie: sql`ROUND(AVG(${recenzii.rating}), 2)`.as('medie'),
             total: sql`COUNT(*)`.as('total'),
         }).from(recenzii).where(eq(recenzii.codUnicLocatie, mId)).get();
 
-        // 4. Top 5 evenimente după venituri (bilete cu pret)
+        // Top 5 evenimente după venituri generate din biletele plătite
         const topEvenimenteVenituri = await db.select({
             titlu: evenimente.titlu,
             venituri: sql`ROUND(SUM(${comenzi.totalPlata}), 2)`.as('venituri'),
@@ -219,7 +219,7 @@ router.get('/museum-reports/director', getMuzeuId, async (req, res) => {
             .limit(5)
             .all();
 
-        // 5. Distribuție status comenzi
+        // Distribuția comenzilor pe status (Plătit/Anulat/În așteptare)
         const statusComenzi = await db.select({
             status: comenzi.statusPlata,
             count: sql`COUNT(DISTINCT ${comenzi.numarComanda})`.as('count'),
@@ -230,7 +230,7 @@ router.get('/museum-reports/director', getMuzeuId, async (req, res) => {
             .groupBy(comenzi.statusPlata)
             .all();
 
-        // 6. Distribuție card fidelitate vizitatori (câte comenzi per nivel card)
+        // Distribuția vizitatorilor pe tipul cardului de fidelitate (câte comenzi/venituri per nivel)
         const loyaltyRaw = await db.select({
             numeCard: cardFidelitate.numeCard,
             tipCard: cardFidelitate.tipUnicCard,

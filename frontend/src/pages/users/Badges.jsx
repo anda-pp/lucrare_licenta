@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import './Badges.css';
 
+// Mapă de icon-uri pentru insignele din sistem — cheia corespunde câmpului `iconita` din DB
 const ICON_MAP = {
     MessageSquare, Star, Ticket, Map, Calendar, Crown, Heart, Trophy
 };
@@ -13,6 +14,7 @@ const ICON_MAP = {
 export default function Badges() {
     const [badges, setBadges] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Insignele câștigate în această sesiune — afișate în bannerul de felicitare
     const [newlyEarned, setNewlyEarned] = useState([]);
 
     useEffect(() => {
@@ -24,6 +26,7 @@ export default function Badges() {
             const res = await axios.get('http://localhost:5000/api/badges/my', { withCredentials: true });
             if (res.data.success) {
                 setBadges(res.data.data);
+                // Backend-ul returnează `newlyEarned` dacă utilizatorul a câștigat insigne noi de la ultima vizită
                 if (res.data.newlyEarned && res.data.newlyEarned.length > 0) {
                     setNewlyEarned(res.data.newlyEarned);
                 }
@@ -35,8 +38,6 @@ export default function Badges() {
         }
     };
 
-
-
     const earned = badges.filter(b => b.earned);
     const locked = badges.filter(b => !b.earned);
 
@@ -44,7 +45,6 @@ export default function Badges() {
 
     return (
         <div className="badges-page">
-            {/* Header */}
             <div className="badges-header">
                 <div>
                     <h1><Trophy size={28} /> Insignele Mele</h1>
@@ -54,7 +54,7 @@ export default function Badges() {
                 </div>
             </div>
 
-            {/* Newly earned toast */}
+            {/* Banner de felicitare pentru insignele câștigate recent */}
             {newlyEarned.length > 0 && (
                 <div className="newly-earned-banner">
                     <CheckCircle size={20} />
@@ -63,7 +63,7 @@ export default function Badges() {
                 </div>
             )}
 
-            {/* Stats strip */}
+            {/* Strip cu statisticile generale: câte insigne câștigate vs. rămase */}
             <div className="badges-stats">
                 <div className="badge-stat-item">
                     <span className="stat-num">{earned.length}</span>
@@ -81,7 +81,7 @@ export default function Badges() {
                 </div>
             </div>
 
-            {/* Earned badges */}
+            {/* Secțiunea cu insignele obținute */}
             {earned.length > 0 && (
                 <section className="badges-section">
                     <h2 className="section-title">
@@ -112,7 +112,7 @@ export default function Badges() {
                 </section>
             )}
 
-            {/* Locked badges */}
+            {/* Secțiunea cu insignele blocate — afișează bara de progres spre condiție */}
             {locked.length > 0 && (
                 <section className="badges-section">
                     <h2 className="section-title">

@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-    // Check local storage or system preference on initial load
+    // Inițializăm tema din localStorage sau din preferința sistemului de operare
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('app-theme');
         if (savedTheme) {
@@ -16,7 +16,7 @@ export function ThemeProvider({ children }) {
     });
 
     useEffect(() => {
-        // Apply theme to the whole document body or html tag
+        // Aplicăm clasa CSS corespunzătoare pe elementul <html> la orice schimbare de temă
         if (theme === 'dark') {
             document.documentElement.classList.add('dark-theme');
             document.documentElement.classList.remove('light-theme');
@@ -25,7 +25,7 @@ export function ThemeProvider({ children }) {
             document.documentElement.classList.remove('dark-theme');
         }
 
-        // Save user preference
+        // Persistăm preferința utilizatorului în localStorage
         localStorage.setItem('app-theme', theme);
     }, [theme]);
 

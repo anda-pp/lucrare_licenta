@@ -1,16 +1,5 @@
-/**
- * StatCard — reusable KPI card used in the user dashboard.
- * Props:
- *   icon        — Lucide icon element
- *   iconClass   — CSS class for the icon wrapper (e.g. 'blue', 'yellow')
- *   iconStyle   — optional inline style object for the icon wrapper
- *   title       — card title
- *   value       — primary value (string or number)
- *   valueStyle  — optional inline style for the value
- *   subLabel    — optional subtitle under the value
- *   btnLabel    — CTA button text
- *   onBtnClick  — CTA button click handler
- */
+// Card KPI refolosibil din dashboard-ul utilizatorului
+// Afișează un icon colorat, un titlu, valoarea principală și opțional un subtitlu + buton CTA
 export default function StatCard({ icon, iconClass, iconStyle, title, value, valueStyle, subLabel, btnLabel, onBtnClick }) {
     return (
         <div className="stat-card">

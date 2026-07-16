@@ -2,16 +2,13 @@ import { db } from '../db/db.js';
 import { carduriClienti, cardFidelitate, user, comenzi, locatiiPublice, tipuriBilete, bileteCumparate } from '../db/schema.js';
 import { eq, sql, and, desc } from 'drizzle-orm';
 
-/**
- * GET /api/reports/director/loyalty
- * Loyalty program efficiency report: user distribution by level + revenue impact
- */
+// Raport de eficiență a programului de fidelitate:
+// distribuția utilizatorilor pe niveluri de card, veniturile generate pe nivel și metricile de eficiență globală
 export const getLoyaltyReport = async (req, res) => {
     try {
-        // Get all card types for reference
         const cardTypes = await db.select().from(cardFidelitate);
 
-        // Get user distribution by card level
+        // Distribuția utilizatorilor: câți utilizatori au fiecare tip de card și câte puncte au acumulat
         const userDistribution = await db
             .select({
                 tipCard: carduriClienti.tipUnicCard,
@@ -22,7 +19,7 @@ export const getLoyaltyReport = async (req, res) => {
             .from(carduriClienti)
             .groupBy(carduriClienti.tipUnicCard);
 
-        // Get revenue per card level (from paid orders)
+        // Veniturile generate de utilizatorii din fiecare nivel de card (comenzi plătite)
         const revenueByLevel = await db
             .select({
                 tipCard: carduriClienti.tipUnicCard,
@@ -38,7 +35,7 @@ export const getLoyaltyReport = async (req, res) => {
             ))
             .groupBy(carduriClienti.tipUnicCard);
 
-        // Combine data with card type info
+        // Combinăm distribuția cu veniturile pentru fiecare tip de card
         const levelData = cardTypes.map(cardType => {
             const dist = userDistribution.find(d => d.tipCard === cardType.tipUnicCard) || {};
             const rev = revenueByLevel.find(r => r.tipCard === cardType.tipUnicCard) || {};
@@ -56,13 +53,12 @@ export const getLoyaltyReport = async (req, res) => {
             };
         });
 
-        // Calculate overall statistics
         const totalUsers = levelData.reduce((sum, l) => sum + l.userCount, 0);
         const totalRevenue = levelData.reduce((sum, l) => sum + l.totalRevenue, 0);
         const totalOrders = levelData.reduce((sum, l) => sum + l.orderCount, 0);
         const totalPoints = levelData.reduce((sum, l) => sum + l.totalPoints, 0);
 
-        // Calculate percentage distribution
+        // Adăugăm procentajele de distribuție per nivel
         const distributionWithPercentages = levelData.map(level => ({
             ...level,
             userPercentage: totalUsers > 0 ? ((level.userCount / totalUsers) * 100).toFixed(1) : 0,
@@ -70,7 +66,7 @@ export const getLoyaltyReport = async (req, res) => {
             revenuePerUser: level.userCount > 0 ? (level.totalRevenue / level.userCount).toFixed(2) : 0,
         }));
 
-        // Calculate loyalty program efficiency metrics
+        // Calculăm metrici de eficiență: premium = Silver, Gold, Platinum
         const premiumUsers = levelData
             .filter(l => ['SILVER', 'GOLD', 'PLATINUM'].includes(l.tipCard))
             .reduce((sum, l) => sum + l.userCount, 0);
@@ -93,7 +89,7 @@ export const getLoyaltyReport = async (req, res) => {
                 : 'N/A',
         };
 
-        // Generate insights
+        // Generăm insight-uri automate bazate pe datele calculate
         const insights = [];
 
         if (parseFloat(efficiency.premiumRevenuePercentage) > parseFloat(efficiency.premiumUserPercentage)) {
@@ -137,19 +133,13 @@ export const getLoyaltyReport = async (req, res) => {
     }
 };
 
-/**
- * GET /api/reports/director/location-performance
- * Location performance analysis by ticket sales
- */
+// Raport de performanță a locațiilor: bilete vândute, venituri și distribuția pe tipuri de bilete
+// Calculul se face în JS (nu SQL pur) pentru a suporta agregarea complexă fără ORM joins multiple
 export const getLocationPerformance = async (req, res) => {
     try {
-        // Get all locations
         const allLocations = await db.select().from(locatiiPublice);
-
-        // Get all ticket types
         const allTicketTypes = await db.select().from(tipuriBilete);
 
-        // Get all purchased tickets with paid orders
         const purchasedTickets = await db
             .select({
                 codUnicTipBilet: bileteCumparate.codUnicTipBilet,
@@ -158,22 +148,18 @@ export const getLocationPerformance = async (req, res) => {
             })
             .from(bileteCumparate);
 
-        // Get all paid orders
         const paidOrders = await db
             .select()
             .from(comenzi)
             .where(eq(comenzi.statusPlata, 'Plătit'));
 
-        // Create a map of paid order numbers
         const paidOrderNumbers = new Set(paidOrders.map(o => o.numarComanda));
 
-        // Calculate tickets sold per location (only from paid orders)
+        // Calculăm biletele vândute și veniturile pentru fiecare locație
         const locationStats = allLocations.map(loc => {
-            // Get ticket types for this location
             const locationTicketTypes = allTicketTypes.filter(t => t.codUnicLocatie === loc.codUnicLocatie);
             const ticketTypeIds = new Set(locationTicketTypes.map(t => t.codUnicTipBilet));
 
-            // Get purchased tickets for these ticket types from paid orders
             let totalTickets = 0;
             let totalRevenue = 0;
             const orderSet = new Set();
@@ -183,7 +169,6 @@ export const getLocationPerformance = async (req, res) => {
                     totalTickets += pt.cantitate || 0;
                     orderSet.add(pt.numarComanda);
 
-                    // Find the ticket price
                     const ticketType = locationTicketTypes.find(t => t.codUnicTipBilet === pt.codUnicTipBilet);
                     if (ticketType) {
                         totalRevenue += (ticketType.pret || 0) * (pt.cantitate || 0);
@@ -212,14 +197,11 @@ export const getLocationPerformance = async (req, res) => {
             };
         });
 
-        // Sort by tickets sold (descending)
         locationStats.sort((a, b) => b.totalTickets - a.totalTickets);
 
-        // Calculate totals
         const totalTicketsAll = locationStats.reduce((sum, loc) => sum + loc.totalTickets, 0);
         const totalRevenueAll = locationStats.reduce((sum, loc) => sum + loc.totalRevenue, 0);
 
-        // Enrich with percentages and rank
         const enrichedLocationData = locationStats.map((loc, index) => ({
             rank: index + 1,
             ...loc,
@@ -228,15 +210,12 @@ export const getLocationPerformance = async (req, res) => {
             avgRevenuePerTicket: loc.totalTickets > 0 ? (loc.totalRevenue / loc.totalTickets).toFixed(2) : 0,
         }));
 
-        // Top 3 performers
         const topPerformers = enrichedLocationData.slice(0, 3);
-
-        // Underperformers (0 tickets)
         const underperformers = enrichedLocationData.filter(loc => loc.totalTickets === 0);
-
-        // Insights
-        const insights = [];
         const avgTicketsPerLocation = totalTicketsAll / allLocations.length || 0;
+
+        // Insight-uri automate: cel mai bun performer, locații fără vânzări, locații peste medie
+        const insights = [];
 
         if (topPerformers.length > 0 && topPerformers[0].totalTickets > 0) {
             insights.push({
@@ -244,14 +223,12 @@ export const getLocationPerformance = async (req, res) => {
                 message: `"${topPerformers[0].numeLoc}" este liderul cu ${topPerformers[0].totalTickets} bilete vândute (${topPerformers[0].ticketPercentage}% din total).`,
             });
         }
-
         if (underperformers.length > 0) {
             insights.push({
                 type: 'action',
                 message: `${underperformers.length} locații nu au înregistrat vânzări - necesită promovare suplimentară.`,
             });
         }
-
         const aboveAverage = enrichedLocationData.filter(loc => loc.totalTickets > avgTicketsPerLocation);
         if (aboveAverage.length > 0 && avgTicketsPerLocation > 0) {
             insights.push({

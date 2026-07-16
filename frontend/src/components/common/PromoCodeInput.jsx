@@ -1,17 +1,7 @@
 import { Tag } from 'lucide-react';
 
-/**
- * Promo code input with apply / remove states.
- *
- * Props:
- *  - promoCode       (string)
- *  - onCodeChange    (value)
- *  - onApply         ()
- *  - onRemove        ()
- *  - appliedPromo    (object|null) – set when a promo is active
- *  - isApplying      (bool)
- *  - error           (string)
- */
+// Input pentru codul promoțional din pagina de checkout
+// Are două stări: câmp liber (cu buton Aplică) și cod aplicat (cu buton Șterge)
 export default function PromoCodeInput({
     promoCode,
     onCodeChange,
@@ -34,6 +24,7 @@ export default function PromoCodeInput({
                             type="text"
                             placeholder="Ex: ART-X9B2"
                             value={promoCode}
+                            // Forțăm uppercase automat pentru un UX mai curat
                             onChange={e => onCodeChange(e.target.value.toUpperCase())}
                             style={{
                                 flex: 1, padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
@@ -55,6 +46,7 @@ export default function PromoCodeInput({
                     )}
                 </>
             ) : (
+                // Codul aplicat cu succes — afișăm un banner verde cu buton de ștergere
                 <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '0.75rem 1rem', background: '#ecfdf5',

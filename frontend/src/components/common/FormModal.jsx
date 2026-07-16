@@ -1,19 +1,7 @@
 import { X, Save } from 'lucide-react';
 
-/**
- * Generic modal wrapper for create/edit forms.
- *
- * Props:
- *  - show        (bool)     – mount guard; renders nothing when false
- *  - title       (string)   – modal heading
- *  - onClose     ()         – called when overlay / X / Anulează is clicked
- *  - onSubmit    (e)        – form submit handler
- *  - saving      (bool)     – disables submit, shows spinner text
- *  - error       (string)   – validation / API error shown above actions
- *  - children    (ReactNode)– form fields
- *  - submitLabel (string)   – custom submit label (default "Salvează")
- *  - wide        (bool)     – wider modal (max-width 720px)
- */
+// Modal generic pentru formularele de creare și editare
+// Afișează un overlay cu form, mesaj de eroare și butoanele Anulează/Salvează
 export default function FormModal({
     show,
     title,
@@ -31,6 +19,7 @@ export default function FormModal({
         <div className="modal-overlay" onClick={onClose}>
             <div
                 className="modal-box"
+                // Prop-ul wide permite un modal mai lat pentru formulare complexe (ex. creare eveniment)
                 style={wide ? { maxWidth: '720px' } : undefined}
                 onClick={e => e.stopPropagation()}
             >

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useSession } from '../../lib/auth';
 import { Ticket, Star, CreditCard, CalendarCheck } from 'lucide-react';
 
-// Dashboard sub-components (single responsibility, reusable)
+// Sub-componentele dashboard-ului — separate pentru reutilizare și lizibilitate
 import StatCard from '../../components/dashboard/StatCard';
 import InterestsPanel from '../../components/dashboard/InterestsPanel';
 import FavoritesPanel from '../../components/dashboard/FavoritesPanel';
@@ -13,6 +13,7 @@ import './UserDashboard.css';
 
 const API = 'http://localhost:5000';
 
+// Culori per tier de card de fidelitate — folosite pentru iconița StatCard
 const TIER_COLORS = {
     BRONZE: '#cd7f32',
     SILVER: '#94a3b8',
@@ -35,6 +36,7 @@ export default function UserDashboard() {
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Încărcăm toate datele în paralel cu Promise.all pentru a minimiza timpul de așteptare
     useEffect(() => {
         if (!session) return;
         (async () => {
@@ -64,6 +66,7 @@ export default function UserDashboard() {
     if (!session) return null;
     if (loading) return <div className="dashboard-loading">Se încarcă profilul tău...</div>;
 
+    // Culoarea iconului de card variază dinamic în funcție de tier-ul utilizatorului
     const tierColor = card ? (TIER_COLORS[card.tipUnicCard] || '#94a3b8') : '#94a3b8';
 
     return (
@@ -73,7 +76,7 @@ export default function UserDashboard() {
                 <p>Acesta este panoul tău de control personal.</p>
             </header>
 
-            {/* ── Stat cards ── */}
+            {/* Cardurile KPI — statistici rapide despre activitatea utilizatorului */}
             <div className="dashboard-stats-grid">
                 <StatCard
                     icon={<Ticket size={24} />}
@@ -111,7 +114,7 @@ export default function UserDashboard() {
                 />
             </div>
 
-            {/* ── Expanded panels ── */}
+            {/* Panouri expandate cu interese și favorite */}
             <div className="dashboard-content-grid">
                 <InterestsPanel
                     interests={interests}

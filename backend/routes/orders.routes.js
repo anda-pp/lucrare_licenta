@@ -4,7 +4,7 @@ import { requireAuth, requireSuperadmin } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-// All routes require authentication
+// Gestionarea comenzilor — exclusiv superadmin (vizualizare globală + actualizare status)
 router.use(requireAuth);
 router.use(requireSuperadmin);
 

@@ -12,17 +12,15 @@ import { updateUserLoyaltyPoints } from '../services/loyaltyPoints.service.js';
 
 const router = express.Router();
 
-// Lazy init — dotenv loads after ESM imports are hoisted
+// Inițializăm Stripe lazy — variabilele de mediu nu sunt disponibile înainte ca ESM să fie hoisted
 let _stripe;
 function getStripe() {
     if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     return _stripe;
 }
 
-/**
- * POST /api/stripe/create-payment-intent
- * Creates a PaymentIntent and returns clientSecret for embedded Stripe Elements
- */
+// Creează un PaymentIntent Stripe și returnează clientSecret pentru Stripe Elements
+// Prețurile se calculează server-side din DB — nu putem lăsa clientul să dicteze suma
 router.post('/create-payment-intent', requireAuth, async (req, res) => {
     try {
         const { locationId, tickets, promoCode, dataVizita } = req.body;
@@ -31,7 +29,7 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Date invalide' });
         }
 
-        // Calculate total from DB prices (server-side, tamper-proof)
+        // Calculăm totalul din prețurile din DB (în bani, pentru Stripe)
         let totalBani = 0;
         const validTickets = [];
 
@@ -52,7 +50,8 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Nu au fost găsite bilete valide' });
         }
 
-        // Apply promo discount if present
+        // Aplicăm discountul din codul promoțional dacă există
+        // Verificăm și că voucherul nu a expirat (maxim 30 de zile de la revendicare)
         let promoDetails = null;
         if (promoCode) {
             const voucherRes = await db.select({
@@ -88,6 +87,7 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
             promoDetails = voucher;
             const valoare = parseFloat(voucher.valoare) || 0;
 
+            // Aplicăm tipul de reducere: procentaj, sumă fixă sau gratuitate totală
             if (voucher.tip === 'reducere' || voucher.tip === 'Procentaj' || voucher.tip === 'reducere_%') {
                 totalBani = Math.round(totalBani * (1 - valoare / 100));
             } else if (voucher.tip === 'voucher' || voucher.tip === 'SumaFixa' || voucher.tip === 'reducere_fixa') {
@@ -97,10 +97,10 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
             }
         }
 
-        // Minimum 50 bani (Stripe requirement)
+        // Stripe necesită minimum 50 de bani pentru un PaymentIntent
         if (totalBani < 50) totalBani = 50;
 
-        // Create PaymentIntent
+        // Metadatele PaymentIntent sunt folosite de webhook la procesarea comenzii
         const paymentIntent = await getStripe().paymentIntents.create({
             amount: totalBani,
             currency: 'ron',
@@ -126,11 +126,9 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/stripe/webhook
- * Handles Stripe events — creates the order after successful PaymentIntent confirmation
- * Must use raw body (express.raw) — configured in server.js
- */
+// Webhook Stripe — procesează evenimentele asincron după confirmarea plății
+// Folosește body raw (configurat în server.js) pentru verificarea semnăturii Stripe
+// La payment_intent.succeeded: creăm comanda, biletele, factura, acordăm puncte și marcăm voucherul folosit
 router.post('/webhook', async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
@@ -153,7 +151,7 @@ router.post('/webhook', async (req, res) => {
             const dataVizita = meta.dataVizita || null;
             const finalTotal = pi.amount / 100;
 
-            // 1. Create Order
+            // 1. Creăm comanda cu status Plătit
             const [newOrder] = await db.insert(comenzi).values({
                 codUnicUtilizator: userId,
                 totalPlata: finalTotal,
@@ -161,7 +159,7 @@ router.post('/webhook', async (req, res) => {
                 statusComanda: 'Activă',
             }).returning({ id: comenzi.numarComanda });
 
-            // 2. Insert Tickets
+            // 2. Inserăm biletele cumpărate legate de comandă
             const ticketInserts = tickets
                 .filter(t => t.cantitate > 0)
                 .map(t => ({
@@ -176,7 +174,7 @@ router.post('/webhook', async (req, res) => {
                 await db.insert(bileteCumparate).values(ticketInserts);
             }
 
-            // 3. Create Invoice
+            // 3. Generăm factura automată
             const serie = 'FCT-' + Math.floor(Math.random() * 10000);
             await db.insert(facturi).values({
                 numarComanda: newOrder.id,
@@ -186,12 +184,12 @@ router.post('/webhook', async (req, res) => {
                 totalFactura: finalTotal,
             });
 
-            // 4. Award loyalty points (1 RON = 1 punct, auto-upgrade card tier)
+            // 4. Acordăm puncte de fidelitate și upgradăm cardul dacă e cazul
             if (finalTotal > 0) {
                 await updateUserLoyaltyPoints(userId, finalTotal);
             }
 
-            // 5. Mark promo code as used
+            // 5. Marcăm voucherul ca folosit pentru a preveni reutilizarea
             if (promoId) {
                 await db.update(recompenzeRevendicate)
                     .set({ status: 'folosit' })

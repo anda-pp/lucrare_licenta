@@ -102,10 +102,46 @@
     color: #94a3b8;
 }
 
-.delete-image-btn {
+/* Cover badge — apare pe imaginea setată ca cover */
+.cover-badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    background: #f59e0b;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+}
+
+.cover-image {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* Containerul butoanelor de acțiune (cover + delete) */
+.image-actions {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-card:hover .image-actions {
+    opacity: 1;
+}
+
+.delete-image-btn {
     width: 32px;
     height: 32px;
     background: rgba(255, 255, 255, 0.95);
@@ -113,7 +149,6 @@
     border-radius: 50%;
     cursor: pointer;
     font-size: 1rem;
-    opacity: 0;
     transition: all 0.2s ease;
     color: #64748b;
     display: flex;
@@ -121,15 +156,34 @@
     justify-content: center;
 }
 
-.image-card:hover .delete-image-btn {
-    opacity: 1;
-}
-
 .delete-image-btn:hover {
-    background: #0f172a;
+    background: #ef4444;
     color: white;
     transform: scale(1.1);
-    border-color: #0f172a;
+    border-color: #ef4444;
+}
+
+.set-cover-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.6rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.set-cover-btn:hover {
+    background: #f59e0b;
+    color: white;
+    border-color: #f59e0b;
+    transform: scale(1.05);
 }
 
 /* Empty State */
@@ -245,6 +299,18 @@
     background: var(--color-danger, #ef4444);
     border-color: var(--color-danger, #ef4444);
     color: #ffffff;
+}
+
+.dark-theme .gallery-modal .set-cover-btn {
+    background: rgba(30, 27, 75, 0.9);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.dark-theme .gallery-modal .set-cover-btn:hover {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
 }
 
 .dark-theme .gallery-modal .empty-gallery {

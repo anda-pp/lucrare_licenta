@@ -14,9 +14,9 @@ export default function Events() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCity, setFilterCity] = useState('');
-    // Set of event IDs the user is interested in
+    // Set cu ID-urile evenimentelor marcate de interes de utilizatorul curent
     const [interestedIds, setInterestedIds] = useState(new Set());
-    const [toggling, setToggling] = useState(null); // id of event being toggled
+    const [toggling, setToggling] = useState(null);
 
     useEffect(() => {
         fetchEvents();
@@ -73,6 +73,7 @@ export default function Events() {
 
     const cities = [...new Set(events.map(e => e.orasLocatie).filter(Boolean))];
 
+    // Excludem evenimentele de tip "Noaptea Muzeelor" — au secțiunea lor dedicată
     const filteredEvents = events.filter(event => {
         if (event.tipEveniment === 'Noaptea Muzeelor') return false;
 
@@ -153,6 +154,7 @@ export default function Events() {
                                     </p>
                                     <div className="event-actions">
                                         <button className="view-details-btn" onClick={() => navigate(`/user/events/${event.id}`)}>Vezi Detalii</button>
+                                        {/* Butonul de interes apare doar dacă utilizatorul este autentificat */}
                                         {session && (
                                             <button
                                                 className={`interest-btn ${isInterested ? 'interested' : ''}`}

@@ -27,6 +27,7 @@ export default function TrailsAdmin() {
 
     useEffect(() => { fetchData(); }, []);
 
+    // Încărcăm traseele și locațiile în paralel — locațiile sunt necesare pentru formularul de editare
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -49,6 +50,7 @@ export default function TrailsAdmin() {
                 durataEstimata: trail.durataEstimata || 120, oras: trail.oras || '',
                 imagineUrl: trail.imagineUrl || '',
                 activ: trail.activ === 1 || trail.activ === true,
+                // Extragem doar codurile unice pentru a simplifica manipularea listei de locații
                 locatiiValide: trail.locatii ? trail.locatii.map(l => l.codUnicLocatie) : []
             });
         } else {
@@ -90,6 +92,7 @@ export default function TrailsAdmin() {
         }
     };
 
+    // Adăugăm locația la traseu doar dacă nu e deja inclusă — prevenim duplicate
     const addLocationToTrail = (codUnic) => {
         if (!codUnic || formData.locatiiValide.includes(codUnic)) return;
         setFormData(prev => ({ ...prev, locatiiValide: [...prev.locatiiValide, codUnic] }));
@@ -133,6 +136,7 @@ export default function TrailsAdmin() {
                             <tr key={t.id} className={!t.activ ? 'row-inactive' : ''}>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        {/* Thumbnail cover — fundal solid dacă nu există imagine */}
                                         <div style={{
                                             width: 50, height: 50, borderRadius: 8,
                                             background: t.imagineUrl ? `url(${t.imagineUrl}) center/cover` : '#e2e8f0'
@@ -217,6 +221,7 @@ export default function TrailsAdmin() {
                                     <li key={`${cod}-${idx}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'var(--color-input-bg)', borderRadius: 6 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <strong style={{ color: 'var(--color-primary)' }}>{idx + 1}.</strong>
+                                            {/* Afișăm numele locației dacă e disponibil, altfel codul */}
                                             <span>{locFull ? locFull.numeLoc : cod}</span>
                                         </div>
                                         <button type="button" onClick={() => removeLocationFromTrail(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }}>X</button>
@@ -227,6 +232,7 @@ export default function TrailsAdmin() {
                     ) : (
                         <div className="text-muted text-sm" style={{ margin: '1rem 0' }}>Nicio locație adăugată încă.</div>
                     )}
+                    {/* Selectăm o locație din dropdown și o adăugăm la traseu — input-ul se resetează automat */}
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <select style={{ flex: 1 }} defaultValue="" onChange={(e) => { if (e.target.value) { addLocationToTrail(e.target.value); e.target.value = ""; } }}>
                             <option value="" disabled>-- Selectează un muzeu / locație --</option>

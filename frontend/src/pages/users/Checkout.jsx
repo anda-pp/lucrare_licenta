@@ -9,9 +9,10 @@ import PromoCodeInput from '../../components/common/PromoCodeInput';
 import './Checkout.css';
 
 const API = 'http://localhost:5000';
+// Inițializăm Stripe o singură dată la nivelul modulului pentru a evita re-crearea obiectului
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PK);
 
-// ─── Inner form that uses Stripe hooks ───────────────────────────────────────
+// Componenta internă de formular Stripe — necesită contextul Elements pentru useStripe/useElements
 function StripePaymentForm({ finalTotal, onSuccess }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -25,6 +26,7 @@ function StripePaymentForm({ finalTotal, onSuccess }) {
         setIsProcessing(true);
         setErrorMsg('');
 
+        // redirect: 'if_required' → nu redirecționăm dacă plata e finalizată direct (fără 3DS)
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             confirmParams: { return_url: `${window.location.origin}/user/payment/success` },
@@ -61,7 +63,7 @@ function StripePaymentForm({ finalTotal, onSuccess }) {
     );
 }
 
-// ─── Main Checkout component ──────────────────────────────────────────────────
+// Pagina de checkout cu sumar comandă, câmp cod promoțional și plată embedded Stripe
 export default function Checkout() {
     const { state } = useLocation();
     const navigate = useNavigate();
@@ -76,6 +78,7 @@ export default function Checkout() {
     const [promoError, setPromoError] = useState('');
     const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
+    // Dacă nu există state de navigare (acces direct la rută), redirecționăm la locații
     useEffect(() => {
         if (!state || !state.tickets || state.tickets.length === 0) {
             navigate('/user/locations');
@@ -86,6 +89,8 @@ export default function Checkout() {
 
     const { locationId, tickets, total, dataVizita } = state;
 
+    // Calculăm totalul final aplicând reducerea promovată client-side pentru preview
+    // Totalul real e recalculat server-side în create-payment-intent
     let finalTotal = total;
     if (appliedPromo) {
         const valoare = parseFloat(appliedPromo.valoare) || 0;
@@ -106,6 +111,7 @@ export default function Checkout() {
             const res = await axios.post(`${API}/api/users/checkout/validate-promo`, { promoCode }, { withCredentials: true });
             if (res.data.success) {
                 setAppliedPromo(res.data.data);
+                // Resetăm clientSecret dacă există — promo schimbă suma, trebuie un nou PaymentIntent
                 setClientSecret('');
             }
         } catch (err) {
@@ -116,6 +122,7 @@ export default function Checkout() {
         }
     };
 
+    // Creăm PaymentIntent-ul la Stripe când utilizatorul apasă "Continuă spre plată"
     const handleCreateIntent = async () => {
         setIsLoadingIntent(true);
         setIntentError('');
@@ -133,7 +140,7 @@ export default function Checkout() {
         }
     };
 
-    // ── Success screen ────────────────────────────────────────────────────────
+    // Ecranul de succes afișat după finalizarea plății prin Stripe Elements
     if (isSuccess) {
         return (
             <div className="checkout-page success-container">
@@ -149,6 +156,7 @@ export default function Checkout() {
         );
     }
 
+    // Tema Stripe customizată să se potrivească cu paleta violet a aplicației
     const stripeAppearance = {
         theme: 'stripe',
         variables: {
@@ -165,7 +173,7 @@ export default function Checkout() {
             </button>
 
             <div className="checkout-layout">
-                {/* Left Column: Order Summary */}
+                {/* Coloana stângă: sumar comandă cu cod promoțional */}
                 <div className="checkout-summary-col">
                     <OrderSummaryCard
                         tickets={tickets}
@@ -186,7 +194,7 @@ export default function Checkout() {
                     </OrderSummaryCard>
                 </div>
 
-                {/* Right Column: Embedded Stripe */}
+                {/* Coloana dreaptă: formularul de plată Stripe embedded */}
                 <div className="checkout-form-col">
                     <div className="checkout-card">
                         <div className="checkout-card-header">
@@ -197,6 +205,7 @@ export default function Checkout() {
                         <div style={{ marginTop: '1.5rem' }}>
                             {!clientSecret ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {/* Card de test Stripe — util în development */}
                                     <div style={{ background: 'var(--color-input-bg)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid var(--color-border)', fontSize: '0.88rem', color: 'var(--color-text-muted)' }}>
                                         Card test: <code style={{ background: 'rgba(147,51,234,0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px', color: 'var(--color-primary)', fontWeight: 600 }}>4242 4242 4242 4242</code> · Orice dată viitoare · Orice CVV
                                     </div>

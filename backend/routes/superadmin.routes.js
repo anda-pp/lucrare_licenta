@@ -9,12 +9,10 @@ import { sendNoapteaMuzeelorReminder } from '../lib/mailer.js';
 
 const router = express.Router();
 
-/**
- * GET /api/superadmin/staff
- * Obține lista tuturor Adminilor și Personalului
- */
+// Listează toți utilizatorii cu rol Admin sau Personal
 router.get('/staff', requireSuperadmin, async (req, res) => {
     try {
+        // Extragem prenumele și numele din câmpul `name` al BetterAuth prin SQL
         const staffList = await db.select({
             codUnicUtilizator: user.id,
             numeUtil: sql`CASE WHEN instr(${user.name}, ' ') > 0 THEN substr(${user.name}, 1, instr(${user.name}, ' ') - 1) ELSE ${user.name} END`.as('numeUtil'),
@@ -36,10 +34,9 @@ router.get('/staff', requireSuperadmin, async (req, res) => {
     }
 });
 
-/**
- * POST /api/superadmin/staff
- * Creează un nou cont de Admin/Personal pentru un muzeu (LocatiePublica)
- */
+// Creare cont nou de Admin sau Personal pentru un muzeu specific
+// Contul se creează prin BetterAuth (pentru hash corect al parolei), după care
+// actualizăm manual rolul, muzeuId și telefonul din tabela user
 router.post('/staff', requireAuth, requireSuperadmin, async (req, res) => {
     try {
         const { nume, prenume, email, telefon, password, rol, muzeuId } = req.body;
@@ -51,13 +48,12 @@ router.post('/staff', requireAuth, requireSuperadmin, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Rol invalid.' });
         }
 
-        // Verifică email unic
+        // Verificăm că emailul nu există deja
         const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
         if (existing.length > 0) {
             return res.status(400).json({ success: false, error: 'Există deja un cont cu acest email.' });
         }
 
-        // Creare cont prin BetterAuth (parolă hash corect)
         let authRes;
         try {
             authRes = await auth.api.signUpEmail({
@@ -70,7 +66,7 @@ router.post('/staff', requireAuth, requireSuperadmin, async (req, res) => {
 
         const newUserId = authRes.user.id;
 
-        // Setează rol, muzeu și telefon
+        // Setăm rolul, muzeul alocat și telefonul după ce contul BetterAuth a fost creat
         await db.update(user)
             .set({ role: rol, muzeuId: muzeuId || null, telefon: telefon || null })
             .where(eq(user.id, newUserId));
@@ -82,6 +78,7 @@ router.post('/staff', requireAuth, requireSuperadmin, async (req, res) => {
     }
 });
 
+// Editare cont de staff — actualizăm datele și, dacă s-a furnizat, parola (cu hash)
 router.put('/staff/:id', requireAuth, requireSuperadmin, async (req, res) => {
     try {
         const { id } = req.params;
@@ -96,7 +93,7 @@ router.put('/staff/:id', requireAuth, requireSuperadmin, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Contul nu a fost găsit.' });
         }
 
-        // Verifică unicitatea emailului dacă a fost schimbat
+        // Dacă emailul s-a schimbat, verificăm să nu fie deja folosit
         if (email && email !== existing[0].email) {
             const duplicate = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
             if (duplicate.length > 0) {
@@ -118,7 +115,7 @@ router.put('/staff/:id', requireAuth, requireSuperadmin, async (req, res) => {
             .set(updateFields)
             .where(eq(user.id, id));
 
-        // Actualizează parola dacă a fost furnizată
+        // Actualizăm parola direct în tabela account (cu hash din better-auth)
         if (password && password.trim().length >= 6) {
             const hashedPassword = await hashPassword(password);
             await db.update(account)
@@ -133,6 +130,7 @@ router.put('/staff/:id', requireAuth, requireSuperadmin, async (req, res) => {
     }
 });
 
+// Ștergere cont de staff — dezactivăm temporar FK pentru a evita erori de cascade din sesiuni active
 router.delete('/staff/:id', requireSuperadmin, async (req, res) => {
     try {
         const { id } = req.params;
@@ -142,7 +140,6 @@ router.delete('/staff/:id', requireSuperadmin, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Contul nu a fost găsit.' });
         }
 
-        // Dezactivăm FK temporar pentru a evita cascade-uri din sesiuni active
         await db.run(sql`PRAGMA foreign_keys = OFF`);
         try {
             await db.delete(account).where(eq(account.userId, id)).run();
@@ -159,13 +156,10 @@ router.delete('/staff/:id', requireSuperadmin, async (req, res) => {
     }
 });
 
-/**
- * POST /api/superadmin/notify-noaptea-muzeelor
- * Send Noaptea Muzeelor reminder to all users (manual trigger)
- */
+// Declanșare manuală a notificărilor pentru Noaptea Muzeelor
+// Găsim toate evenimentele de tip Noaptea Muzeelor viitoare și trimitem email tuturor utilizatorilor
 router.post('/notify-noaptea-muzeelor', requireSuperadmin, async (req, res) => {
     try {
-        // Find upcoming Noaptea Muzeelor events
         const now = Math.floor(Date.now() / 1000);
         const nmEvents = await db.select({
             titlu: evenimente.titlu,

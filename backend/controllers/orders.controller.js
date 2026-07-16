@@ -2,10 +2,7 @@ import { db } from '../db/db.js';
 import { comenzi, user, locatiiPublice, bileteCumparate, tipuriBilete, facturi } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 
-/**
- * GET /api/orders
- * Get all orders with user info
- */
+// Returnează toate comenzile din platformă cu informații despre utilizator
 export const getAllOrders = async (req, res) => {
     try {
         const orders = await db
@@ -37,10 +34,7 @@ export const getAllOrders = async (req, res) => {
     }
 };
 
-/**
- * GET /api/orders/:id
- * Get order details with tickets
- */
+// Returnează detaliile unei comenzi specifice: biletele cumpărate și factura aferentă
 export const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -68,6 +62,7 @@ export const getOrderById = async (req, res) => {
             });
         }
 
+        // Biletele individuale din comandă cu tipul, prețul și locația
         const tickets = await db
             .select({
                 nrBiletCumparat: bileteCumparate.nrBiletCumparat,
@@ -104,10 +99,7 @@ export const getOrderById = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/orders/:id/status
- * Toggle order status between Activă and Anulată (Admin only)
- */
+// Actualizează statusul unei comenzi (Activă ↔ Anulată) — numai admin
 export const updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;

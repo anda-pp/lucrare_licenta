@@ -13,10 +13,7 @@ import { sendOrderConfirmation } from '../lib/mailer.js';
 
 const router = express.Router();
 
-/**
- * GET /api/users/me
- * Get current authenticated user
- */
+// Returnează profilul utilizatorului curent (injectat de BetterAuth în req.user)
 router.get('/me', requireAuth, async (req, res) => {
     try {
         res.json({ success: true, user: req.user });
@@ -25,10 +22,7 @@ router.get('/me', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users/my-orders
- * Get orders belonging to the current logged-in user
- */
+// Returnează toate comenzile plasate de utilizatorul curent, ordonate descrescător
 router.get('/my-orders', requireAuth, async (req, res) => {
     try {
         const orders = await db
@@ -44,16 +38,13 @@ router.get('/my-orders', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/checkout/validate-promo
- * Validate a user's promo code before checkout
- */
+// Validare cod promoțional înainte de checkout — verificăm că e activ și neexpirat (max 30 zile)
+// Dacă a expirat, îl marcăm în DB ca 'expirat' pentru a nu mai fi verificat ulterior
 router.post('/checkout/validate-promo', requireAuth, async (req, res) => {
     try {
         const { promoCode } = req.body;
         if (!promoCode) return res.status(400).json({ success: false, error: 'Cod promoțional lipsă' });
 
-        // Extragem detaliile voucherului și ale recompensei asociate
         const voucherRes = await db.select({
             id: recompenzeRevendicate.id,
             status: recompenzeRevendicate.status,
@@ -78,10 +69,8 @@ router.post('/checkout/validate-promo', requireAuth, async (req, res) => {
 
         const voucher = voucherRes[0];
 
-        // Verificam daca a expirat (mai vechi de 30 de zile)
         const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
         if (voucher.dataRevendicarii < thirtyDaysAgo) {
-            // Optional: îl putem marca și în DB ca 'expirat' aici
             await db.update(recompenzeRevendicate)
                 .set({ status: 'expirat' })
                 .where(eq(recompenzeRevendicate.id, voucher.id));
@@ -105,10 +94,12 @@ router.post('/checkout/validate-promo', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/checkout
- * Process ticket purchase and create order
- */
+// Procesare comandă (checkout manual fără Stripe):
+// 1. Recalculăm totalul server-side din prețurile din DB (prețurile din frontend nu se acceptă)
+// 2. Aplicăm reducerea din codul promoțional dacă există și e valid
+// 3. Creăm comanda, biletele și factura în DB
+// 4. Acordăm puncte de fidelitate și marcăm voucherul ca folosit
+// 5. Trimitem email de confirmare cu PDF atașat (fire-and-forget)
 router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, res) => {
     try {
         const { locationId, tickets, promoCode, dataVizita } = req.body;
@@ -117,7 +108,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
             return res.status(400).json({ success: false, error: 'Date invalide' });
         }
 
-        // Recalculate total server-side from DB prices (prevents price manipulation)
+        // Calculăm totalul din prețurile din DB — nu acceptăm prețurile din request
         let calculatedTotal = 0;
         const validTickets = [];
         for (const t of tickets) {
@@ -138,7 +129,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
         let finalTotal = calculatedTotal;
         let voucherIdFolosit = null;
 
-        // Validam si Aplicam Promo Code daca exista
+        // Aplicăm codul promoțional dacă e furnizat — verificăm validitate și expirare
         if (promoCode) {
             const voucherRes = await db.select({
                 id: recompenzeRevendicate.id,
@@ -163,7 +154,6 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
 
             const voucher = voucherRes[0];
 
-            // Verificam daca a expirat (mai vechi de 30 de zile) la momentul plasarii comenzii
             const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
             if (voucher.dataRevendicarii < thirtyDaysAgo) {
                 await db.update(recompenzeRevendicate)
@@ -174,7 +164,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
 
             voucherIdFolosit = voucher.id;
 
-            // Calculare reducere
+            // Aplicăm tipul de reducere: procentaj, sumă fixă sau gratuitate totală
             const valoareReducere = parseFloat(voucher.valoare) || 0;
             if (voucher.tip === 'reducere' || voucher.tip === 'Procentaj' || voucher.tip === 'reducere_%') {
                 finalTotal = finalTotal - (finalTotal * (valoareReducere / 100));
@@ -185,15 +175,15 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
             }
         }
 
-        // 1. Create Order
+        // Pas 1: Creăm comanda
         const [newOrder] = await db.insert(comenzi).values({
             codUnicUtilizator: req.user.id,
-            totalPlata: finalTotal, // salvam totalul nou cu reducerea
+            totalPlata: finalTotal,
             statusPlata: 'Plătit',
             statusComanda: 'Activă'
         }).returning({ id: comenzi.numarComanda });
 
-        // 2. Insert Tickets
+        // Pas 2: Inserăm biletele individuale legate de comandă
         const ticketInserts = [];
         for (const t of validTickets) {
             if (t.cantitate > 0) {
@@ -211,7 +201,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
             await db.insert(bileteCumparate).values(ticketInserts);
         }
 
-        // 3. Create Invoice
+        // Pas 3: Generăm factura automată (seria FCT- + UUID)
         const serie = 'FCT-' + uuidv4().slice(0, 8).toUpperCase();
         await db.insert(facturi).values({
             numarComanda: newOrder.id,
@@ -221,12 +211,12 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
             totalFactura: finalTotal
         });
 
-        // 4. Acordare puncte fidelitate (1 leu cheltuit = 1 punct, auto-upgrade card tier)
+        // Pas 4: Acordăm puncte de fidelitate (1 leu cheltuit = 1 punct, auto-upgrade tier dacă e cazul)
         if (finalTotal > 0) {
             await updateUserLoyaltyPoints(req.user.id, finalTotal);
         }
 
-        // 5. Marcam Promo Code ca folosit
+        // Pas 5: Marcăm voucherul ca folosit pentru a preveni reutilizarea
         if (voucherIdFolosit) {
             await db.update(recompenzeRevendicate)
                 .set({ status: 'folosit' })
@@ -235,7 +225,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
 
         res.json({ success: true, message: 'Comandă plasată cu succes!', orderId: newOrder.id });
 
-        // 6. Send order confirmation email (fire-and-forget)
+        // Pas 6: Trimitem emailul de confirmare cu PDF bilet atașat (fire-and-forget)
         try {
             const [loc] = await db.select({ numeLoc: locatiiPublice.numeLoc })
                 .from(tipuriBilete)
@@ -251,7 +241,7 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
                 .leftJoin(tipuriBilete, eq(bileteCumparate.codUnicTipBilet, tipuriBilete.codUnicTipBilet))
                 .where(eq(bileteCumparate.numarComanda, newOrder.id));
 
-            // Generate PDF buffer for attachment
+            // Generăm PDF-ul biletului ca buffer pentru atașament email
             const pdfBuffer = await new Promise((resolve, reject) => {
                 const doc = new PDFDocument({ margin: 50, size: 'A4' });
                 const chunks = [];
@@ -290,16 +280,13 @@ router.post('/checkout', requireAuth, validateBody(checkoutSchema), async (req, 
     }
 });
 
-/**
- * GET /api/users/my-orders/:id/ticket
- * Download tickets for a specific order as PDF
- */
+// Generare PDF bilet de acces pentru o comandă plătită și activă
+// Fiecare tip de bilet generează o pagină separată cu QR code unic
 router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
     try {
         const orderId = parseInt(req.params.id, 10);
         if (isNaN(orderId)) return res.status(400).send('ID comandă invalid');
 
-        // Check if order belongs to user and is paid
         const orderInfo = await db.select().from(comenzi)
             .where(and(eq(comenzi.numarComanda, orderId), eq(comenzi.codUnicUtilizator, req.user.id)))
             .limit(1);
@@ -313,7 +300,6 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
             return res.status(400).send('Nu se pot emite bilete pentru o comandă neplătită sau anulată');
         }
 
-        // Fetch ticket details
         const tickets = await db.select({
             cantitate: bileteCumparate.cantitate,
             tipBilet: tipuriBilete.tipBilet,
@@ -330,7 +316,6 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
             return res.status(404).send('Nu au fost găsite bilete pentru această comandă');
         }
 
-        // Create PDF with better defaults
         const doc = new PDFDocument({
             margin: 50,
             size: 'A4',
@@ -340,36 +325,32 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
             }
         });
 
-        // Set response headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Bilete_Comanda_${orderId}.pdf`);
 
-        doc.pipe(res); // Stream directly to HTTP response
+        doc.pipe(res);
 
         const userName = req.user.numeComplet || 'Vizitator';
 
-        // Helper function to remove diacritics
+        // PDFKit nu suportă caractere diacritice native — normalizăm textul înainte de a-l scrie
         const normalizeText = (text) => {
             if (!text) return '';
             return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i').replace(/ș/g, 's').replace(/ț/g, 't').replace(/Ă/g, 'A').replace(/Â/g, 'A').replace(/Î/g, 'I').replace(/Ș/g, 'S').replace(/Ț/g, 'T');
         };
 
-        // Draw Ticket Content
+        // Fiecare tip de bilet = o pagină separată în PDF
         for (let i = 0; i < tickets.length; i++) {
             const t = tickets[i];
 
             if (i > 0) doc.addPage();
 
-            // Background / Border
             doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60)
                 .lineWidth(2)
                 .stroke('#1e293b');
 
-            // Header Section Background
             doc.rect(30, 30, doc.page.width - 60, 100)
                 .fill('#0f172a');
 
-            // Header Text
             doc.font('Helvetica-Bold')
                 .fontSize(28)
                 .fillColor('#ffffff')
@@ -380,13 +361,11 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
                 .fillColor('#94a3b8')
                 .text(normalizeText(t.numeLocatie || 'Locatie Nespecificata'), 0, 85, { align: 'center', width: doc.page.width });
 
-            // Main Content Area
             doc.moveDown(4);
 
             const leftX = 70;
             const rightX = doc.page.width - 220;
 
-            // Order Info (Left side)
             doc.font('Helvetica-Bold').fontSize(18).fillColor('#0f172a').text('Detalii Comanda', leftX, 170);
 
             doc.font('Helvetica-Bold').fontSize(12).fillColor('#64748b').text('Nume:', leftX, 205);
@@ -398,7 +377,6 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
             doc.font('Helvetica-Bold').fillColor('#64748b').text('Data:', leftX, 245);
             doc.font('Helvetica').fillColor('#1e293b').text(new Date(order.dataComanda).toLocaleDateString('ro-RO'), leftX + 80, 245);
 
-            // Ticket Info (Left side, lower)
             doc.font('Helvetica-Bold').fontSize(18).fillColor('#0f172a').text('Detalii Bilet', leftX, 300);
 
             doc.font('Helvetica-Bold').fontSize(12).fillColor('#64748b').text('Tip Bilet:', leftX, 335);
@@ -410,20 +388,17 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
             doc.font('Helvetica-Bold').fillColor('#64748b').text('Pret total:', leftX, 375);
             doc.font('Helvetica-Bold').fillColor('#10b981').text(`${(t.pret * t.cantitate).toFixed(2)} RON`, leftX + 80, 375);
 
-            // Generate QR Code
+            // Generăm QR code cu datele comenzii pentru scanare la intrare
             const qrData = JSON.stringify({ order: orderId, user: req.user.id, type: normalizeText(t.tipBilet), loc: t.codUnicLocatie });
             const qrImage = await QRCode.toDataURL(qrData, { margin: 1, width: 150, color: { dark: '#0f172a', light: '#ffffff' } });
 
-            // Draw QR Code Background & Image (Right side)
             doc.rect(rightX - 10, 160, 170, 190).fill('#f1f5f9');
             doc.image(qrImage, rightX, 170, { width: 150 });
             doc.font('Courier-Bold').fontSize(10).fillColor('#475569').text('SCANATI LA INTRARE', rightX, 330, { width: 150, align: 'center' });
 
-            // Cut Here Dashed Line
             doc.moveTo(30, 430).lineTo(doc.page.width - 30, 430).dash(5, { space: 5 }).stroke('#cbd5e1');
-            doc.undash(); // Important to reset
+            doc.undash();
 
-            // Terms & Conditions (Footer area)
             doc.font('Helvetica-Bold').fontSize(10).fillColor('#64748b').text('Termeni si Conditii', 70, 460);
             doc.font('Helvetica').fontSize(8).fillColor('#94a3b8').text(
                 '1. Acest bilet asigura unicul acces pentru numarul de persoane specificat.\n' +
@@ -433,7 +408,6 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
                 70, 480, { width: doc.page.width - 140, lineGap: 4 }
             );
 
-            // Absolute Footer
             doc.font('Helvetica').fontSize(9).fillColor('#cbd5e1')
                 .text('Aplicația de Licență - Sistem de Gestionare Muzee și Galerii © 2024', 0, doc.page.height - 60, { align: 'center', width: doc.page.width });
         }
@@ -448,19 +422,15 @@ router.get('/my-orders/:id/ticket', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/reviews
- * Create a review for a location
- */
+// Adăugare recenzie la o locație — un utilizator poate lăsa o singură recenzie per locație
 router.post('/reviews', requireAuth, validateBody(createReviewSchema), async (req, res) => {
     try {
         const { codUnicLocatie, rating, descriereRecenzie } = req.body;
 
-        // Check location exists
         const [loc] = await db.select().from(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, codUnicLocatie)).limit(1);
         if (!loc) return res.status(404).json({ success: false, error: 'Locația nu există.' });
 
-        // Check if user already reviewed this location
+        // Verificăm că nu a mai lăsat o recenzie la aceeași locație
         const existing = await db.select().from(recenzii)
             .where(and(eq(recenzii.codUnicUtilizator, req.user.id), eq(recenzii.codUnicLocatie, codUnicLocatie)))
             .limit(1);
@@ -484,10 +454,7 @@ router.post('/reviews', requireAuth, validateBody(createReviewSchema), async (re
     }
 });
 
-/**
- * GET /api/users/my-reviews
- * Get reviews written by the current logged-in user
- */
+// Returnează recenziile scrise de utilizatorul curent cu numele locației asociate
 router.get('/my-reviews', requireAuth, async (req, res) => {
     try {
         const reviews = await db
@@ -511,10 +478,7 @@ router.get('/my-reviews', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * PUT /api/users/my-reviews/:id
- * Edit an existing review
- */
+// Editare recenzie — verificăm că aparține utilizatorului curent prin where dublu
 router.put('/my-reviews/:id', requireAuth, validateBody(updateReviewSchema), async (req, res) => {
     try {
         const { id } = req.params;
@@ -539,10 +503,7 @@ router.put('/my-reviews/:id', requireAuth, validateBody(updateReviewSchema), asy
     }
 });
 
-/**
- * DELETE /api/users/my-reviews/:id
- * Delete a review
- */
+// Ștergere recenzie proprie — where dublu previne ștergerea recenziilor altor utilizatori
 router.delete('/my-reviews/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -561,10 +522,7 @@ router.delete('/my-reviews/:id', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users/my-card
- * Get the loyalty card for the current user
- */
+// Returnează cardul de fidelitate al utilizatorului curent cu detaliile tipului de card (beneficii, oferte)
 router.get('/my-card', requireAuth, async (req, res) => {
     try {
         const [card] = await db
@@ -588,10 +546,7 @@ router.get('/my-card', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users/my-favorites
- * Get favorite locations for the current user
- */
+// Returnează locațiile marcate ca favorite de utilizatorul curent
 router.get('/my-favorites', requireAuth, async (req, res) => {
     try {
         const favs = await db
@@ -614,10 +569,7 @@ router.get('/my-favorites', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/my-favorites/:locationId
- * Add location to favorites
- */
+// Adăugare locație la favorite — idempotent: dacă există deja, returnăm OK fără duplicate
 router.post('/my-favorites/:locationId', requireAuth, async (req, res) => {
     try {
         const { locationId } = req.params;
@@ -642,10 +594,7 @@ router.post('/my-favorites/:locationId', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * DELETE /api/users/my-favorites/:locationId
- * Remove location from favorites (only for current user)
- */
+// Eliminare locație din favorite — where dublu asigură că aparține utilizatorului curent
 router.delete('/my-favorites/:locationId', requireAuth, async (req, res) => {
     try {
         const { locationId } = req.params;
@@ -664,13 +613,9 @@ router.delete('/my-favorites/:locationId', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users
- * Get all users (Admin only)
- */
+// Stub endpoint — lista utilizatorilor e gestionată prin admin.controller.js, nu prin users.routes.js
 router.get('/', requireSuperadmin, async (req, res) => {
     try {
-        // TODO: Implement get all users from database
         res.json({
             success: true,
             message: 'Lista utilizatori (de implementat)',
@@ -685,10 +630,7 @@ router.get('/', requireSuperadmin, async (req, res) => {
     }
 });
 
-/**
- * PUT /api/users/:id
- * Update user (Owner or Admin only)
- */
+// Stub endpoint — actualizarea utilizatorilor e gestionată prin BetterAuth sau superadmin.routes.js
 router.put('/:id', requireAuth, async (req, res) => {
     try {
         const userId = req.params.id;
@@ -702,7 +644,6 @@ router.put('/:id', requireAuth, async (req, res) => {
             });
         }
 
-        // TODO: Implement update user in database
         res.json({
             success: true,
             message: 'Utilizator actualizat (de implementat)',
@@ -716,13 +657,9 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * DELETE /api/users/:id
- * Delete user (Admin only)
- */
+// Stub endpoint — ștergerea utilizatorilor e gestionată prin admin.controller.js
 router.delete('/:id', requireSuperadmin, async (req, res) => {
     try {
-        // TODO: Implement delete user from database
         res.json({
             success: true,
             message: 'Utilizator șters (de implementat)',
@@ -737,13 +674,10 @@ router.delete('/:id', requireSuperadmin, async (req, res) => {
 });
 
 // ============================================================
-// EVENT INTERESTS (Facebook-style "Interested")
+// INTERESE LA EVENIMENTE (similar cu "Interested" de pe Facebook)
 // ============================================================
 
-/**
- * GET /api/users/my-interests
- * Get events the user is interested in
- */
+// Returnează evenimentele marcate ca interesante de utilizatorul curent
 router.get('/my-interests', requireAuth, async (req, res) => {
     try {
         const interests = await db
@@ -771,15 +705,11 @@ router.get('/my-interests', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/my-interests/:eventId
- * Mark event as interested
- */
+// Marchează un eveniment ca interesant — idempotent dacă există deja
 router.post('/my-interests/:eventId', requireAuth, async (req, res) => {
     try {
         const { eventId } = req.params;
 
-        // Check if already interested
         const existing = await db
             .select()
             .from(intereseEvenimente)
@@ -804,10 +734,7 @@ router.post('/my-interests/:eventId', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * DELETE /api/users/my-interests/:eventId
- * Remove interest in event
- */
+// Elimină interesul față de un eveniment — where dublu asigură ownership
 router.delete('/my-interests/:eventId', requireAuth, async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -828,14 +755,7 @@ router.delete('/my-interests/:eventId', requireAuth, async (req, res) => {
     }
 });
 
-// ============================================================
-// ALL LOYALTY CARD TIERS
-// ============================================================
-
-/**
- * GET /api/users/card-tiers
- * Get all card tiers for the loyalty card progression display
- */
+// Returnează toate nivelurile de carduri de fidelitate — pentru afișarea progresului în UI
 router.get('/card-tiers', requireAuth, async (req, res) => {
     try {
         const tiers = await db.select().from(cardFidelitate);
@@ -846,16 +766,12 @@ router.get('/card-tiers', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * POST /api/users/events/:id/reserve
- * Create a free event reservation
- */
+// Rezervare la un eveniment gratuit — generăm un ID de rezervare și salvăm în DB
 router.post('/events/:id/reserve', requireAuth, async (req, res) => {
     try {
         const { id: eventId } = req.params;
         const { nrPersoane, ziuaAleasa, intervalOrar } = req.body;
 
-        // Verify event exists and is free
         const [event] = await db.select().from(evenimente).where(eq(evenimente.id, eventId)).limit(1);
         if (!event) return res.status(404).json({ success: false, error: 'Evenimentul nu a fost găsit' });
         if (!event.isGratuit) return res.status(400).json({ success: false, error: 'Evenimentul nu este gratuit' });
@@ -880,10 +796,7 @@ router.post('/events/:id/reserve', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users/my-reservations
- * List all reservations for the current user
- */
+// Returnează toate rezervările la evenimente ale utilizatorului curent
 router.get('/my-reservations', requireAuth, async (req, res) => {
     try {
         const reservations = await db
@@ -913,10 +826,8 @@ router.get('/my-reservations', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/users/my-reservations/:id/ticket
- * Generate PDF ticket for a reservation
- */
+// Generare PDF bilet de participare gratuită pentru o rezervare la eveniment
+// Include QR code cu datele rezervării pentru scanare la intrare
 router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -945,6 +856,7 @@ router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
 
         if (!reservation) return res.status(404).send('Rezervarea nu a fost găsită');
 
+        // Normalizăm diacriticele pentru compatibilitate cu fonturile PDFKit
         const normalizeText = (text) => {
             if (!text) return '';
             return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i').replace(/ș/g, 's').replace(/ț/g, 't').replace(/Ă/g, 'A').replace(/Â/g, 'A').replace(/Î/g, 'I').replace(/Ș/g, 'S').replace(/Ț/g, 'T');
@@ -955,10 +867,7 @@ router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=Bilet_Rezervare_${id.slice(0, 8)}.pdf`);
         doc.pipe(res);
 
-        // Background border
         doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60).lineWidth(2).stroke('#1e293b');
-
-        // Dark header
         doc.rect(30, 30, doc.page.width - 60, 100).fill('#0f172a');
 
         doc.font('Helvetica-Bold').fontSize(22).fillColor('#ffffff')
@@ -968,7 +877,6 @@ router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
 
         const leftX = 70;
 
-        // Event Details
         doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f172a').text('Detalii Eveniment', leftX, 165);
 
         const fields = [
@@ -989,13 +897,11 @@ router.get('/my-reservations/:id/ticket', requireAuth, async (req, res) => {
             yPos += 22;
         }
 
-        // QR Code (right side)
         const qrData = JSON.stringify({ id: reservation.id, user: reservation.userId, np: reservation.nrPersoane, ev: reservation.titluEveniment });
         const qrImage = await QRCode.toDataURL(qrData, { margin: 1, width: 150, color: { dark: '#0f172a', light: '#ffffff' } });
         const qrBuffer = Buffer.from(qrImage.split(',')[1], 'base64');
         doc.image(qrBuffer, doc.page.width - 230, 160, { width: 150, height: 150 });
 
-        // Footer
         doc.font('Helvetica').fontSize(10).fillColor('#94a3b8')
             .text(`Rezervare ID: ${reservation.id}`, leftX, doc.page.height - 100, { align: 'left' });
         doc.text(`Emis: ${new Date().toLocaleDateString('ro-RO')}`, leftX, doc.page.height - 85);

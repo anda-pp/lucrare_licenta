@@ -43,6 +43,7 @@ export default function MyOrders() {
         });
     };
 
+    // Iconița de status reflectă vizual starea plății fiecărei comenzi
     const getStatusIcon = (status) => {
         if (status === 'Plătit') return <CheckCircle2 size={18} className="status-icon success" />;
         if (status === 'Eșuat') return <XCircle size={18} className="status-icon error" />;
@@ -53,10 +54,10 @@ export default function MyOrders() {
         try {
             const response = await axios.get(`${API}/api/users/my-orders/${orderId}/ticket`, {
                 withCredentials: true,
-                responseType: 'blob' // Important for file download
+                responseType: 'blob'
             });
 
-            // Creates a URL for the downloaded blob and auto-clicks a hidden anchor tag
+            // Creăm un URL temporar din blob și declanșăm download-ul printr-un link invizibil
             const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
             const link = document.createElement('a');
             link.href = url;
@@ -117,6 +118,7 @@ export default function MyOrders() {
                                 </div>
                             </div>
 
+                            {/* Butonul de descărcare PDF apare doar pentru comenzile plătite cu succes */}
                             {order.statusPlata === 'Plătit' && (
                                 <div className="order-footer">
                                     <button className="download-btn" onClick={() => downloadTickets(order.numarComanda)}>

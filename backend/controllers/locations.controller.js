@@ -5,10 +5,8 @@ import { createLocationSchema, updateLocationSchema } from '../validators/schema
 import crypto from 'crypto';
 import { sendNewMuseum } from '../lib/mailer.js';
 
-/**
- * GET /api/locations
- * Get all locations with optional filters
- */
+// Returnează toate locațiile cu numărul de recenzii și rating-ul mediu
+// Suportă filtrare opțională după tip (Muzeu/Galerie), status și search pe nume
 export const getAllLocations = async (req, res) => {
     try {
         const { type, status, search } = req.query;
@@ -34,21 +32,17 @@ export const getAllLocations = async (req, res) => {
             .leftJoin(recenzii, eq(locatiiPublice.codUnicLocatie, recenzii.codUnicLocatie))
             .groupBy(locatiiPublice.codUnicLocatie);
 
-        // Apply filters
         const conditions = [];
 
         if (type) {
             conditions.push(eq(locatiiPublice.tipLocatie, type));
         }
-
         if (status) {
             conditions.push(eq(locatiiPublice.statusLocatie, status));
         }
-
         if (search) {
             conditions.push(like(locatiiPublice.numeLoc, `%${search}%`));
         }
-
         if (conditions.length > 0) {
             query = query.where(and(...conditions));
         }
@@ -69,15 +63,11 @@ export const getAllLocations = async (req, res) => {
     }
 };
 
-/**
- * GET /api/locations/:id
- * Get single location with reviews and ticket types
- */
+// Returnează detaliile complete ale unei locații: recenzii și tipuri de bilete
 export const getLocationById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Get location
         const location = await db
             .select()
             .from(locatiiPublice)
@@ -91,13 +81,11 @@ export const getLocationById = async (req, res) => {
             });
         }
 
-        // Get reviews
         const locationReviews = await db
             .select()
             .from(recenzii)
             .where(eq(recenzii.codUnicLocatie, id));
 
-        // Get ticket types
         const ticketTypes = await db
             .select()
             .from(tipuriBilete)
@@ -120,19 +108,13 @@ export const getLocationById = async (req, res) => {
     }
 };
 
-/**
- * POST /api/locations
- * Create new location (Admin only)
- */
+// Creare locație nouă — validăm cu Zod, generăm UUID și inserăm
+// Dacă locația este Activă, trimitem email tuturor utilizatorilor (fire-and-forget)
 export const createLocation = async (req, res) => {
     try {
-        // Validate input
         const validatedData = createLocationSchema.parse(req.body);
-
-        // Generate unique ID
         const codUnicLocatie = crypto.randomUUID();
 
-        // Insert location
         await db.insert(locatiiPublice).values({
             codUnicLocatie,
             ...validatedData,
@@ -144,7 +126,7 @@ export const createLocation = async (req, res) => {
             data: { codUnicLocatie },
         });
 
-        // Notify all users about the new museum/gallery (fire-and-forget)
+        // Notificăm utilizatorii doar dacă locația este publicată direct ca Activă
         if (validatedData.statusLocatie === 'Activ') {
             (async () => {
                 try {
@@ -178,18 +160,12 @@ export const createLocation = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/locations/:id
- * Update location (Admin or Personal)
- */
+// Editare locație — verificăm că există, validăm cu Zod, actualizăm câmpurile furnizate
 export const updateLocation = async (req, res) => {
     try {
         const { id } = req.params;
-
-        // Validate input
         const validatedData = updateLocationSchema.parse(req.body);
 
-        // Check if location exists
         const existing = await db
             .select()
             .from(locatiiPublice)
@@ -203,7 +179,6 @@ export const updateLocation = async (req, res) => {
             });
         }
 
-        // Update location
         await db
             .update(locatiiPublice)
             .set(validatedData)
@@ -230,15 +205,11 @@ export const updateLocation = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/locations/:id
- * Delete location permanently (Admin only)
- */
+// Ștergere permanentă a unei locații — ștergem biletele și recenziile asociate mai întâi (FK manual)
 export const deleteLocation = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if location exists
         const existing = await db
             .select()
             .from(locatiiPublice)
@@ -252,20 +223,10 @@ export const deleteLocation = async (req, res) => {
             });
         }
 
-        // Delete associated ticket types first
-        await db
-            .delete(tipuriBilete)
-            .where(eq(tipuriBilete.codUnicLocatie, id));
-
-        // Delete associated reviews
-        await db
-            .delete(recenzii)
-            .where(eq(recenzii.codUnicLocatie, id));
-
-        // Delete location permanently
-        await db
-            .delete(locatiiPublice)
-            .where(eq(locatiiPublice.codUnicLocatie, id));
+        // Ștergem datele asociate înainte să ștergem locația (nu avem cascade pe toate tabelele)
+        await db.delete(tipuriBilete).where(eq(tipuriBilete.codUnicLocatie, id));
+        await db.delete(recenzii).where(eq(recenzii.codUnicLocatie, id));
+        await db.delete(locatiiPublice).where(eq(locatiiPublice.codUnicLocatie, id));
 
         res.json({
             success: true,
@@ -280,9 +241,7 @@ export const deleteLocation = async (req, res) => {
     }
 };
 
-// ---- TICKETS MANAGEMENT ----
-
-/** GET /api/locations/:id/tickets */
+// Returnează tipurile de bilete de intrare pentru o locație specifică
 export const getTicketsByLocation = async (req, res) => {
     try {
         const { id } = req.params;
@@ -294,7 +253,7 @@ export const getTicketsByLocation = async (req, res) => {
     }
 };
 
-/** POST /api/locations/:id/tickets */
+// Adaugă un tip de bilet nou pentru o locație
 export const createTicket = async (req, res) => {
     try {
         const { id } = req.params;
@@ -311,7 +270,7 @@ export const createTicket = async (req, res) => {
     }
 };
 
-/** PUT /api/locations/tickets/:ticketId */
+// Actualizează tipul sau prețul unui bilet existent
 export const updateTicket = async (req, res) => {
     try {
         const { ticketId } = req.params;
@@ -324,7 +283,7 @@ export const updateTicket = async (req, res) => {
     }
 };
 
-/** DELETE /api/locations/tickets/:ticketId */
+// Șterge un tip de bilet din oferta locației
 export const deleteTicket = async (req, res) => {
     try {
         const { ticketId } = req.params;
@@ -335,4 +294,3 @@ export const deleteTicket = async (req, res) => {
         res.status(500).json({ success: false, error: 'Nu s-a putut șterge biletul' });
     }
 };
-

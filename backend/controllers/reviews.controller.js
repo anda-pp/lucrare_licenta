@@ -2,10 +2,7 @@ import { db } from '../db/db.js';
 import { recenzii, user, locatiiPublice } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 
-/**
- * GET /api/reviews
- * Get all reviews with user and location info
- */
+// Returnează toate recenziile din platformă cu informații despre utilizator și locație
 export const getAllReviews = async (req, res) => {
     try {
         const reviews = await db
@@ -39,15 +36,11 @@ export const getAllReviews = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/reviews/:id
- * Delete a review (Admin only)
- */
+// Ștergere recenzie de către admin — verificăm că există înainte
 export const deleteReview = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if review exists
         const existing = await db
             .select()
             .from(recenzii)
@@ -61,7 +54,6 @@ export const deleteReview = async (req, res) => {
             });
         }
 
-        // Delete review
         await db.delete(recenzii).where(eq(recenzii.numarRecenzie, id));
 
         res.json({

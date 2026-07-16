@@ -48,6 +48,7 @@ export default function MyReservations() {
                 responseType: 'blob'
             });
 
+            // Generăm download-ul PDF prin anchor element invizibil
             const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
             const link = document.createElement('a');
             link.href = url;
@@ -106,6 +107,7 @@ export default function MyReservations() {
                                 )}
                                 <div className="res-detail-row">
                                     <span className="res-label">Zi aleasă:</span>
+                                    {/* Afișăm ziua aleasă de utilizator dacă există, altfel data de start a evenimentului */}
                                     <span className="res-val">{res.ziuaAleasa ? formatDate(res.ziuaAleasa) : formatDate(res.dataStart)}</span>
                                 </div>
                                 {res.intervalOrar && (

@@ -20,7 +20,7 @@ export default function PaymentSuccess() {
             return;
         }
 
-        // Poll session status – webhook may need a moment to create the order
+        // Polling pentru confirmarea plății — webhook-ul Stripe poate întârzia câteva secunde față de redirect
         let attempts = 0;
         const interval = setInterval(async () => {
             try {
@@ -31,11 +31,11 @@ export default function PaymentSuccess() {
                     clearInterval(interval);
                 }
             } catch {
-                // keep polling
+                // Continuăm polling-ul la fiecare eroare — webhook-ul poate să nu fie procesat încă
             }
             attempts++;
             if (attempts > 10) {
-                // After ~5s, show success anyway (webhook may be slightly delayed)
+                // După ~5 secunde afișăm succesul oricum — comanda e creată de webhook asincron
                 setLoading(false);
                 clearInterval(interval);
             }

@@ -33,11 +33,13 @@ export default function ArtistDetail() {
         fetchArtist();
     }, [id]);
 
+    // Detectăm dacă link-ul de interviu este un video YouTube pentru a-l putea afișa embedded
     const isYouTubeLink = (url) => {
         if (!url) return false;
         return url.includes('youtube.com') || url.includes('youtu.be');
     };
 
+    // Extragem ID-ul videoclipului YouTube pentru a construi URL-ul de embed
     const getYouTubeEmbedUrl = (url) => {
         if (!url) return '';
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -68,6 +70,7 @@ export default function ArtistDetail() {
                 </div>
                 <div className="artist-profile-title">
                     <h1>{artist.nume}</h1>
+                    {/* Link extern spre portofoliul complet — deschis în tab nou */}
                     {artist.linkOpere && (
                         <a href={artist.linkOpere} target="_blank" rel="noopener noreferrer" className="external-portfolio-link">
                             <LinkIcon size={18} />
@@ -97,6 +100,7 @@ export default function ArtistDetail() {
                         <div className="media-container">
                             {artist.interviu ? (
                                 isYouTubeLink(artist.interviu) ? (
+                                    // Dacă link-ul e YouTube, afișăm player-ul embedded
                                     <div className="video-responsive">
                                         <iframe
                                             width="560"
@@ -109,6 +113,7 @@ export default function ArtistDetail() {
                                         ></iframe>
                                     </div>
                                 ) : (
+                                    // Altfel afișăm textul interviului direct
                                     <div className="text-interview">
                                         <p>{artist.interviu}</p>
                                     </div>

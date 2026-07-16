@@ -4,6 +4,7 @@ import { MapPin, Clock, ChevronRight, Map, Building2, Palette } from 'lucide-rea
 import './CulturalTrails.css';
 import { useNavigate } from 'react-router-dom';
 
+// Iconița de tip pentru fiecare locație din traseul cultural
 const TYPE_ICON = {
     'Muzeu': Building2,
     'Galerie': Palette,
@@ -12,6 +13,7 @@ const TYPE_ICON = {
 export default function CulturalTrails() {
     const [trails, setTrails] = useState([]);
     const [loading, setLoading] = useState(true);
+    // ID-ul traseului expandat — permite afișarea detaliată a locațiilor
     const [expanded, setExpanded] = useState(null);
     const navigate = useNavigate();
 
@@ -19,7 +21,7 @@ export default function CulturalTrails() {
         axios.get('http://localhost:5000/api/trails', { withCredentials: true })
             .then(res => {
                 if (res.data.success) {
-                    // Preia doar cele active public (daca exista campul activ)
+                    // Afișăm doar traseele marcate ca active
                     const activeTrails = res.data.data.filter(t => t.activ !== false && t.activ !== 0);
                     setTrails(activeTrails);
                 }
@@ -28,6 +30,7 @@ export default function CulturalTrails() {
             .finally(() => setLoading(false));
     }, []);
 
+    // Formatăm durata estimată din minute în formatul "~Xh Ym"
     const copyFormat = (durataMinutes) => {
         const h = Math.floor(durataMinutes / 60);
         const m = durataMinutes % 60;
@@ -38,7 +41,6 @@ export default function CulturalTrails() {
 
     return (
         <div className="trails-page">
-            {/* Header */}
             <div className="trails-header">
                 <div className="trails-header-icon"><Map size={40} /></div>
                 <div>
@@ -54,6 +56,7 @@ export default function CulturalTrails() {
                     <p>Administratorii platformei lucrează la noi experiențe.</p>
                 </div>
             ) : (
+                // Grupăm traseele pe orașe pentru o navigare mai naturală
                 <div className="trails-grouped">
                     {Object.entries(
                         trails.reduce((acc, trail) => {
@@ -69,7 +72,7 @@ export default function CulturalTrails() {
                             <div className="trails-grid">
                                 {cityTrails.map(trail => (
                                     <div key={trail.id} className="trail-card">
-                                        {/* Cover Image Header */}
+                                        {/* Cover image cu gradient de overlay pentru titlu */}
                                         <div
                                             className="trail-cover-image"
                                             style={{
@@ -92,7 +95,6 @@ export default function CulturalTrails() {
                                             </div>
                                         </div>
 
-                                        {/* Meta */}
                                         <div className="trail-meta" style={{ paddingTop: '1rem' }}>
                                             <span><Clock size={14} /> {copyFormat(trail.durataEstimata)}</span>
                                             <span><Building2 size={14} /> {trail.locatii?.length || 0} locații</span>
@@ -104,7 +106,7 @@ export default function CulturalTrails() {
                                             </div>
                                         )}
 
-                                        {/* Locations list */}
+                                        {/* Lista ordonată a locațiilor din traseu */}
                                         <div className="trail-locations">
                                             {trail.locatii && trail.locatii.map((loc, idx) => {
                                                 const IconComp = TYPE_ICON[loc.tipLocatie] || Building2;
@@ -118,7 +120,7 @@ export default function CulturalTrails() {
                                             })}
                                         </div>
 
-                                        {/* Expanded details */}
+                                        {/* Detalii expandate cu adresele locațiilor */}
                                         {expanded === trail.id && (
                                             <div className="trail-details">
                                                 {trail.locatii && trail.locatii.map(loc => (
@@ -138,7 +140,6 @@ export default function CulturalTrails() {
                                             </div>
                                         )}
 
-                                        {/* Actions */}
                                         <div className="trail-actions">
                                             <button
                                                 className="trail-expand-btn"
@@ -146,6 +147,7 @@ export default function CulturalTrails() {
                                             >
                                                 {expanded === trail.id ? 'Închide' : 'Detalii Navigare'} <ChevronRight size={16} />
                                             </button>
+                                            {/* Butonul de start navighează la prima locație din traseu */}
                                             {trail.locatii && trail.locatii.length > 0 && (
                                                 <button
                                                     className="trail-start-btn"

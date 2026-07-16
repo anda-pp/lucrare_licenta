@@ -15,6 +15,7 @@ const EMPTY_FORM = {
 
 export default function BadgesAdmin() {
     const [badges, setBadges] = useState([]);
+    // Condițiile tehnice disponibile — vin din backend și definesc ce eveniment declanșează insigna
     const [conditions, setConditions] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -59,6 +60,7 @@ export default function BadgesAdmin() {
             });
         } else {
             setEditingId(null);
+            // Pre-selectăm prima condiție disponibilă pentru confort la adăugare rapidă
             setFormData({ ...EMPTY_FORM, conditie: conditions[0]?.conditie || '' });
         }
         setFormError('');
@@ -96,12 +98,14 @@ export default function BadgesAdmin() {
         }
     };
 
+    // Renderăm iconița dinamică din Lucide — fallback la HelpCircle dacă nu există
     const renderIcon = (iconName, color) => {
         const Icon = LucideIcons[iconName];
         if (!Icon) return <LucideIcons.HelpCircle color={color || "var(--color-primary)"} size={24} />;
         return <Icon color={color || "var(--color-primary)"} size={24} />;
     };
 
+    // Helper pentru update parțial al formularului
     const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
 
     if (loading) return <div className="admin-loading">Se încarcă insignele...</div>;
@@ -139,6 +143,7 @@ export default function BadgesAdmin() {
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        {/* Preview icon cu culoarea corespunzătoare insignei */}
                                         <div style={{
                                             width: 40, height: 40, borderRadius: 8,
                                             background: `linear-gradient(135deg, ${b.culoare}40, ${b.culoare})`,
@@ -178,6 +183,7 @@ export default function BadgesAdmin() {
                 saving={saving}
                 error={formError}
             >
+                {/* ID-ul e editat doar la creare — la editare rămâne fix */}
                 {!editingId && (
                     <div className="form-group">
                         <label>ID Unic Insignă *</label>
@@ -209,6 +215,7 @@ export default function BadgesAdmin() {
                     <label>Mesaj Motivațional</label>
                     <input type="text" value={formData.mesajMotivatie} onChange={e => set('mesajMotivatie', e.target.value)} placeholder="ex: Ești pe drumul cel bun! Păstrează ritmul." />
                 </div>
+                {/* Condiția tehnică e read-only la editare — schimbarea ei ar reseta progresul tuturor */}
                 <div className={`form-row ${editingId ? 'opacity-50 select-none' : ''}`}>
                     <div className="form-group flex-1">
                         <label>Condiție Tehnică {!editingId ? '*' : '(read-only)'}</label>
@@ -219,8 +226,7 @@ export default function BadgesAdmin() {
                             disabled={!!editingId}
                         >
                             <option value="" disabled>-- Alege o condiție --</option>
-                            {/* La editare, condiția existentă poate fi una „legacy" care nu mai e în registru;
-                                o adăugăm ca opțiune ca să nu dispară din dropdown. */}
+                            {/* La editare, condiția veche poate fi „legacy" — o includem ca fallback */}
                             {editingId && formData.conditie && !conditions.some(c => c.conditie === formData.conditie) && (
                                 <option value={formData.conditie}>{formData.conditie} (neimplementată)</option>
                             )}
@@ -241,6 +247,7 @@ export default function BadgesAdmin() {
                 </div>
             </FormModal>
 
+            {/* Atenționare specială — ștergerea insignei afectează și progresul utilizatorilor */}
             <ConfirmDialog
                 show={!!confirmTarget}
                 title="Ștergere Insignă"

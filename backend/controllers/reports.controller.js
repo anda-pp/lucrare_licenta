@@ -2,15 +2,12 @@ import { db } from '../db/db.js';
 import { comenzi, user, recenzii, locatiiPublice, tipuriBilete, bileteCumparate } from '../db/schema.js';
 import { eq, sql, gte, and } from 'drizzle-orm';
 
-/**
- * GET /api/reports
- * Get report data with optional date range filter
- */
+// Raport general cu statistici agregate — filtrabil pe interval de timp (week/month/year/all)
 export const getReports = async (req, res) => {
     try {
         const { range = 'month' } = req.query;
 
-        // Calculate date filter
+        // Calculăm data de start a filtrului în funcție de parametrul `range`
         const now = new Date();
         let dateFrom;
 
@@ -29,34 +26,30 @@ export const getReports = async (req, res) => {
                 dateFrom = null;
         }
 
-        // Total revenue from paid orders
+        // Venituri totale din comenzile plătite
         let revenueQuery = db
             .select({ total: sql`COALESCE(SUM(${comenzi.totalPlata}), 0)` })
             .from(comenzi)
             .where(eq(comenzi.statusPlata, 'Plătit'));
 
-        // Total orders
         let ordersQuery = db.select({ count: sql`COUNT(*)` }).from(comenzi);
 
-        // Paid orders
         let paidOrdersQuery = db
             .select({ count: sql`COUNT(*)` })
             .from(comenzi)
             .where(eq(comenzi.statusPlata, 'Plătit'));
 
-        // Pending orders
         let pendingOrdersQuery = db
             .select({ count: sql`COUNT(*)` })
             .from(comenzi)
             .where(eq(comenzi.statusPlata, 'În așteptare'));
 
-        // New users (with Utilizator role)
+        // Numărăm doar utilizatorii cu rol Utilizator (excluem staff-ul)
         let newUsersQuery = db
             .select({ count: sql`COUNT(*)` })
             .from(user)
             .where(eq(user.role, 'Utilizator'));
 
-        // Reviews count and average rating
         let reviewsQuery = db
             .select({
                 count: sql`COUNT(*)`,
@@ -74,7 +67,7 @@ export const getReports = async (req, res) => {
                 reviewsQuery,
             ]);
 
-        // Top locations by revenue
+        // Top 5 locații după veniturile generate din bilete plătite
         const topLocationsQuery = await db
             .select({
                 id: locatiiPublice.codUnicLocatie,

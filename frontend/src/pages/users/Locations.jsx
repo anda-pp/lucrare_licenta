@@ -14,6 +14,7 @@ export default function Locations() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
+    // Set-ul cu ID-urile locațiilor favorite ale utilizatorului curent
     const [favIds, setFavIds] = useState(new Set());
     const [toggling, setToggling] = useState(null);
 
@@ -21,7 +22,7 @@ export default function Locations() {
     useEffect(() => {
         if (session) {
             fetchFavs();
-            // Re-sync favorites whenever user returns to this page
+            // Re-sincronizăm favoritele când utilizatorul revine pe această pagină din alt tab
             const onFocus = () => fetchFavs();
             window.addEventListener('focus', onFocus);
             return () => window.removeEventListener('focus', onFocus);
@@ -31,6 +32,7 @@ export default function Locations() {
     const fetchLocations = async () => {
         try {
             const res = await axios.get(`${API}/api/locations`, { withCredentials: true });
+            // Afișăm doar locațiile active — cele inactive nu sunt vizibile publicului
             if (res.data.success) setLocations(res.data.data.filter(l => l.statusLocatie === 'Activ'));
         } catch (e) {
             console.error(e);
@@ -81,7 +83,6 @@ export default function Locations() {
                 <p>Explorează instituțiile culturale din România și salvează-ți favoritele.</p>
             </header>
 
-            {/* Filters */}
             <div className="loc-filters">
                 <div className="loc-search-box">
                     <Search size={18} />
@@ -92,6 +93,7 @@ export default function Locations() {
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
+                {/* Filtrele de tip: Toate / Muzeu / Galerie */}
                 <div className="loc-type-filters">
                     {['', 'Muzeu', 'Galerie'].map(t => (
                         <button
@@ -134,6 +136,7 @@ export default function Locations() {
                                     <span className={`loc-type-badge ${loc.tipLocatie === 'Muzeu' ? 'museum' : 'gallery'}`}>
                                         {loc.tipLocatie}
                                     </span>
+                                    {/* Butonul de favorite blochează propagarea click-ului spre card */}
                                     {session && (
                                         <button
                                             className={`loc-fav-btn ${isFav ? 'active' : ''}`}

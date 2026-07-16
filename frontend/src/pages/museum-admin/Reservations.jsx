@@ -27,6 +27,7 @@ export default function Reservations() {
         fetchReservations();
     }, []);
 
+    // Căutăm după numele vizitatorului, titlul evenimentului sau ID-ul rezervării
     const filteredReservations = reservations.filter(r => 
         (r.numeRezervant || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (r.eventTitlu || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,6 +83,7 @@ export default function Reservations() {
                             ) : (
                                 filteredReservations.map(rez => (
                                     <tr key={rez.id}>
+                                        {/* Afișăm primele 8 caractere ale UUID-ului ca identificator vizibil */}
                                         <td>#{rez.id.substring(0, 8)}...</td>
                                         <td>
                                             <div style={{ fontWeight: 600 }}>{rez.numeRezervant}</div>
