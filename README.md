@@ -4,6 +4,7 @@ Aplicație web full-stack pentru gestionarea vizitelor la muzee, vânzare de bil
 
 ## Cuprins
 
+- [Note de Securitate](#note-securitate)
 - [Tehnologii Utilizate](#tehnologii-utilizate)
 - [Funcționalități](#funcționalități)
 - [Structura Proiectului](#structura-proiectului)
@@ -14,6 +15,17 @@ Aplicație web full-stack pentru gestionarea vizitelor la muzee, vânzare de bil
 - [Paginile Aplicației](#paginile-aplicației)
 - [Autentificare și Autorizare](#autentificare-și-autorizare)
 - [Sistem de Notificări Email](#sistem-de-notificări-email)
+
+---
+
+## Note de Securitate
+
+Proiectul implementează câteva practici de securitate aplicată:
+- **Autentificare pe sesiuni server-side** (BetterAuth), nu token-uri stocate client-side vulnerabile la XSS
+- **Control acces bazat pe roluri (RBAC)** cu 4 niveluri (Utilizator, Personal, Admin, Superadmin), aplicat prin middleware dedicat (`requireAuth`, `requireAdmin`, `requireSuperadmin`, `requireStaff`)
+- **Validare input pe server** cu scheme Zod, pentru prevenirea datelor malformate/injectate
+- **Chei secrete și credențiale** izolate în variabile de mediu (`.env`), niciodată hard-codate
+- **Procesare plăți prin Stripe** (nu se stochează local date de card)
 
 ---
 
